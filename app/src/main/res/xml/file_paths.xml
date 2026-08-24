@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Only the export directory is shared, and only for files the user explicitly asked to share.
+  The database and receipt images are deliberately absent: nothing grants another app a URI to
+  them, so a share sheet can never hand out the ledger itself.
+-->
+<paths>
+    <files-path name="exports" path="exports/" />
+    <cache-path name="shared_exports" path="exports/" />
+</paths>

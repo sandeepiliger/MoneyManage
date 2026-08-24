@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Compose owns the app's appearance, so these XML themes exist only for what happens before
+      the first composition: the splash screen and the window background. Keeping the window
+      background the same colour as the Compose background is what prevents the white flash on
+      launch that makes an app feel slow.
+    -->
+    <style name="Theme.Khaata" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+    </style>
+
+    <style name="Theme.Khaata.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Khaata</item>
+    </style>
+</resources>

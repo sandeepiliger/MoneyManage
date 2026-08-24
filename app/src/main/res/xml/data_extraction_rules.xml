@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ backup and device-to-device transfer rules.
+
+  Both exclude everything. Device transfer is the more tempting of the two to allow, but it would
+  move the database and the encrypted PIN store onto another device outside the app's control,
+  so the export path is the only sanctioned way data leaves this install.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="external" path="." />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="external" path="." />
+    </device-transfer>
+</data-extraction-rules>

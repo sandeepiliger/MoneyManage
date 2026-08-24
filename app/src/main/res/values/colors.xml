@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Only the handful of colours needed before Compose takes over. The full palette lives in
+  Color.kt so light and dark stay in one place rather than split across Kotlin and XML.
+-->
+<resources>
+    <color name="window_background">#FAFAFC</color>
+    <color name="brand_indigo">#3A3A8C</color>
+    <color name="brand_brass">#C29300</color>
+    <color name="launcher_background">#3A3A8C</color>
+</resources>

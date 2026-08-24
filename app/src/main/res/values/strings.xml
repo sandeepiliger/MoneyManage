@@ -1,0 +1,660 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Every user-visible string lives here. Nothing is hardcoded in a composable, so adding a language
+  is a matter of adding a values-xx directory.
+
+  Money amounts are never assembled with string concatenation — they go through MoneyFormatter,
+  which handles Indian digit grouping. Placeholders below take an already-formatted amount.
+-->
+<resources>
+    <string name="app_name">Khaata</string>
+    <string name="app_tagline">Money, simply.</string>
+
+    <!-- ==================== Navigation ==================== -->
+    <string name="nav_home">Home</string>
+    <string name="nav_transactions">Transactions</string>
+    <string name="nav_budgets">Budgets</string>
+    <string name="nav_insights">Insights</string>
+    <string name="nav_more">More</string>
+    <string name="nav_add_transaction">Add transaction</string>
+
+    <!-- ==================== Common actions ==================== -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_done">Done</string>
+    <string name="action_next">Next</string>
+    <string name="action_back">Back</string>
+    <string name="action_skip">Skip</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_retry">Try again</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_close">Close</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_see_all">See all</string>
+    <string name="action_add">Add</string>
+    <string name="action_got_it">Got it</string>
+    <string name="action_learn_more">Learn more</string>
+    <string name="action_not_now">Not now</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_restore">Restore</string>
+    <string name="action_share">Share</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_search">Search</string>
+    <string name="action_filter">Filter</string>
+
+    <!-- ==================== States ==================== -->
+    <string name="state_loading">Loading</string>
+    <string name="state_error_title">Something went wrong</string>
+    <string name="state_error_generic">We could not load this. Please try again.</string>
+    <string name="state_error_database">We could not read your saved data.</string>
+    <string name="state_error_offline">You are offline. This needs an internet connection.</string>
+    <string name="chart_no_data">Not enough data yet</string>
+
+    <!-- ==================== Accessibility ==================== -->
+    <string name="a11y_spent">spent</string>
+    <string name="a11y_received">received</string>
+    <string name="a11y_transferred_amount">%1$s rupees transferred</string>
+    <string name="a11y_amount_hidden">Amount hidden</string>
+    <string name="a11y_show_amounts">Show amounts</string>
+    <string name="a11y_hide_amounts">Hide amounts</string>
+    <string name="a11y_close_sheet">Close</string>
+    <string name="a11y_more_options">More options</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_welcome_title">Welcome to Khaata</string>
+    <string name="onboarding_welcome_body">Track where your money goes in a couple of taps. Everything stays on your phone.</string>
+    <string name="onboarding_why_title">Why bother tracking?</string>
+    <string name="onboarding_why_spending">See where your money actually goes</string>
+    <string name="onboarding_why_budget">Know how much is safe to spend</string>
+    <string name="onboarding_why_bills">Never miss a bill or an EMI</string>
+    <string name="onboarding_why_private">Your data stays on your device</string>
+    <string name="onboarding_currency_title">Which currency do you use?</string>
+    <string name="onboarding_currency_body">You can change this later in Settings.</string>
+    <string name="onboarding_language_title">Choose your language</string>
+    <string name="onboarding_account_title">Add your first account</string>
+    <string name="onboarding_account_body">This is where your money sits — a bank account, cash in your wallet, or a card.</string>
+    <string name="onboarding_account_type_title">What kind of account is it?</string>
+    <string name="onboarding_balance_title">How much is in it right now?</string>
+    <string name="onboarding_balance_body">A rough figure is fine. You can correct it any time.</string>
+    <string name="onboarding_income_title">What do you earn in a month?</string>
+    <string name="onboarding_income_body">Used to work out how much you are saving. Leave it blank if you would rather not say.</string>
+    <string name="onboarding_categories_title">What do you usually spend on?</string>
+    <string name="onboarding_categories_body">Pick a few. We will suggest budgets for them next.</string>
+    <string name="onboarding_budget_title">Set a spending limit</string>
+    <string name="onboarding_budget_body">A limit you can live with beats one you will ignore. You can change it any time.</string>
+    <string name="onboarding_notifications_title">Bill reminders</string>
+    <string name="onboarding_notifications_body">We will remind you before a bill or EMI is due. Nothing else.</string>
+    <string name="onboarding_lock_title">Lock the app</string>
+    <string name="onboarding_lock_body">Use your fingerprint or a PIN so your finances are not open to anyone who picks up your phone.</string>
+    <string name="onboarding_sms_title">Read bank messages?</string>
+    <string name="onboarding_sms_body">Khaata can read transaction SMS from your bank so you do not have to type them in. Messages are read on your phone and never sent anywhere. You confirm each one before it is saved.</string>
+    <string name="onboarding_sms_optional">This is completely optional — everything works without it.</string>
+    <string name="onboarding_finish_title">You are set up</string>
+    <string name="onboarding_finish_body">Tap the + button any time you spend something. That is the whole thing.</string>
+    <string name="onboarding_try_demo">Explore with sample data</string>
+    <string name="onboarding_start_fresh">Start with my own data</string>
+
+    <!-- ==================== Dashboard ==================== -->
+    <string name="dashboard_greeting_morning">Good morning</string>
+    <string name="dashboard_greeting_afternoon">Good afternoon</string>
+    <string name="dashboard_greeting_evening">Good evening</string>
+    <string name="dashboard_total_balance">Total balance</string>
+    <string name="dashboard_available_to_spend">Available to spend</string>
+    <string name="dashboard_net_worth">Net worth</string>
+    <string name="dashboard_this_month">This month</string>
+    <string name="dashboard_income">Income</string>
+    <string name="dashboard_expenses">Expenses</string>
+    <string name="dashboard_saved">Saved</string>
+    <string name="dashboard_savings_rate">Savings rate</string>
+    <string name="dashboard_budget_remaining">Budget left</string>
+    <string name="dashboard_spending_overview">Spending overview</string>
+    <string name="dashboard_category_breakdown">Where it went</string>
+    <string name="dashboard_upcoming_payments">Coming up</string>
+    <string name="dashboard_recent_transactions">Recent</string>
+    <string name="dashboard_budget_progress">Budgets</string>
+    <string name="dashboard_goals">Goals</string>
+    <string name="dashboard_accounts">Accounts</string>
+    <string name="dashboard_subscriptions">Subscriptions</string>
+    <string name="dashboard_net_worth_trend">Net worth over time</string>
+    <string name="dashboard_ai_insight">Worth knowing</string>
+    <string name="dashboard_customise">Customise dashboard</string>
+    <string name="dashboard_empty_title">Nothing recorded yet</string>
+    <string name="dashboard_empty_body">Tap the + button to record your first expense. It takes a couple of seconds.</string>
+    <string name="dashboard_empty_action">Add an expense</string>
+    <string name="dashboard_demo_banner">You are exploring sample data</string>
+    <string name="dashboard_demo_exit">Clear sample data</string>
+    <string name="dashboard_pending_imports">%1$d transaction(s) waiting for you to confirm</string>
+
+    <!-- ==================== Transactions ==================== -->
+    <string name="transaction_expense">Expense</string>
+    <string name="transaction_income">Income</string>
+    <string name="transaction_transfer">Transfer</string>
+    <string name="transaction_amount">Amount</string>
+    <string name="transaction_account">Account</string>
+    <string name="transaction_to_account">To account</string>
+    <string name="transaction_category">Category</string>
+    <string name="transaction_merchant">Merchant</string>
+    <string name="transaction_note">Note</string>
+    <string name="transaction_date">Date</string>
+    <string name="transaction_tags">Tags</string>
+    <string name="transaction_receipt">Receipt</string>
+    <string name="transaction_add_title">Add transaction</string>
+    <string name="transaction_edit_title">Edit transaction</string>
+    <string name="transaction_deleted">Transaction deleted</string>
+    <string name="transaction_saved">Saved</string>
+    <string name="transaction_delete_confirm_title">Delete this transaction?</string>
+    <string name="transaction_delete_confirm_body">It will move to Recently deleted, where you can restore it for 30 days.</string>
+    <string name="transaction_list_empty_title">No transactions yet</string>
+    <string name="transaction_list_empty_body">Everything you record will show up here.</string>
+    <string name="transaction_filter_empty_title">Nothing matches</string>
+    <string name="transaction_filter_empty_body">Try widening your filters or clearing the search.</string>
+    <string name="transaction_search_hint">Search merchant, note or reference</string>
+    <string name="transaction_filters_active">Filters (%1$d)</string>
+    <string name="transaction_today">Today</string>
+    <string name="transaction_yesterday">Yesterday</string>
+    <string name="transaction_pending_badge">Awaiting confirmation</string>
+    <string name="transaction_source_sms">From your bank SMS</string>
+    <string name="transaction_source_import">Imported</string>
+    <string name="transaction_source_recurring">Recurring</string>
+    <string name="transaction_suggestion_hint">Usually %1$s</string>
+    <string name="transaction_overdraft_warning">This will take %1$s below zero</string>
+
+    <!-- Validation -->
+    <string name="validation_amount_required">Enter an amount</string>
+    <string name="validation_amount_invalid">That is not a valid amount</string>
+    <string name="validation_amount_zero">Amount must be more than zero</string>
+    <string name="validation_account_required">Choose an account</string>
+    <string name="validation_category_required">Choose a category</string>
+    <string name="validation_transfer_account_required">Choose where the money is going</string>
+    <string name="validation_transfer_same_account">Choose a different destination account</string>
+    <string name="validation_date_too_far_future">That date is more than a year away</string>
+    <string name="validation_date_too_far_past">That date is too far in the past</string>
+    <string name="validation_note_too_long">Note is too long</string>
+    <string name="validation_name_required">Give it a name</string>
+    <string name="validation_name_too_long">That name is too long</string>
+    <string name="validation_name_duplicate">You already have one with that name</string>
+    <string name="validation_balance_invalid">That is not a valid amount</string>
+    <string name="validation_limit_required">Enter a budget amount</string>
+    <string name="validation_limit_zero">Budget must be more than zero</string>
+    <string name="validation_alert_out_of_range">Alert must be between 1% and 100%</string>
+    <string name="validation_target_required">Enter a target amount</string>
+    <string name="validation_target_zero">Target must be more than zero</string>
+    <string name="validation_current_exceeds_target">Saved amount is more than the target</string>
+    <string name="validation_date_in_past">Choose a date in the future</string>
+
+    <!-- ==================== Quick add ==================== -->
+    <string name="quick_add_shortcut">Quick add</string>
+    <string name="quick_add_title">How much?</string>
+    <string name="quick_add_more_options">More options</string>
+    <string name="quick_add_natural_language">Type it out instead</string>
+    <string name="quick_add_nl_hint">e.g. spent 850 on Swiggy yesterday</string>
+    <string name="quick_add_nl_title">Describe what you spent</string>
+    <string name="quick_add_nl_confirm">Check these before saving</string>
+    <string name="quick_add_nl_none_found">We could not find an amount in that. Try including a number.</string>
+    <string name="quick_add_nl_count">%1$d transaction(s) found</string>
+
+    <!-- ==================== Accounts ==================== -->
+    <string name="accounts_title">Accounts</string>
+    <string name="accounts_add">Add account</string>
+    <string name="accounts_edit">Edit account</string>
+    <string name="accounts_name">Account name</string>
+    <string name="accounts_institution">Bank or provider</string>
+    <string name="accounts_type">Type</string>
+    <string name="accounts_opening_balance">Current balance</string>
+    <string name="accounts_last_four">Last 4 digits (optional)</string>
+    <string name="accounts_last_four_help">Only the last four digits, so we can match your bank SMS. Never enter a full account or card number.</string>
+    <string name="accounts_include_net_worth">Count towards net worth</string>
+    <string name="accounts_include_available">Count as money I can spend</string>
+    <string name="accounts_archive">Archive</string>
+    <string name="accounts_unarchive">Unarchive</string>
+    <string name="accounts_archived">Archived</string>
+    <string name="accounts_delete_blocked_title">This account has transactions</string>
+    <string name="accounts_delete_blocked_body">Deleting it would remove %1$d transaction(s) from your history. Archive it instead to hide it while keeping your records.</string>
+    <string name="accounts_empty_title">No accounts yet</string>
+    <string name="accounts_empty_body">Add the bank account, wallet or card you use most.</string>
+    <string name="accounts_limit_reached_title">Free plan includes %1$d accounts</string>
+    <string name="accounts_limit_reached_body">Upgrade to add as many as you need.</string>
+    <string name="accounts_never_credentials">Khaata never asks for your banking password, PIN or OTP.</string>
+
+    <string name="account_type_cash">Cash</string>
+    <string name="account_type_bank">Bank account</string>
+    <string name="account_type_savings">Savings account</string>
+    <string name="account_type_current">Current account</string>
+    <string name="account_type_credit_card">Credit card</string>
+    <string name="account_type_wallet">Wallet / UPI</string>
+    <string name="account_type_investment">Investment account</string>
+    <string name="account_type_loan">Loan account</string>
+    <string name="account_type_other">Other</string>
+
+    <!-- ==================== Budgets ==================== -->
+    <string name="budgets_title">Budgets</string>
+    <string name="budgets_add">Create budget</string>
+    <string name="budgets_edit">Edit budget</string>
+    <string name="budgets_name">Budget name</string>
+    <string name="budgets_limit">Limit</string>
+    <string name="budgets_period">Period</string>
+    <string name="budgets_period_weekly">Weekly</string>
+    <string name="budgets_period_monthly">Monthly</string>
+    <string name="budgets_categories">Categories</string>
+    <string name="budgets_all_spending">All spending</string>
+    <string name="budgets_alert_threshold">Warn me at</string>
+    <string name="budgets_rollover">Carry unspent money forward</string>
+    <string name="budgets_rollover_help">Anything you do not spend this period is added to the next one.</string>
+    <string name="budgets_spent_of">%1$s of %2$s</string>
+    <string name="budgets_remaining">%1$s left</string>
+    <string name="budgets_overspent_by">%1$s over</string>
+    <string name="budgets_days_left">%1$d day(s) left</string>
+    <string name="budgets_safe_daily">About %1$s a day keeps you on track</string>
+    <string name="budgets_projected">On track to spend %1$s</string>
+    <string name="budgets_carried_over">Includes %1$s carried over</string>
+    <string name="budgets_empty_title">No budgets yet</string>
+    <string name="budgets_empty_body">A budget turns "where did it all go?" into "how much is left?".</string>
+
+    <string name="budget_status_on_track">On track</string>
+    <string name="budget_status_projected_over">Spending fast</string>
+    <string name="budget_status_nearing_limit">Nearly used up</string>
+    <string name="budget_status_exhausted">Fully used</string>
+    <string name="budget_status_overspent">Over budget</string>
+
+    <!-- ==================== Categories ==================== -->
+    <string name="categories_title">Categories</string>
+    <string name="categories_add">Add category</string>
+    <string name="categories_edit">Edit category</string>
+    <string name="categories_name">Category name</string>
+    <string name="categories_parent">Belongs under</string>
+    <string name="categories_none">No category</string>
+    <string name="categories_uncategorised">Uncategorised</string>
+    <string name="categories_system_cannot_delete">Built-in categories can be hidden but not deleted, so your past reports keep their labels.</string>
+    <string name="categories_delete_orphan_warning">%1$d transaction(s) will become uncategorised.</string>
+    <string name="categories_search_hint">Search categories</string>
+
+    <!-- ==================== Recurring ==================== -->
+    <string name="recurring_title">Recurring</string>
+    <string name="recurring_add">Add recurring</string>
+    <string name="recurring_edit">Edit recurring</string>
+    <string name="recurring_name">Name</string>
+    <string name="recurring_frequency">Repeats</string>
+    <string name="recurring_start_date">Starts</string>
+    <string name="recurring_end_date">Ends (optional)</string>
+    <string name="recurring_auto_post">Record it automatically</string>
+    <string name="recurring_auto_post_help">Off by default. When off, we remind you and you confirm — so your balance always matches what actually happened.</string>
+    <string name="recurring_reminder_days">Remind me before</string>
+    <string name="recurring_next_due">Next: %1$s</string>
+    <string name="recurring_overdue">Overdue</string>
+    <string name="recurring_due_today">Due today</string>
+    <string name="recurring_due_in_days">In %1$d day(s)</string>
+    <string name="recurring_confirm_post">Record this now</string>
+    <string name="recurring_empty_title">Nothing recurring yet</string>
+    <string name="recurring_empty_body">Add your rent, salary, EMIs and SIPs so they are never a surprise.</string>
+
+    <string name="frequency_daily">Daily</string>
+    <string name="frequency_weekly">Weekly</string>
+    <string name="frequency_fortnightly">Every 2 weeks</string>
+    <string name="frequency_monthly">Monthly</string>
+    <string name="frequency_quarterly">Every 3 months</string>
+    <string name="frequency_half_yearly">Every 6 months</string>
+    <string name="frequency_yearly">Yearly</string>
+
+    <!-- ==================== Subscriptions ==================== -->
+    <string name="subscriptions_title">Subscriptions</string>
+    <string name="subscriptions_add">Add subscription</string>
+    <string name="subscriptions_edit">Edit subscription</string>
+    <string name="subscriptions_name">Service</string>
+    <string name="subscriptions_billing_cycle">Billing cycle</string>
+    <string name="subscriptions_next_payment">Next payment</string>
+    <string name="subscriptions_monthly_cost">About %1$s a month</string>
+    <string name="subscriptions_yearly_cost">%1$s a year</string>
+    <string name="subscriptions_total_monthly">Per month</string>
+    <string name="subscriptions_total_yearly">Per year</string>
+    <string name="subscriptions_cancel">Mark as cancelled</string>
+    <string name="subscriptions_cancelled">Cancelled</string>
+    <string name="subscriptions_empty_title">No subscriptions tracked</string>
+    <string name="subscriptions_empty_body">Add the services you pay for monthly. Seeing the yearly total is usually the surprising part.</string>
+    <string name="subscriptions_renewing_soon">Renewing soon</string>
+
+    <!-- ==================== Credit cards ==================== -->
+    <string name="cards_title">Credit cards</string>
+    <string name="cards_add">Add card</string>
+    <string name="cards_edit">Edit card</string>
+    <string name="cards_name">Card name</string>
+    <string name="cards_issuer">Bank</string>
+    <string name="cards_limit">Credit limit</string>
+    <string name="cards_statement_day">Statement day</string>
+    <string name="cards_due_day">Payment due day</string>
+    <string name="cards_outstanding">Outstanding</string>
+    <string name="cards_available_credit">Available credit</string>
+    <string name="cards_utilisation">Utilisation</string>
+    <string name="cards_statement_balance">This statement</string>
+    <string name="cards_minimum_due">Minimum due</string>
+    <string name="cards_due_on">Due %1$s</string>
+    <string name="cards_overdue">Payment overdue</string>
+    <string name="cards_next_statement">Next statement %1$s</string>
+    <string name="cards_spend_this_cycle">Spent this cycle</string>
+    <string name="cards_interest_note">Paying only the minimum leaves the rest to accrue interest.</string>
+    <string name="cards_minimum_estimate">Minimum due is an estimate; your statement is the final word.</string>
+    <string name="cards_empty_title">No cards added</string>
+    <string name="cards_empty_body">Add a card to keep an eye on its due date and utilisation.</string>
+
+    <string name="utilisation_healthy">Healthy</string>
+    <string name="utilisation_elevated">Getting high</string>
+    <string name="utilisation_high">High</string>
+    <string name="utilisation_over_limit">Over limit</string>
+
+    <!-- ==================== Loans ==================== -->
+    <string name="loans_title">Loans</string>
+    <string name="loans_add">Add loan</string>
+    <string name="loans_edit">Edit loan</string>
+    <string name="loans_name">Loan name</string>
+    <string name="loans_lender">Lender</string>
+    <string name="loans_principal">Loan amount</string>
+    <string name="loans_interest_rate">Interest rate (% per year)</string>
+    <string name="loans_tenure">Tenure (months)</string>
+    <string name="loans_start_date">Started</string>
+    <string name="loans_emi_day">EMI day of month</string>
+    <string name="loans_emi_override">EMI amount (optional)</string>
+    <string name="loans_emi_override_help">Leave blank and we will calculate it. Enter your lender\'s figure if it differs.</string>
+    <string name="loans_emi">EMI</string>
+    <string name="loans_outstanding">Outstanding</string>
+    <string name="loans_repaid">Repaid</string>
+    <string name="loans_interest_paid">Interest paid</string>
+    <string name="loans_interest_remaining">Interest remaining</string>
+    <string name="loans_total_interest">Total interest</string>
+    <string name="loans_total_payable">Total payable</string>
+    <string name="loans_instalments">%1$d of %2$d instalments</string>
+    <string name="loans_next_emi">Next EMI %1$s</string>
+    <string name="loans_closes">Closes %1$s</string>
+    <string name="loans_schedule">Payment schedule</string>
+    <string name="loans_schedule_note">Assumes every instalment is paid on schedule.</string>
+    <string name="loans_empty_title">No loans tracked</string>
+    <string name="loans_empty_body">Add a loan to see how much of each EMI is interest and when it will be paid off.</string>
+    <string name="loans_no_advice">Khaata shows you what your loan costs. It does not give financial advice.</string>
+
+    <!-- ==================== Investments ==================== -->
+    <string name="investments_title">Investments</string>
+    <string name="investments_add">Add investment</string>
+    <string name="investments_edit">Edit investment</string>
+    <string name="investments_name">Name</string>
+    <string name="investments_kind">Type</string>
+    <string name="investments_invested">Invested</string>
+    <string name="investments_current_value">Current value</string>
+    <string name="investments_update_value">Update value</string>
+    <string name="investments_gain">Gain</string>
+    <string name="investments_loss">Loss</string>
+    <string name="investments_return">Return</string>
+    <string name="investments_annualised">Per year</string>
+    <string name="investments_valued_on">Valued %1$s</string>
+    <string name="investments_stale_value">This value is %1$d days old</string>
+    <string name="investments_portfolio_total">Portfolio</string>
+    <string name="investments_manual_note">Values are whatever you last entered. Khaata does not fetch live prices.</string>
+    <string name="investments_empty_title">No investments tracked</string>
+    <string name="investments_empty_body">Add your funds, deposits and gold to see them alongside everything else.</string>
+
+    <string name="investment_kind_mutual_fund">Mutual fund</string>
+    <string name="investment_kind_sip">SIP</string>
+    <string name="investment_kind_stock">Stocks</string>
+    <string name="investment_kind_fixed_deposit">Fixed deposit</string>
+    <string name="investment_kind_recurring_deposit">Recurring deposit</string>
+    <string name="investment_kind_gold">Gold</string>
+    <string name="investment_kind_ppf">PPF</string>
+    <string name="investment_kind_nps">NPS</string>
+    <string name="investment_kind_epf">EPF</string>
+    <string name="investment_kind_other">Other</string>
+
+    <!-- ==================== Goals ==================== -->
+    <string name="goals_title">Goals</string>
+    <string name="goals_add">Add goal</string>
+    <string name="goals_edit">Edit goal</string>
+    <string name="goals_name">What are you saving for?</string>
+    <string name="goals_target">Target amount</string>
+    <string name="goals_current">Saved so far</string>
+    <string name="goals_target_date">By when? (optional)</string>
+    <string name="goals_add_money">Add money</string>
+    <string name="goals_remaining">%1$s to go</string>
+    <string name="goals_required_monthly">%1$s a month gets you there</string>
+    <string name="goals_achieved">Reached</string>
+    <string name="goals_on_track">On track</string>
+    <string name="goals_behind">Behind schedule</string>
+    <string name="goals_missed_deadline">Past its date</string>
+    <string name="goals_no_deadline">No deadline</string>
+    <string name="goals_projected">At this rate, around %1$s</string>
+    <string name="goals_empty_title">No goals yet</string>
+    <string name="goals_empty_body">An emergency fund, a trip, a new phone — anything you are putting money aside for.</string>
+
+    <!-- ==================== Reports ==================== -->
+    <string name="reports_title">Reports</string>
+    <string name="reports_monthly">Monthly summary</string>
+    <string name="reports_income_vs_expense">Income vs expenses</string>
+    <string name="reports_by_category">By category</string>
+    <string name="reports_by_account">By account</string>
+    <string name="reports_by_merchant">Top merchants</string>
+    <string name="reports_cash_flow">Cash flow</string>
+    <string name="reports_savings_trend">Savings over time</string>
+    <string name="reports_net_worth_trend">Net worth over time</string>
+    <string name="reports_budget_performance">Budget performance</string>
+    <string name="reports_daily_spending">Daily spending</string>
+    <string name="reports_period_this_month">This month</string>
+    <string name="reports_period_last_month">Last month</string>
+    <string name="reports_period_3_months">Last 3 months</string>
+    <string name="reports_period_6_months">Last 6 months</string>
+    <string name="reports_period_year">This year</string>
+    <string name="reports_period_financial_year">This financial year</string>
+    <string name="reports_period_custom">Custom range</string>
+    <string name="reports_empty_title">Not enough data yet</string>
+    <string name="reports_empty_body">Record a few transactions and your reports will fill in.</string>
+    <string name="reports_transfers_excluded">Transfers between your own accounts are not counted as spending.</string>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Insights</string>
+    <string name="insights_empty_title">Nothing to report yet</string>
+    <string name="insights_empty_body">Once you have a month or two of records, patterns start showing up here.</string>
+    <string name="insights_dismiss">Dismiss</string>
+    <string name="insights_why">How we worked this out</string>
+    <string name="insights_severity_action">Needs attention</string>
+    <string name="insights_severity_notable">Worth a look</string>
+    <string name="insights_severity_info">For information</string>
+
+    <!-- ==================== AI assistant ==================== -->
+    <string name="ai_title">Ask about your money</string>
+    <string name="ai_input_hint">Ask a question</string>
+    <string name="ai_suggestions">Try asking</string>
+    <string name="ai_thinking">Working it out</string>
+    <string name="ai_not_understood">We did not follow that. Try one of these:</string>
+    <string name="ai_no_data">There is not enough recorded yet to answer that.</string>
+    <string name="ai_unavailable">The assistant is unavailable right now.</string>
+    <string name="ai_source_on_device">Worked out on your phone</string>
+    <string name="ai_source_cloud">Phrased using cloud AI</string>
+    <string name="ai_evidence_title">Based on</string>
+    <string name="ai_never_acts">The assistant answers questions. It never adds, changes or moves money on its own.</string>
+    <string name="ai_cloud_disabled">Cloud AI is off. Answers are worked out on your phone.</string>
+    <string name="ai_cloud_enable_title">Use cloud AI?</string>
+    <string name="ai_cloud_enable_body">Your questions and a summary of the relevant figures would be sent to an AI provider. Nothing is sent unless you turn this on.</string>
+
+    <!-- ==================== SMS import ==================== -->
+    <string name="sms_import_title">Bank messages</string>
+    <string name="sms_review_title">Confirm these transactions</string>
+    <string name="sms_review_body">We found these in your bank messages. Check them and save the ones that are right.</string>
+    <string name="sms_review_accept">Save</string>
+    <string name="sms_review_reject">Discard</string>
+    <string name="sms_review_check_fields">Check these details</string>
+    <string name="sms_permission_title">Allow reading SMS?</string>
+    <string name="sms_permission_body">Khaata reads only messages that look like bank transactions, on your phone. Message text is never stored or sent anywhere, and nothing is saved until you confirm it.</string>
+    <string name="sms_permission_denied">Without this, you can still add transactions by hand or import a CSV.</string>
+    <string name="sms_no_messages">No new transactions found in your messages.</string>
+
+    <!-- ==================== Backup and export ==================== -->
+    <string name="backup_title">Backup and export</string>
+    <string name="backup_create">Create backup</string>
+    <string name="backup_restore">Restore from backup</string>
+    <string name="backup_export_csv">Export transactions as CSV</string>
+    <string name="backup_import_csv">Import from CSV</string>
+    <string name="backup_created">Backup created</string>
+    <string name="backup_export_created">Export created</string>
+    <string name="backup_restore_title">Restore this backup?</string>
+    <string name="backup_restore_summary">%1$d accounts, %2$d transactions, %3$d budgets</string>
+    <string name="backup_restore_mode">How should we handle what is already here?</string>
+    <string name="backup_mode_merge_skip">Add anything new, keep what I have</string>
+    <string name="backup_mode_merge_overwrite">Add new and update existing</string>
+    <string name="backup_mode_replace">Replace everything</string>
+    <string name="backup_mode_replace_warning">This permanently deletes everything currently in the app.</string>
+    <string name="backup_restore_done">Restored %1$d record(s)</string>
+    <string name="backup_restore_rejected">%1$d record(s) could not be read and were skipped</string>
+    <string name="backup_invalid">This file could not be read as a Khaata backup.</string>
+    <string name="backup_too_new">This backup was made by a newer version of Khaata. Update the app to restore it.</string>
+    <string name="backup_local_only">Backups are saved to your device. Nothing is uploaded.</string>
+    <string name="backup_last_created">Last backup: %1$s</string>
+    <string name="backup_never">No backup yet</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_profile">Profile</string>
+    <string name="settings_display_name">Your name</string>
+    <string name="settings_currency">Currency</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_month_start">Month starts on day</string>
+    <string name="settings_month_start_help">Set this to your salary date if you think of your month that way.</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_app_lock">App lock</string>
+    <string name="settings_lock_off">Off</string>
+    <string name="settings_lock_biometric">Fingerprint or face</string>
+    <string name="settings_lock_pin">PIN</string>
+    <string name="settings_lock_after">Lock after</string>
+    <string name="settings_lock_immediately">Immediately</string>
+    <string name="settings_lock_seconds">%1$d seconds</string>
+    <string name="settings_lock_minute">1 minute</string>
+    <string name="settings_hide_amounts">Hide amounts on the lock screen</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_budget_alerts">Budget alerts</string>
+    <string name="settings_bill_reminders">Bill and EMI reminders</string>
+    <string name="settings_daily_reminder">Daily reminder to log spending</string>
+    <string name="settings_reminder_time">Reminder time</string>
+    <string name="settings_data">Your data</string>
+    <string name="settings_manage_categories">Categories</string>
+    <string name="settings_manage_accounts">Accounts</string>
+    <string name="settings_recently_deleted">Recently deleted</string>
+    <string name="settings_merchant_rules">Learned merchants</string>
+    <string name="settings_forget_learned">Forget what Khaata has learned</string>
+    <string name="settings_ai">AI assistant</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_subscription">Khaata Pro</string>
+    <string name="settings_help">Help</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
+    <string name="settings_terms">Terms of use</string>
+    <string name="settings_delete_all">Delete all my data</string>
+    <string name="settings_delete_all_title">Delete everything?</string>
+    <string name="settings_delete_all_body">This permanently removes every account, transaction, budget and goal from this device. It cannot be undone. Consider making a backup first.</string>
+    <string name="settings_delete_all_confirm">Yes, delete everything</string>
+    <string name="settings_delete_all_done">All data deleted</string>
+    <string name="settings_demo_mode">Sample data</string>
+    <string name="settings_demo_enable">Load sample data</string>
+    <string name="settings_demo_disable">Clear sample data</string>
+    <string name="settings_demo_body">Fills the app with realistic sample data so you can see how it works. Clearly labelled, and removable in one tap.</string>
+
+    <!-- ==================== Privacy dashboard ==================== -->
+    <string name="privacy_title">Privacy</string>
+    <string name="privacy_summary">Khaata is built to keep your financial data on your phone.</string>
+    <string name="privacy_stored_title">What is stored on this device</string>
+    <string name="privacy_stored_body">Your accounts, transactions, budgets, goals and settings. All of it in the app\'s private storage, which other apps cannot read.</string>
+    <string name="privacy_local_title">What is processed on your phone</string>
+    <string name="privacy_local_body">Every calculation, every insight, category suggestions, natural-language entry and bank SMS parsing. None of it needs an internet connection.</string>
+    <string name="privacy_leaves_title">What can leave your device</string>
+    <string name="privacy_leaves_none">Right now: nothing.</string>
+    <string name="privacy_leaves_ads">Ad requests, if you are on the free plan. These do not include your financial data.</string>
+    <string name="privacy_leaves_billing">Purchase checks with Google Play, if you subscribe.</string>
+    <string name="privacy_leaves_ai">Your question and the figures needed to answer it, only if you turn cloud AI on.</string>
+    <string name="privacy_never_title">What never leaves your device</string>
+    <string name="privacy_never_body">Your transaction amounts, merchants, balances, account numbers and bank messages. These are never sent to us or to anyone else.</string>
+    <string name="privacy_controls_title">Your controls</string>
+    <string name="privacy_analytics">Usage analytics</string>
+    <string name="privacy_analytics_help">Anonymous counts of which features are used. Never amounts, merchants or balances. Off by default.</string>
+    <string name="privacy_crash_reporting">Crash reports</string>
+    <string name="privacy_crash_help">Helps us fix crashes. Never includes your financial data. Off by default.</string>
+    <string name="privacy_cloud_ai">Cloud AI processing</string>
+    <string name="privacy_cloud_ai_help">Lets the assistant use a cloud model. Off by default; the on-device assistant works without it.</string>
+    <string name="privacy_sms_access">Read bank SMS</string>
+    <string name="privacy_sms_help">Parsed on your phone, never uploaded. Off by default.</string>
+    <string name="privacy_export_data">Export everything</string>
+    <string name="privacy_delete_data">Delete everything</string>
+    <string name="privacy_no_account">Khaata has no accounts and no sign-in. There is no server holding your data.</string>
+
+    <!-- ==================== Paywall ==================== -->
+    <string name="paywall_title">Khaata Pro</string>
+    <string name="paywall_subtitle">The core of Khaata is free forever. Pro adds the extras.</string>
+    <string name="paywall_free_always">Recording transactions, budgets, goals, reports and exporting your data are always free.</string>
+    <string name="paywall_restore">Restore purchases</string>
+    <string name="paywall_unavailable">Purchases are not available on this device.</string>
+    <string name="paywall_pending">Your payment is being processed. This can take a while with UPI — we will unlock things as soon as it clears.</string>
+    <string name="paywall_current_plan">Your plan</string>
+    <string name="paywall_manage">Manage subscription</string>
+    <string name="paywall_tier_free">Free</string>
+    <string name="paywall_tier_pro">Pro</string>
+    <string name="paywall_tier_ai_pro">AI Pro</string>
+    <string name="paywall_tier_family">Family</string>
+    <string name="paywall_feature_ad_free">No ads</string>
+    <string name="paywall_feature_unlimited_accounts">Unlimited accounts</string>
+    <string name="paywall_feature_advanced_reports">Advanced reports</string>
+    <string name="paywall_feature_receipts">Receipt attachments</string>
+    <string name="paywall_feature_scheduled_backup">Scheduled backups</string>
+    <string name="paywall_feature_rollover">Budget rollover</string>
+    <string name="paywall_feature_ai_assistant">Cloud AI assistant</string>
+    <string name="paywall_feature_ai_insights">AI-enhanced insights</string>
+    <string name="paywall_feature_ai_categorisation">Smarter categorisation</string>
+    <string name="paywall_feature_shared">Shared household finances</string>
+    <string name="paywall_feature_family_budgets">Family budgets</string>
+    <string name="paywall_feature_shared_goals">Shared goals</string>
+
+    <!-- ==================== App lock ==================== -->
+    <string name="lock_title">Khaata is locked</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_enter_pin">Enter your PIN</string>
+    <string name="lock_set_pin">Set a PIN</string>
+    <string name="lock_confirm_pin">Enter it again</string>
+    <string name="lock_pin_mismatch">Those did not match. Try again.</string>
+    <string name="lock_pin_incorrect">Incorrect PIN</string>
+    <string name="lock_pin_attempts_left">Incorrect PIN. %1$d attempt(s) before a pause.</string>
+    <string name="lock_locked_out">Too many attempts. Try again in %1$d second(s).</string>
+    <string name="lock_use_pin">Use PIN instead</string>
+    <string name="lock_use_biometric">Use fingerprint</string>
+    <string name="lock_storage_unavailable">Secure storage is unavailable on this device, so a PIN cannot be set.</string>
+    <string name="biometric_prompt_title">Unlock Khaata</string>
+    <string name="biometric_prompt_subtitle">Confirm it is you</string>
+    <string name="biometric_not_enrolled">Set up a fingerprint or screen lock in your phone\'s settings first.</string>
+    <string name="biometric_no_hardware">This device does not support fingerprint unlock. You can use a PIN instead.</string>
+
+    <!-- ==================== Notifications ==================== -->
+    <string name="notification_channel_bills">Bill reminders</string>
+    <string name="notification_channel_bills_description">Reminders before a bill, EMI or subscription is due</string>
+    <string name="notification_channel_budgets">Budget alerts</string>
+    <string name="notification_channel_budgets_description">When a budget is nearly used or overspent</string>
+    <string name="notification_channel_reminders">Daily reminders</string>
+    <string name="notification_channel_reminders_description">A nudge to record what you spent today</string>
+    <string name="notification_bill_title">%1$s is due %2$s</string>
+    <string name="notification_bill_body">%1$s</string>
+    <string name="notification_budget_title">%1$s budget</string>
+    <string name="notification_budget_nearing">You have used %1$d%% of it</string>
+    <string name="notification_budget_over">You are %1$s over</string>
+    <string name="notification_daily_title">Anything to record today?</string>
+    <string name="notification_daily_body">Takes a couple of seconds.</string>
+    <string name="notification_action_record">Record it</string>
+    <string name="notification_action_dismiss">Dismiss</string>
+    <string name="notification_permission_rationale">Allow notifications so we can remind you before bills are due.</string>
+
+    <!-- ==================== Misc ==================== -->
+    <string name="more_title">More</string>
+    <string name="demo_badge">Sample data</string>
+    <string name="offline_badge">Offline</string>
+    <string name="currency_inr">Indian Rupee</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी</string>
+</resources>
