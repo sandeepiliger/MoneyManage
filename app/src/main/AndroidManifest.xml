@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Permissions are deliberately minimal, and every optional one is requested in context with an
+      explanation rather than up front.
+    -->
+
+    <!-- Bill and budget reminders. Runtime-requested on Android 13+. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Biometric app lock. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!--
+      Optional cloud features only: backup upload, billing verification, ads and cloud AI. Core
+      tracking works with the device in flight mode.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!--
+      SMS transaction import. Entirely optional and off by default: the app is fully usable
+      without it, the consent screen explains exactly what is read, and message text is parsed
+      on-device and never stored verbatim or transmitted.
+
+      Play's Permissions policy restricts SMS access. Before shipping a build that declares
+      these, either complete the Permissions Declaration for the relevant use case or remove
+      this block and rely on manual, CSV and notification-based entry — see docs/PLAY.md.
+    -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+
+    <!-- Scheduling exact bill reminders on Android 12+. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Play Billing. -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
+    <!-- AdMob on Android 13+. -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <application
+        android:name=".KhaataApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true"
+        android:theme="@style/Theme.Khaata.Splash"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:theme="@style/Theme.Khaata.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Quick-add tile, so logging a spend is one tap from the notification shade. -->
+        <activity-alias
+            android:name=".QuickAddAlias"
+            android:exported="true"
+            android:targetActivity=".MainActivity"
+            android:label="@string/quick_add_shortcut"
+            android:icon="@mipmap/ic_launcher">
+            <intent-filter>
+                <action android:name="ai.labs32.khaata.action.QUICK_ADD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <!--
+          Receives bank SMS when the user has granted the permission and enabled import.
+          Disabled at install time and enabled programmatically only after consent, so a user
+          who never opts in has no SMS receiver registered at all.
+        -->
+        <receiver
+            android:name=".core.sms.SmsTransactionReceiver"
+            android:enabled="false"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="500">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".core.notifications.BootCompletedReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".core.notifications.NotificationActionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!--
+          Sharing exported backups and CSVs. Read access is granted per-file via a temporary URI
+          permission; nothing under the app's private directory is otherwise reachable.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
+
+        <!--
+          Ads are only initialised after the user's consent state is known, so the SDK is not
+          started automatically at process launch.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_INITIALIZATION"
+            android:value="true" />
+        <meta-data
+            android:name="com.google.android.gms.ads.DELAY_APP_MEASUREMENT_INIT"
+            android:value="true" />
+
+        <!--
+          WorkManager is initialised on demand with a Hilt-aware factory rather than by the
+          default provider, so workers can be injected.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+    </application>
+</manifest>
