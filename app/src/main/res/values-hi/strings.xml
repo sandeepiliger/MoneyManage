@@ -129,6 +129,22 @@
     <string name="dashboard_demo_banner">आप सैंपल डेटा देख रहे हैं</string>
     <string name="dashboard_demo_exit">सैंपल डेटा हटाएँ</string>
 
+    <!-- Dashboard shortcuts -->
+    <string name="dashboard_shortcuts">शॉर्टकट</string>
+    <string name="shortcut_analytics">विश्लेषण</string>
+    <string name="shortcut_analytics_sub">रिपोर्ट और रुझान</string>
+    <string name="shortcut_accounts">खाते</string>
+    <string name="shortcut_accounts_sub">बैलेंस</string>
+    <string name="shortcut_goals">लक्ष्य</string>
+    <string name="shortcut_goals_sub">बचत ट्रैक करें</string>
+    <string name="shortcut_cards">क्रेडिट कार्ड</string>
+    <string name="shortcut_cards_sub">बिल और सीमाएँ</string>
+    <string name="shortcut_loans">ऋण</string>
+    <string name="shortcut_loans_sub">ईएमआई और भुगतान</string>
+    <string name="shortcut_investments">निवेश</string>
+    <string name="shortcut_investments_sub">पोर्टफोलियो</string>
+    <string name="dashboard_vs_last_month">पिछले महीने से %1$s</string>
+
     <!-- Transactions -->
     <string name="transaction_expense">खर्च</string>
     <string name="transaction_income">आमदनी</string>
@@ -180,6 +196,11 @@
     <string name="quick_add_nl_title">बताएँ आपने क्या खर्च किया</string>
     <string name="quick_add_nl_confirm">सेव करने से पहले जाँच लें</string>
     <string name="quick_add_nl_none_found">इसमें कोई राशि नहीं मिली। कोई संख्या शामिल करें।</string>
+
+    <!-- Voice input -->
+    <string name="voice_input">बोलें</string>
+    <string name="voice_prompt">बताएं आपने क्या खर्च किया</string>
+    <string name="voice_unavailable">इस डिवाइस पर वॉइस इनपुट उपलब्ध नहीं है।</string>
 
     <!-- Accounts -->
     <string name="accounts_title">खाते</string>

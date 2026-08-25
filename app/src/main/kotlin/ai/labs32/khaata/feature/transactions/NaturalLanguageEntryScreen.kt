@@ -1,5 +1,10 @@
 package ai.labs32.khaata.feature.transactions
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,6 +31,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -32,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -45,6 +54,7 @@ import ai.labs32.khaata.core.ui.components.KhaataCard
 import ai.labs32.khaata.core.ui.components.TransactionAmountText
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import kotlinx.coroutines.launch
 
 /**
  * Natural-language transaction entry.
@@ -66,6 +76,26 @@ fun NaturalLanguageEntryScreen(
 
     LaunchedEffect(state.savedCount) { if (state.savedCount > 0) onDone() }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val voicePrompt = stringResource(R.string.voice_prompt)
+    val voiceUnavailable = stringResource(R.string.voice_unavailable)
+
+    // A speech-recognizer *activity* rather than the SpeechRecognizer API: the system app owns
+    // the microphone and its own permission, so this app never needs RECORD_AUDIO.
+    val voiceLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val spoken = result.data
+            ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            ?.firstOrNull()
+            ?.takeIf { it.isNotBlank() }
+        if (spoken != null) {
+            val combined = if (state.input.isBlank()) spoken else state.input.trimEnd() + " " + spoken
+            viewModel.onInputChange(combined)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,6 +111,7 @@ fun NaturalLanguageEntryScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             Modifier
@@ -96,6 +127,32 @@ fun NaturalLanguageEntryScreen(
                     .heightIn(min = 100.dp),
                 label = { Text(stringResource(R.string.quick_add_nl_title)) },
                 placeholder = { Text(stringResource(R.string.quick_add_nl_hint)) },
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                                putExtra(
+                                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+                                )
+                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault())
+                                putExtra(RecognizerIntent.EXTRA_PROMPT, voicePrompt)
+                            }
+                            try {
+                                voiceLauncher.launch(intent)
+                            } catch (_: ActivityNotFoundException) {
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(voiceUnavailable)
+                                }
+                            }
+                        },
+                    ) {
+                        Icon(
+                            Icons.Default.Mic,
+                            contentDescription = stringResource(R.string.voice_input),
+                        )
+                    }
+                },
                 minLines = 3,
             )
 

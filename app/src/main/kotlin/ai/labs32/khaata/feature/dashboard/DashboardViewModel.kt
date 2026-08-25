@@ -75,6 +75,7 @@ data class DashboardUiState(
     val accounts: List<AccountBalance> = emptyList(),
     val subscriptionCost: SubscriptionTotals? = null,
     val netWorthTrend: List<Pair<String, Float>> = emptyList(),
+    val netWorthChangePercent: BigDecimal? = null,
     val topInsight: Insight? = null,
 
     val categories: List<Category> = emptyList(),
@@ -298,11 +299,20 @@ class DashboardViewModel @Inject constructor(
                     dates = months.map { it.endInclusive.coerceAtMost(today) },
                     currency = _uiState.value.currency,
                 )
+                val change = if (points.size >= 2) {
+                    ai.labs32.khaata.core.calc.BalanceCalculator.percentChange(
+                        previous = points[points.size - 2].netWorth,
+                        current = points.last().netWorth,
+                    )
+                } else {
+                    null
+                }
                 _uiState.update { state ->
                     state.copy(
                         netWorthTrend = points.map { point ->
                             point.date.month.name.take(3) to point.netWorth.amount.toFloat()
                         },
+                        netWorthChangePercent = change,
                     )
                 }
             } catch (error: Exception) {

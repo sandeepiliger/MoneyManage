@@ -131,6 +131,22 @@
     <string name="dashboard_demo_exit">Clear sample data</string>
     <string name="dashboard_pending_imports">%1$d transaction(s) waiting for you to confirm</string>
 
+    <!-- ==================== Dashboard shortcuts ==================== -->
+    <string name="dashboard_shortcuts">Shortcuts</string>
+    <string name="shortcut_analytics">Analytics</string>
+    <string name="shortcut_analytics_sub">Reports &amp; trends</string>
+    <string name="shortcut_accounts">Accounts</string>
+    <string name="shortcut_accounts_sub">Balances</string>
+    <string name="shortcut_goals">Goals</string>
+    <string name="shortcut_goals_sub">Track savings</string>
+    <string name="shortcut_cards">Credit Cards</string>
+    <string name="shortcut_cards_sub">Bills &amp; limits</string>
+    <string name="shortcut_loans">Loans</string>
+    <string name="shortcut_loans_sub">EMIs &amp; payoff</string>
+    <string name="shortcut_investments">Investments</string>
+    <string name="shortcut_investments_sub">Portfolio</string>
+    <string name="dashboard_vs_last_month">%1$s vs last month</string>
+
     <!-- ==================== Transactions ==================== -->
     <string name="transaction_expense">Expense</string>
     <string name="transaction_income">Income</string>
@@ -199,6 +215,11 @@
     <string name="quick_add_nl_confirm">Check these before saving</string>
     <string name="quick_add_nl_none_found">We could not find an amount in that. Try including a number.</string>
     <string name="quick_add_nl_count">%1$d transaction(s) found</string>
+
+    <!-- ==================== Voice input ==================== -->
+    <string name="voice_input">Speak</string>
+    <string name="voice_prompt">Say what you spent</string>
+    <string name="voice_unavailable">Voice input isn\'t available on this device.</string>
 
     <!-- ==================== Accounts ==================== -->
     <string name="accounts_title">Accounts</string>

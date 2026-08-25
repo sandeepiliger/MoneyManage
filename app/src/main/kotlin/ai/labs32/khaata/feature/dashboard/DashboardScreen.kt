@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.dashboard
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,15 +14,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+// Filled rather than outlined only because the filled variant is already proven present in this
+// project (GoalsScreen); at 14dp the two are indistinguishable.
+import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Subscriptions
+import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +41,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,6 +70,7 @@ import ai.labs32.khaata.core.ui.components.KhaataStatTile
 import ai.labs32.khaata.core.ui.components.LabelledProgress
 import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.components.MoneyText
+import ai.labs32.khaata.core.ui.components.Sparkline
 import ai.labs32.khaata.core.ui.components.StatPair
 import ai.labs32.khaata.core.ui.components.TrendLineChart
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
@@ -155,6 +167,10 @@ private fun DashboardContent(
             }
         }
 
+        item("shortcuts") {
+            DashboardShortcuts(onNavigate = onNavigate)
+        }
+
         items(state.visibleCards, key = { it.name }) { card ->
             when (card) {
                 DashboardCard.SPENDING_OVERVIEW -> SpendingOverviewCard(state)
@@ -245,22 +261,225 @@ private fun DashboardHeader(
 
         state.netWorth?.let { netWorth ->
             Spacer(Modifier.height(6.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(R.string.dashboard_net_worth),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.72f),
-                )
-                Spacer(Modifier.width(6.dp))
-                if (state.amountsHidden) {
-                    Text("••••", style = MaterialTheme.typography.labelLarge, color = Color.White)
-                } else {
-                    MoneyText(
-                        money = netWorth.netWorth,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Color.White,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = stringResource(R.string.dashboard_net_worth),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.72f),
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        if (state.amountsHidden) {
+                            Text(
+                                text = "••••",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.White,
+                            )
+                        } else {
+                            MoneyText(
+                                money = netWorth.netWorth,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.White,
+                            )
+                        }
+                    }
+                    NetWorthDelta(state)
+                }
+
+                // The trend is drawn against net worth rather than the headline figure above it,
+                // because net worth is what the series actually measures -- putting this curve
+                // under "available to spend" would chart one number and label it as another.
+                if (!state.amountsHidden && state.netWorthTrend.size >= 2) {
+                    Sparkline(
+                        values = state.netWorthTrend.map { it.second },
+                        color = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier
+                            .padding(start = KhaataTheme.spacing.small)
+                            .width(72.dp)
+                            .height(28.dp),
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * "+12.4% vs last month", under the net worth figure.
+ *
+ * Direction is carried by the sign and by an arrow, never by colour: this sits on the indigo hero
+ * card where a red/green pair would both have to be lightened to stay legible, and would then be
+ * hard to tell apart for exactly the readers the palette was chosen to protect.
+ */
+@Composable
+private fun NetWorthDelta(state: DashboardUiState) {
+    val percent = state.netWorthChangePercent ?: return
+    if (state.amountsHidden) return
+
+    val rising = percent.signum() >= 0
+    val formatted = MoneyFormatter.percentage(percent, decimals = 1)
+    val signed = if (rising && percent.signum() > 0) "+$formatted" else formatted
+
+    Spacer(Modifier.height(2.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = if (rising) Icons.Outlined.TrendingUp else Icons.Default.TrendingDown,
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.72f),
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = stringResource(R.string.dashboard_vs_last_month, signed),
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.72f),
+        )
+    }
+}
+
+// ---- Shortcuts -------------------------------------------------------------------------------
+
+/** One destination on the shortcuts grid. */
+private data class Shortcut(
+    val titleRes: Int,
+    val subtitleRes: Int,
+    val icon: ImageVector,
+    val route: String,
+)
+
+/**
+ * A grid of the destinations that are otherwise buried under the More tab.
+ *
+ * The app carries considerably more than the five bottom-tab screens — loans with amortisation,
+ * investments, credit-card cycles, goals — and until now a user had to go looking through More to
+ * discover any of it. Depth nobody finds is depth that may as well not be built.
+ *
+ * Deliberately *not* a [DashboardCard]. That enum is persisted as the user's saved card order, so
+ * adding a value to it would change how existing stored orders deserialise; this sits above the
+ * reorderable cards as fixed chrome instead.
+ */
+@Composable
+private fun DashboardShortcuts(onNavigate: (String) -> Unit) {
+    val spacing = KhaataTheme.spacing
+    val money = KhaataTheme.money
+
+    val shortcuts = remember {
+        listOf(
+            Shortcut(
+                R.string.shortcut_analytics,
+                R.string.shortcut_analytics_sub,
+                Icons.Outlined.Assessment,
+                Routes.REPORTS,
+            ),
+            Shortcut(
+                R.string.shortcut_accounts,
+                R.string.shortcut_accounts_sub,
+                Icons.Outlined.AccountBalanceWallet,
+                Routes.ACCOUNTS,
+            ),
+            Shortcut(
+                R.string.shortcut_goals,
+                R.string.shortcut_goals_sub,
+                Icons.Outlined.Flag,
+                Routes.GOALS,
+            ),
+            Shortcut(
+                R.string.shortcut_cards,
+                R.string.shortcut_cards_sub,
+                Icons.Outlined.CreditCard,
+                Routes.CREDIT_CARDS,
+            ),
+            Shortcut(
+                R.string.shortcut_loans,
+                R.string.shortcut_loans_sub,
+                Icons.Outlined.AccountBalance,
+                Routes.LOANS,
+            ),
+            Shortcut(
+                R.string.shortcut_investments,
+                R.string.shortcut_investments_sub,
+                Icons.Outlined.TrendingUp,
+                Routes.INVESTMENTS,
+            ),
+        )
+    }
+
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(R.string.dashboard_shortcuts),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(spacing.small))
+
+        // Built from Rows rather than a LazyVerticalGrid on purpose: this sits inside the
+        // dashboard's LazyColumn, and nesting a lazy grid inside a lazy list that scrolls the same
+        // axis throws at runtime.
+        shortcuts.chunked(2).forEachIndexed { rowIndex, row ->
+            if (rowIndex > 0) Spacer(Modifier.height(spacing.small))
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
+                row.forEachIndexed { columnIndex, shortcut ->
+                    ShortcutTile(
+                        shortcut = shortcut,
+                        tint = money.swatch(rowIndex * 2 + columnIndex),
+                        modifier = Modifier.weight(1f),
+                        onClick = { onNavigate(shortcut.route) },
+                    )
+                }
+                // Keeps a lone tile on a final odd row at half width rather than stretching it
+                // across the screen, so the grid stays a grid.
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShortcutTile(
+    shortcut: Shortcut,
+    tint: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    KhaataCard(
+        modifier = modifier,
+        onClick = onClick,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(tint.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = shortcut.icon,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(shortcut.titleRes),
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = stringResource(shortcut.subtitleRes),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }

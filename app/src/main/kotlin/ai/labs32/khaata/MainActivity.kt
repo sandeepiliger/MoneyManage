@@ -203,6 +203,7 @@ private fun KhaataApp(
                 ) {
                     KhaataFloatingAddButton(
                         onClick = { navController.navigate(Routes.ADD_TRANSACTION) },
+                        onVoiceClick = { navController.navigate(Routes.NATURAL_LANGUAGE_ENTRY) },
                     )
                 }
             },

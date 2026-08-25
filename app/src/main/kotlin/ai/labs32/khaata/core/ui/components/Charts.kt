@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.geometry.CornerRadius
@@ -436,6 +437,69 @@ fun TrendLineChart(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+/**
+ * A minimal trend line with no axes, labels or grid — meant to sit inside a card next to a number
+ * that already states the value, e.g. a net worth figure with its recent shape beside it.
+ *
+ * Deliberately bare: a sparkline earns its place by being glanceable at a small size, and axis
+ * ticks or gridlines at that size would be noise rather than information. The last point carries
+ * a dot because "where are we now" is the one thing a shape alone cannot say.
+ *
+ * Hidden from TalkBack rather than described, because it duplicates the accompanying number
+ * exactly — a spoken description would just repeat what the screen reader already read a moment
+ * earlier, adding noise rather than information.
+ */
+@Composable
+fun Sparkline(
+    values: List<Float>,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary,
+    strokeWidth: androidx.compose.ui.unit.Dp = 2.dp,
+) {
+    if (values.size < 2) return
+
+    val maxValue = values.max()
+    val minValue = values.min()
+    // A flat series would divide by zero; give it a nominal range so it draws as a centred line.
+    val range = (maxValue - minValue).takeIf { it > 0f } ?: 1f
+
+    Canvas(modifier.clearAndSetSemantics { }) {
+        val strokePx = strokeWidth.toPx()
+        val dotRadius = strokePx * 1.6f
+
+        // Inset by the dot's radius and half the stroke width. Drawn flush to the canvas the end
+        // dot is clipped in half by the right edge, and any point at the series minimum or maximum
+        // loses half its stroke to the top or bottom — both of which read as a rendering fault
+        // rather than as a deliberately tight chart.
+        val left = strokePx / 2f
+        val right = (size.width - dotRadius).coerceAtLeast(left + 1f)
+        val top = dotRadius
+        val bottom = (size.height - dotRadius).coerceAtLeast(top + 1f)
+
+        val stepX = (right - left) / (values.size - 1)
+        fun yFor(value: Float): Float = bottom - ((value - minValue) / range) * (bottom - top)
+
+        val path = Path()
+        values.forEachIndexed { index, value ->
+            val x = left + stepX * index
+            val y = yFor(value)
+            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(width = strokePx, cap = StrokeCap.Round, join = StrokeJoin.Round),
+        )
+
+        drawCircle(
+            color = color,
+            radius = dotRadius,
+            center = Offset(right, yFor(values.last())),
+        )
     }
 }
 
