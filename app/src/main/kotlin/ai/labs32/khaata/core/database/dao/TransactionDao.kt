@@ -247,7 +247,7 @@ interface TransactionDao {
           COALESCE(SUM(
             CASE
               WHEN transferAccountId = accounts.id THEN amount_minor_units
-              WHEN transactions.accountId = accounts.id AND type = 'INCOME' THEN amount_minor_units
+              WHEN transactions.accountId = accounts.id AND transactions.type = 'INCOME' THEN amount_minor_units
               WHEN transactions.accountId = accounts.id THEN -amount_minor_units
               ELSE 0
             END
