@@ -56,6 +56,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true"
+        android:usesCleartextTraffic="false"
         android:theme="@style/Theme.Khaata.Splash"
         tools:targetApi="34">
 
