@@ -595,4 +595,71 @@
         <item quantity="one">%1$d महीने में आमदनी से ज़्यादा खर्च हुआ।</item>
         <item quantity="other">%1$d महीनों में आमदनी से ज़्यादा खर्च हुआ।</item>
     </plurals>
+
+    <!-- Settings cluster -->
+    <string name="settings_demo_loaded">सैंपल डेटा लोड हो गया। यह हर जगह लेबल किया गया है और कभी भी हटाया जा सकता है।</string>
+    <string name="settings_demo_cleared">सैंपल डेटा हटा दिया गया।</string>
+    <string name="settings_demo_blocked">आपके अपने रिकॉर्ड पहले से हैं। पहले उन्हें हटाएँ, या सैंपल डेटा नए इंस्टॉल पर देखें।</string>
+    <string name="privacy_leaves_analytics">बिना पहचान वाले फ़ीचर आँकड़े, क्योंकि आपने उपयोग आँकड़े चालू किए हैं।</string>
+    <string name="privacy_leaves_crashes">क्रैश की जानकारी, क्योंकि आपने क्रैश रिपोर्ट चालू की हैं।</string>
+    <string name="privacy_cloud_ai_requires_plan">यह AI Pro का हिस्सा है। फ़ोन पर चलने वाला असिस्टेंट हर प्लान में है।</string>
+
+    <!-- Learned merchants -->
+    <string name="merchant_rules_explanation">जब आप कोई लेन-देन किसी श्रेणी में डालते हैं, खाता उस दुकान को याद रख लेता है ताकि अगली बार वही श्रेणी सुझा सके। जो कुछ उसने सीखा है वह यहाँ दिख रहा है, और आप कुछ भी हटा सकते हैं।</string>
+    <string name="merchant_rules_search">दुकान खोजें</string>
+    <string name="merchant_rules_set_by_you">यह आपने तय किया</string>
+    <string name="merchant_rules_delete_named">%1$s को भुला दें</string>
+    <string name="merchant_rules_empty_title">अभी कुछ नहीं सीखा</string>
+    <string name="merchant_rules_empty_body">कुछ लेन-देन दर्ज करें, आपकी दुकानें यहाँ दिखने लगेंगी।</string>
+    <string name="merchant_rules_forget_title">सब कुछ भुला दें?</string>
+    <string name="merchant_rules_forget_body">खाता अब तक के आपके तरीक़े के आधार पर श्रेणियाँ सुझाना बंद कर देगा। पहले से मौजूद दुकानें बनी रहेंगी और आपके लेन-देन नहीं बदलेंगे।</string>
+
+    <!-- About -->
+    <string name="about_version_detail">वर्शन %1$s (%2$d) · %3$s</string>
+    <string name="about_licences">ओपन-सोर्स लाइसेंस</string>
+    <string name="about_licences_show">खाता जिन लाइब्रेरी पर बना है</string>
+    <string name="about_contact">सहायता से संपर्क करें</string>
+    <string name="about_contact_subject">खाता %1$s — सहायता</string>
+    <string name="about_no_browser">इस फ़ोन में ऐसा कोई ऐप नहीं जो इसे खोल सके।</string>
+    <string name="about_no_advice">खाता आपको अपना पैसा देखने में मदद करता है। यह वित्तीय, निवेश या टैक्स सलाह नहीं देता, और इसमें कुछ भी ख़रीदने, बेचने या उधार लेने की सिफ़ारिश नहीं है।</string>
+
+    <plurals name="merchant_rules_learned_from">
+        <item quantity="one">%1$d लेन-देन से सीखा</item>
+        <item quantity="other">%1$d लेन-देन से सीखा</item>
+    </plurals>
+    <plurals name="merchant_rules_seeded_count">
+        <item quantity="one">%1$d दुकान पहले से मौजूद है और यहाँ नहीं दिखती।</item>
+        <item quantity="other">%1$d दुकानें पहले से मौजूद हैं और यहाँ नहीं दिखतीं।</item>
+    </plurals>
+
+    <!-- Backup -->
+    <string name="backup_section_export">एक कॉपी बनाएँ</string>
+    <string name="backup_section_files">इस फ़ोन में मौजूद फ़ाइलें</string>
+    <string name="backup_section_restore">डेटा वापस लाएँ</string>
+    <string name="backup_create_help">सब कुछ एक फ़ाइल में, जिसे आप जहाँ चाहें रख सकते हैं।</string>
+    <string name="backup_export_csv_help">सिर्फ़ लेन-देन, स्प्रेडशीट के लिए।</string>
+    <string name="backup_import_csv_help">खाते और श्रेणियाँ नाम से मिलाई जाती हैं।</string>
+    <string name="backup_share_title">यह फ़ाइल शेयर करें</string>
+    <string name="backup_exported_on">%1$s को बनी</string>
+    <string name="backup_exports_cleared">एक्सपोर्ट की गई फ़ाइलें इस फ़ोन से हटा दी गईं।</string>
+    <string name="backup_failed">यह नहीं हो सका। कुछ भी नहीं बदला।</string>
+    <string name="backup_csv_ready">%1$d पंक्तियाँ इम्पोर्ट के लिए तैयार हैं।</string>
+    <string name="backup_csv_rejected">%1$d पंक्तियाँ पढ़ी नहीं जा सकीं और छोड़ दी जाएँगी।</string>
+    <string name="backup_csv_account_matching">जिन पंक्तियों में ऐसा खाता है जो यहाँ नहीं है, उन्हें ग़लत खाते में डालने के बजाय छोड़ दिया जाता है।</string>
+
+    <!-- Paywall -->
+    <string name="paywall_feature_custom_ranges">कोई भी तारीख़ सीमा</string>
+    <string name="paywall_feature_dashboard">डैशबोर्ड अपने हिसाब से</string>
+    <string name="paywall_feature_included">शामिल है</string>
+    <string name="paywall_choose">यह प्लान चुनें</string>
+    <string name="paywall_purchase_done">हो गया। धन्यवाद।</string>
+    <string name="paywall_purchase_failed">ख़रीद पूरी नहीं हुई। आपसे पैसे नहीं लिए गए।</string>
+    <string name="paywall_restore_done">ख़रीद वापस आ गई।</string>
+    <string name="paywall_restore_none">इस Google अकाउंट पर पहले की कोई ख़रीद नहीं मिली।</string>
+    <string name="paywall_terms_note">Google Play से हर साल बिलिंग। Play Store की सब्सक्रिप्शन में कभी भी रद्द करें; अवधि पूरी होने तक सुविधाएँ चलती रहेंगी।</string>
+
+    <plurals name="paywall_free_trial">
+        <item quantity="one">%1$d दिन मुफ़्त</item>
+        <item quantity="other">%1$d दिन मुफ़्त</item>
+    </plurals>
 </resources>

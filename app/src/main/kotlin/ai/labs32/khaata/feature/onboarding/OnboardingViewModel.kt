@@ -6,25 +6,18 @@ import ai.labs32.khaata.core.analytics.AnalyticsEvent
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
 import ai.labs32.khaata.core.categorize.DefaultCategories
 import ai.labs32.khaata.core.common.KhaataClock
-import ai.labs32.khaata.core.demo.DemoDataGenerator
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.AccountType
 import ai.labs32.khaata.core.model.AppLockMode
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyParser
+import ai.labs32.khaata.data.demo.DemoDataManager
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.BudgetRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
-import ai.labs32.khaata.data.repository.CreditCardRepository
-import ai.labs32.khaata.data.repository.GoalRepository
-import ai.labs32.khaata.data.repository.InvestmentRepository
-import ai.labs32.khaata.data.repository.LoanRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
-import ai.labs32.khaata.data.repository.RecurringRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
-import ai.labs32.khaata.data.repository.SubscriptionRepository
-import ai.labs32.khaata.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -101,13 +94,7 @@ class OnboardingViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val budgetRepository: BudgetRepository,
     private val settingsRepository: SettingsRepository,
-    private val transactionRepository: TransactionRepository,
-    private val recurringRepository: RecurringRepository,
-    private val subscriptionRepository: SubscriptionRepository,
-    private val creditCardRepository: CreditCardRepository,
-    private val loanRepository: LoanRepository,
-    private val investmentRepository: InvestmentRepository,
-    private val goalRepository: GoalRepository,
+    private val demoDataManager: DemoDataManager,
     private val analytics: AnalyticsProvider,
     private val clock: KhaataClock,
 ) : ViewModel() {
@@ -285,21 +272,7 @@ class OnboardingViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val dataset = DemoDataGenerator(currency = _uiState.value.currency)
-                    .generate(clock.today())
-
-                categoryRepository.seedIfEmpty()
-                accountRepository.upsertAll(dataset.accounts)
-                transactionRepository.createAll(dataset.transactions)
-                budgetRepository.upsertAll(dataset.budgets)
-                recurringRepository.upsertAll(dataset.recurringRules)
-                subscriptionRepository.upsertAll(dataset.subscriptions)
-                creditCardRepository.upsertAll(dataset.creditCards)
-                loanRepository.upsertAll(dataset.loans)
-                investmentRepository.upsertAll(dataset.investments)
-                goalRepository.upsertAll(dataset.goals)
-
-                profileRepository.setDemoMode(true)
+                demoDataManager.load(currency = _uiState.value.currency)
                 profileRepository.markOnboardingComplete()
                 analytics.track(AnalyticsEvent.DemoModeEnabled)
 

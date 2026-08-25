@@ -83,6 +83,11 @@ sealed class AnalyticsEvent(val name: String) {
 
     data object DemoModeEnabled : AnalyticsEvent("demo_mode_enabled")
 
+    data object DemoModeDisabled : AnalyticsEvent("demo_mode_disabled")
+
+    /** Whether the app lock is on. Never which kind, and never the PIN. */
+    data class AppLockChanged(val enabled: Boolean) : AnalyticsEvent("app_lock_changed")
+
     /**
      * A handled error, for spotting broken flows.
      *
@@ -109,6 +114,7 @@ sealed class AnalyticsEvent(val name: String) {
         is AiAssistantUsed -> mapOf("provider" to provider, "answered" to wasAnswered)
         is BackupCreated -> mapOf("record_count" to recordCount)
         is ExportCreated -> mapOf("format" to format)
+        is AppLockChanged -> mapOf("enabled" to enabled)
         is ImportCompleted -> mapOf("imported" to importedCount, "rejected" to rejectedCount)
         is SmsImportReviewed -> mapOf("accepted" to accepted)
         is ErrorEncountered -> mapOf("context" to context)

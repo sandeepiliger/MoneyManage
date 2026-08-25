@@ -592,6 +592,19 @@
     <string name="backup_local_only">Backups are saved to your device. Nothing is uploaded.</string>
     <string name="backup_last_created">Last backup: %1$s</string>
     <string name="backup_never">No backup yet</string>
+    <string name="backup_section_export">Make a copy</string>
+    <string name="backup_section_files">Files on this device</string>
+    <string name="backup_section_restore">Bring data in</string>
+    <string name="backup_create_help">Everything, in one file you can keep wherever you like.</string>
+    <string name="backup_export_csv_help">Just the transactions, for a spreadsheet.</string>
+    <string name="backup_import_csv_help">Accounts and categories are matched by name.</string>
+    <string name="backup_share_title">Share this file</string>
+    <string name="backup_exported_on">Made on %1$s</string>
+    <string name="backup_exports_cleared">Exported files removed from this device.</string>
+    <string name="backup_failed">That did not work. Nothing was changed.</string>
+    <string name="backup_csv_ready">%1$d rows are ready to import.</string>
+    <string name="backup_csv_rejected">%1$d rows could not be read and will be skipped.</string>
+    <string name="backup_csv_account_matching">Rows naming an account that does not exist here are skipped rather than filed against the wrong one.</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Settings</string>
@@ -644,6 +657,9 @@
     <string name="settings_demo_enable">Load sample data</string>
     <string name="settings_demo_disable">Clear sample data</string>
     <string name="settings_demo_body">Fills the app with realistic sample data so you can see how it works. Clearly labelled, and removable in one tap.</string>
+    <string name="settings_demo_loaded">Sample data loaded. It is labelled throughout and you can clear it any time.</string>
+    <string name="settings_demo_cleared">Sample data cleared.</string>
+    <string name="settings_demo_blocked">You already have your own records. Clear them first, or try the sample data on a fresh install.</string>
 
     <!-- ==================== Privacy dashboard ==================== -->
     <string name="privacy_title">Privacy</string>
@@ -670,7 +686,29 @@
     <string name="privacy_sms_help">Parsed on your phone, never uploaded. Off by default.</string>
     <string name="privacy_export_data">Export everything</string>
     <string name="privacy_delete_data">Delete everything</string>
+    <string name="privacy_leaves_analytics">Anonymous feature counts, because you turned usage analytics on.</string>
+    <string name="privacy_leaves_crashes">Crash diagnostics, because you turned crash reports on.</string>
+    <string name="privacy_cloud_ai_requires_plan">Part of AI Pro. The on-device assistant works on every plan.</string>
     <string name="privacy_no_account">Khaata has no accounts and no sign-in. There is no server holding your data.</string>
+
+    <!-- ==================== Learned merchants ==================== -->
+    <string name="merchant_rules_explanation">When you file a transaction, Khaata remembers the merchant so it can suggest the same category next time. Everything it has worked out is listed here, and you can remove any of it.</string>
+    <string name="merchant_rules_search">Search merchants</string>
+    <string name="merchant_rules_set_by_you">You set this</string>
+    <string name="merchant_rules_delete_named">Forget %1$s</string>
+    <string name="merchant_rules_empty_title">Nothing learned yet</string>
+    <string name="merchant_rules_empty_body">File a few transactions and the merchants you use will show up here.</string>
+    <string name="merchant_rules_forget_title">Forget everything learned?</string>
+    <string name="merchant_rules_forget_body">Khaata will stop suggesting categories based on what you have filed so far. The merchants it shipped with are kept, and none of your transactions change.</string>
+
+    <!-- ==================== About ==================== -->
+    <string name="about_version_detail">Version %1$s (%2$d) · %3$s</string>
+    <string name="about_licences">Open-source licences</string>
+    <string name="about_licences_show">Show the libraries Khaata is built on</string>
+    <string name="about_contact">Contact support</string>
+    <string name="about_contact_subject">Khaata %1$s — support</string>
+    <string name="about_no_browser">No app on this device can open that.</string>
+    <string name="about_no_advice">Khaata helps you see your own money. It does not give financial, investment or tax advice, and nothing in it is a recommendation to buy, sell or borrow.</string>
 
     <!-- ==================== Paywall ==================== -->
     <string name="paywall_title">Khaata Pro</string>
@@ -697,6 +735,15 @@
     <string name="paywall_feature_shared">Shared household finances</string>
     <string name="paywall_feature_family_budgets">Family budgets</string>
     <string name="paywall_feature_shared_goals">Shared goals</string>
+    <string name="paywall_feature_custom_ranges">Any date range</string>
+    <string name="paywall_feature_dashboard">Rearrange the dashboard</string>
+    <string name="paywall_feature_included">Included</string>
+    <string name="paywall_choose">Choose this plan</string>
+    <string name="paywall_purchase_done">You are all set. Thank you.</string>
+    <string name="paywall_purchase_failed">The purchase did not go through. You have not been charged.</string>
+    <string name="paywall_restore_done">Purchases restored.</string>
+    <string name="paywall_restore_none">No previous purchases found on this Google account.</string>
+    <string name="paywall_terms_note">Billed yearly through Google Play. Cancel any time in Play Store subscriptions; you keep access until the period ends.</string>
 
     <!-- ==================== App lock ==================== -->
     <string name="lock_title">Khaata is locked</string>
@@ -807,5 +854,17 @@
     <plurals name="reports_deficit_months">
         <item quantity="one">%1$d month spent more than it brought in.</item>
         <item quantity="other">%1$d months spent more than they brought in.</item>
+    </plurals>
+    <plurals name="merchant_rules_learned_from">
+        <item quantity="one">Learned from %1$d transaction</item>
+        <item quantity="other">Learned from %1$d transactions</item>
+    </plurals>
+    <plurals name="merchant_rules_seeded_count">
+        <item quantity="one">%1$d merchant came built in and is not listed here.</item>
+        <item quantity="other">%1$d merchants came built in and are not listed here.</item>
+    </plurals>
+    <plurals name="paywall_free_trial">
+        <item quantity="one">%1$d day free</item>
+        <item quantity="other">%1$d days free</item>
     </plurals>
 </resources>
