@@ -2,7 +2,7 @@ package ai.labs32.khaata.core.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
-import androidx.compose.material.icons.automirrored.filled.DirectionsBus
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Apartment
@@ -87,7 +87,7 @@ object CategoryIcons {
         "fuel" to Icons.Default.LocalGasStation,
         "cab" to Icons.Default.LocalTaxi,
         "auto" to Icons.AutoMirrored.Filled.DirectionsBike,
-        "metro" to Icons.AutoMirrored.Filled.DirectionsBus,
+        "metro" to Icons.Default.DirectionsBus,
         "parking" to Icons.Default.LocalParking,
         "toll" to Icons.Default.Toll,
         "car_service" to Icons.Default.DirectionsCar,

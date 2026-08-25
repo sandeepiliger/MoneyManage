@@ -179,10 +179,12 @@ class TransactionRepository @Inject constructor(
 
         // An edit is a stronger signal than an initial save: the user looked at what we guessed
         // and changed it, so this teaches the rule set as an explicit choice.
-        if (learnCategory && transaction.categoryId != null && transaction.merchant != null) {
+        val merchant = transaction.merchant
+        val categoryId = transaction.categoryId
+        if (learnCategory && categoryId != null && merchant != null) {
             learnMerchantRule(
-                transaction.merchant,
-                transaction.categoryId,
+                merchant,
+                categoryId,
                 transaction.accountId,
                 isExplicitUserChoice = true,
             )

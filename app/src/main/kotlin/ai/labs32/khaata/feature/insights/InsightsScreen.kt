@@ -20,9 +20,9 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.InfoOutline
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -327,7 +327,7 @@ private fun severityColor(severity: InsightSeverity): Color = when (severity) {
 private fun severityIcon(severity: InsightSeverity): ImageVector = when (severity) {
     InsightSeverity.ACTION_NEEDED -> Icons.Default.ErrorOutline
     InsightSeverity.NOTABLE -> Icons.Default.Warning
-    InsightSeverity.INFORMATIONAL -> Icons.Default.InfoOutline
+    InsightSeverity.INFORMATIONAL -> Icons.Outlined.Info
 }
 
 @Composable

@@ -176,11 +176,12 @@ class ReminderWorker @AssistedInject constructor(
     }
 
     private fun dueLabel(context: Context, today: LocalDate, dueOn: LocalDate): String =
-        when (ChronoUnit.DAYS.between(today, dueOn)) {
+        when (val days = ChronoUnit.DAYS.between(today, dueOn)) {
             0L -> context.getString(R.string.recurring_due_today)
-            else -> context.getString(
-                R.string.recurring_due_in_days,
-                ChronoUnit.DAYS.between(today, dueOn).toInt(),
+            else -> context.resources.getQuantityString(
+                R.plurals.recurring_due_in_days,
+                days.toInt(),
+                days.toInt(),
             )
         }
 

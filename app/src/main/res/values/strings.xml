@@ -767,6 +767,9 @@
     <string name="notification_budget_title">%1$s budget</string>
     <string name="notification_budget_nearing">You have used %1$d%% of it</string>
     <string name="notification_budget_over">You are %1$s over</string>
+    <string name="notification_import_title">New transaction to confirm</string>
+    <string name="notification_import_body">%1$s · %2$s</string>
+    <string name="notification_import_unknown_merchant">Unknown merchant</string>
     <string name="notification_daily_title">Anything to record today?</string>
     <string name="notification_daily_body">Takes a couple of seconds.</string>
     <string name="notification_action_record">Record it</string>
