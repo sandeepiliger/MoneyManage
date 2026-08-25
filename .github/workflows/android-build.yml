@@ -43,8 +43,29 @@ jobs:
       # slower than what a user would actually get. This is the same code built the way it ships
       # -- R8, resource shrinking, no debug flag -- signed with the debug key purely so it can be
       # sideloaded. This is the build to judge performance on.
+      #
+      # app/build.gradle.kts configures a lint baseline that has never existed: lint has never run
+      # on this module before (assembleDebug never triggers it; this is the first assembleRelease).
+      # AGP's default behaviour on a missing baseline is to write one and abort the build so nobody
+      # accepts it unreviewed -- -Dlint.baselines.continue=true is AGP's own documented flag for
+      # bootstrapping that baseline instead of failing outright. The generated file is then printed
+      # into this log (echo, not the artifact upload below) because the log is the only channel
+      # this Claude Code session can actually read back -- the artifact download URL is Azure Blob
+      # Storage, which is blocked by this org's egress policy the same way dl.google.com is.
       - name: Assemble optimised (release) APK
-        run: ./gradlew :app:assembleRelease -Pkhaata.debugSignRelease=true --stacktrace
+        run: |
+          ./gradlew :app:assembleRelease -Pkhaata.debugSignRelease=true -Dlint.baselines.continue=true --stacktrace
+
+      - name: Print generated lint baseline
+        if: always()
+        run: |
+          if [ -f app/lint-baseline.xml ]; then
+            echo "::group::app/lint-baseline.xml"
+            cat app/lint-baseline.xml
+            echo "::endgroup::"
+          else
+            echo "No app/lint-baseline.xml was generated."
+          fi
 
       - name: Upload APK
         if: success()
