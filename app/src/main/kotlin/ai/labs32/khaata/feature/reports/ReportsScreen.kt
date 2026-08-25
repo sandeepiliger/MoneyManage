@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.reports
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,19 +18,26 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,6 +76,9 @@ import ai.labs32.khaata.core.ui.components.StatPair
 import ai.labs32.khaata.core.ui.components.TrendLineChart
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import ai.labs32.khaata.data.backup.ExportedFile
+import ai.labs32.khaata.data.export.StatementData
+import ai.labs32.khaata.data.export.StatementExporter
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.TransactionRepository
@@ -83,6 +94,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -99,6 +111,9 @@ data class ReportsUiState(
     val monthlySeries: List<CashflowSummary> = emptyList(),
     val accountNames: Map<String, String> = emptyMap(),
     val currency: CurrencyCode = CurrencyCode.DEFAULT,
+    val isExporting: Boolean = false,
+    val exportedFile: ExportedFile? = null,
+    val exportError: Boolean = false,
 ) {
     val hasData: Boolean get() = summary?.hasActivity == true
 }
@@ -110,6 +125,7 @@ class ReportsViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val accountRepository: AccountRepository,
     private val clock: KhaataClock,
+    private val statementExporter: StatementExporter,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportsUiState())
@@ -165,13 +181,71 @@ class ReportsViewModel @Inject constructor(
                     )
                 }
             }
-            .onEach { fresh -> _uiState.update { fresh } }
+            .onEach { fresh ->
+                // The export fields belong to a separate, user-triggered action rather than to
+                // the ledger snapshot this flow re-emits on every change, so a database write
+                // that happens to land mid-export must not wipe out its in-flight state.
+                _uiState.update { current ->
+                    fresh.copy(
+                        isExporting = current.isExporting,
+                        exportedFile = current.exportedFile,
+                        exportError = current.exportError,
+                    )
+                }
+            }
             .launchIn(viewModelScope)
     }
 
     fun selectPeriod(selected: ReportPeriod) {
         _uiState.update { it.copy(isLoading = true, period = selected) }
         period.value = selected
+    }
+
+    /**
+     * Builds and writes the statement PDF for whatever is currently on screen.
+     *
+     * [periodLabel] is resolved by the caller because it is a `stringResource` lookup and this
+     * ViewModel has no Compose context to make one from.
+     */
+    fun exportStatement(periodLabel: String) {
+        val range = _uiState.value.range ?: return
+        val summary = _uiState.value.summary ?: return
+        if (_uiState.value.isExporting) return
+
+        _uiState.update { it.copy(isExporting = true, exportError = false) }
+        viewModelScope.launch {
+            // Transfers are excluded here the same way CashflowAnalyzer excludes them from every
+            // total above: a statement that lists a transfer next to "amounts exclude transfers"
+            // would contradict its own footnote.
+            val transactions = transactionRepository.getInRange(range)
+                .filter { it.isEffective && !it.type.isTransfer }
+                .sortedBy { it.occurredOn }
+
+            val statement = StatementData(
+                periodLabel = periodLabel,
+                periodStart = range.start,
+                periodEnd = range.endInclusive,
+                generatedOn = clock.today(),
+                currency = _uiState.value.currency,
+                summary = summary,
+                categories = _uiState.value.categories,
+                transactions = transactions,
+            )
+
+            val result = statementExporter.export(statement)
+            _uiState.update {
+                it.copy(
+                    isExporting = false,
+                    exportedFile = result.getOrNull(),
+                    exportError = result.isFailure,
+                )
+            }
+        }
+    }
+
+    /** Clears a completed export once the UI has acted on it (shared, or the failure shown). */
+    fun consumeExport() {
+        _uiState.update { it.copy(exportedFile = null, exportError = false) }
     }
 
     private companion object {
@@ -196,6 +270,32 @@ fun ReportsScreen(
     viewModel: ReportsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val currentPeriodLabel = periodLabel(state.period)
+    val shareTitle = stringResource(R.string.statement_share_title)
+    val exportFailedMessage = stringResource(R.string.reports_export_failed)
+
+    // The share sheet fires exactly once per completed export, then the state is cleared so
+    // rotating the screen or recomposing for an unrelated reason does not reopen it.
+    LaunchedEffect(state.exportedFile) {
+        state.exportedFile?.let { file ->
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = file.mimeType
+                putExtra(Intent.EXTRA_STREAM, file.uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(intent, shareTitle))
+            viewModel.consumeExport()
+        }
+    }
+
+    LaunchedEffect(state.exportError) {
+        if (state.exportError) {
+            snackbarHostState.showSnackbar(exportFailedMessage)
+            viewModel.consumeExport()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -210,8 +310,27 @@ fun ReportsScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(
+                        onClick = { viewModel.exportStatement(currentPeriodLabel) },
+                        enabled = state.hasData && !state.isExporting,
+                    ) {
+                        if (state.isExporting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Download,
+                                contentDescription = stringResource(R.string.reports_export_pdf),
+                            )
+                        }
+                    }
+                },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             Modifier

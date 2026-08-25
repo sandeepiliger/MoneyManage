@@ -467,6 +467,23 @@
     <string name="reports_more_than_previous">पिछली अवधि से %1$s ज़्यादा।</string>
     <string name="reports_less_than_previous">पिछली अवधि से %1$s कम।</string>
     <string name="reports_unknown_account">हटाया गया खाता</string>
+    <string name="reports_export_pdf">पीडीएफ निर्यात करें</string>
+    <string name="reports_export_failed">विवरण नहीं बनाया जा सका।</string>
+
+    <!-- Statement PDF -->
+    <string name="statement_share_title">विवरण साझा करें</string>
+    <string name="statement_title">विवरण</string>
+    <string name="statement_income">कुल आय</string>
+    <string name="statement_expense">कुल व्यय</string>
+    <string name="statement_net">शुद्ध बदलाव</string>
+    <string name="statement_categories">पैसा कहाँ गया</string>
+    <string name="statement_transactions">लेन-देन</string>
+    <string name="statement_col_date">तारीख</string>
+    <string name="statement_col_description">विवरण</string>
+    <string name="statement_col_amount">राशि</string>
+    <string name="statement_generated">%1$s को बनाया गया</string>
+    <string name="statement_page">पृष्ठ %1$d</string>
+    <string name="statement_transfers_note">राशियों में आपके अपने खातों के बीच किए गए हस्तांतरण शामिल नहीं हैं।</string>
 
     <!-- Ads -->
     <string name="ad_label">विज्ञापन</string>

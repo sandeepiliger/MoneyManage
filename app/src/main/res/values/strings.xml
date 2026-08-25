@@ -541,6 +541,23 @@
     <string name="reports_more_than_previous">%1$s more than the period before.</string>
     <string name="reports_less_than_previous">%1$s less than the period before.</string>
     <string name="reports_unknown_account">Deleted account</string>
+    <string name="reports_export_pdf">Export PDF</string>
+    <string name="reports_export_failed">Could not create the statement.</string>
+
+    <!-- ==================== Statement PDF ==================== -->
+    <string name="statement_share_title">Share statement</string>
+    <string name="statement_title">Statement</string>
+    <string name="statement_income">Total income</string>
+    <string name="statement_expense">Total expense</string>
+    <string name="statement_net">Net movement</string>
+    <string name="statement_categories">Where it went</string>
+    <string name="statement_transactions">Transactions</string>
+    <string name="statement_col_date">Date</string>
+    <string name="statement_col_description">Description</string>
+    <string name="statement_col_amount">Amount</string>
+    <string name="statement_generated">Generated %1$s</string>
+    <string name="statement_page">Page %1$d</string>
+    <string name="statement_transfers_note">Amounts exclude transfers between your own accounts.</string>
 
     <!-- ==================== Ads ==================== -->
     <string name="ad_label">Advertisement</string>
