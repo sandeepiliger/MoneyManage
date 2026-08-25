@@ -440,6 +440,15 @@
     <string name="reports_period_30_days">पिछले 30 दिन</string>
     <string name="reports_period_year">इस साल</string>
     <string name="reports_transfers_excluded">अपने ही खातों के बीच ट्रांसफ़र को खर्च नहीं गिना जाता।</string>
+    <string name="reports_average_daily">रोज़ का औसत</string>
+    <string name="reports_transaction_count">लेन-देन</string>
+    <string name="reports_no_income">कोई आमदनी दर्ज नहीं</string>
+    <string name="reports_more_than_previous">पिछली अवधि से %1$s ज़्यादा।</string>
+    <string name="reports_less_than_previous">पिछली अवधि से %1$s कम।</string>
+    <string name="reports_unknown_account">हटाया गया खाता</string>
+
+    <!-- Ads -->
+    <string name="ad_label">विज्ञापन</string>
 
     <!-- Insights -->
     <string name="insights_title">जानकारी</string>
@@ -577,5 +586,13 @@
     <plurals name="subscriptions_tracked_count">
         <item quantity="one">%1$d सब्सक्रिप्शन</item>
         <item quantity="other">%1$d सब्सक्रिप्शन</item>
+    </plurals>
+    <plurals name="reports_transactions">
+        <item quantity="one">%1$d लेन-देन</item>
+        <item quantity="other">%1$d लेन-देन</item>
+    </plurals>
+    <plurals name="reports_deficit_months">
+        <item quantity="one">%1$d महीने में आमदनी से ज़्यादा खर्च हुआ।</item>
+        <item quantity="other">%1$d महीनों में आमदनी से ज़्यादा खर्च हुआ।</item>
     </plurals>
 </resources>

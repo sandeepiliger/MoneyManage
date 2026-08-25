@@ -522,6 +522,15 @@
     <string name="reports_empty_title">Not enough data yet</string>
     <string name="reports_empty_body">Record a few transactions and your reports will fill in.</string>
     <string name="reports_transfers_excluded">Transfers between your own accounts are not counted as spending.</string>
+    <string name="reports_average_daily">Average a day</string>
+    <string name="reports_transaction_count">Transactions</string>
+    <string name="reports_no_income">No income recorded</string>
+    <string name="reports_more_than_previous">%1$s more than the period before.</string>
+    <string name="reports_less_than_previous">%1$s less than the period before.</string>
+    <string name="reports_unknown_account">Deleted account</string>
+
+    <!-- ==================== Ads ==================== -->
+    <string name="ad_label">Advertisement</string>
 
     <!-- ==================== Insights ==================== -->
     <string name="insights_title">Insights</string>
@@ -790,5 +799,13 @@
     <plurals name="subscriptions_tracked_count">
         <item quantity="one">%1$d subscription</item>
         <item quantity="other">%1$d subscriptions</item>
+    </plurals>
+    <plurals name="reports_transactions">
+        <item quantity="one">%1$d transaction</item>
+        <item quantity="other">%1$d transactions</item>
+    </plurals>
+    <plurals name="reports_deficit_months">
+        <item quantity="one">%1$d month spent more than it brought in.</item>
+        <item quantity="other">%1$d months spent more than they brought in.</item>
     </plurals>
 </resources>
