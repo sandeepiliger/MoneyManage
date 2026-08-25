@@ -676,6 +676,8 @@
     <string name="privacy_cloud_ai_help">Lets the assistant use a cloud model. Off by default; the on-device assistant works without it.</string>
     <string name="privacy_sms_access">Read bank SMS</string>
     <string name="privacy_sms_help">Parsed on your phone, never uploaded. Off by default.</string>
+    <string name="privacy_sms_permission_denied">SMS permission was denied. Enable it in your phone\'s app settings to turn this on.</string>
+    <string name="action_open_settings">Open settings</string>
     <string name="privacy_export_data">Export everything</string>
     <string name="privacy_delete_data">Delete everything</string>
     <string name="privacy_leaves_analytics">Anonymous feature counts, because you turned usage analytics on.</string>

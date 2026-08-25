@@ -1,5 +1,8 @@
 package ai.labs32.khaata.feature.settings
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +27,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -32,9 +38,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -168,9 +177,36 @@ fun PrivacyDashboardScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val settings = state.settings
 
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val permissionDeniedMessage = stringResource(R.string.privacy_sms_permission_denied)
+    val openSettingsLabel = stringResource(R.string.action_open_settings)
+
+    // Once a user has denied this twice, Android stops showing the system dialog at all and
+    // the launcher's callback fires immediately with everything false -- so a denial (of either
+    // kind) needs its own explanation. Leaving the switch to just snap back to off with nothing
+    // said is the same silent-failure shape as the bug this permission handling was added to fix.
     val smsPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
-    ) { grants -> viewModel.setSmsImport(grants.values.all { it }) }
+    ) { grants ->
+        val granted = grants.values.all { it }
+        viewModel.setSmsImport(granted)
+        if (!granted) {
+            coroutineScope.launch {
+                val result = snackbarHostState.showSnackbar(
+                    message = permissionDeniedMessage,
+                    actionLabel = openSettingsLabel,
+                )
+                if (result == SnackbarResult.ActionPerformed) {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            .setData(Uri.fromParts("package", context.packageName, null)),
+                    )
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.markSeen()
@@ -192,6 +228,7 @@ fun PrivacyDashboardScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             Modifier
