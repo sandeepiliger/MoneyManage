@@ -69,5 +69,6 @@ jobs:
           name: build-reports
           path: |
             app/build/reports/
+            app/lint-baseline.xml
             **/build/test-results/**/*.xml
           retention-days: 14
