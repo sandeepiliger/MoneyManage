@@ -72,7 +72,8 @@ import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
-import ai.labs32.khaata.data.repository.SubscriptionCost
+import ai.labs32.khaata.core.calc.CommitmentCalculator
+import ai.labs32.khaata.core.calc.SubscriptionTotals
 import ai.labs32.khaata.data.repository.SubscriptionRepository
 import ai.labs32.khaata.feature.recurring.frequencyLabel
 import ai.labs32.khaata.feature.shared.ChipSelector
@@ -122,7 +123,7 @@ data class SubscriptionsUiState(
     val isLoading: Boolean = true,
     val active: List<SubscriptionItem> = emptyList(),
     val cancelled: List<SubscriptionItem> = emptyList(),
-    val cost: SubscriptionCost? = null,
+    val cost: SubscriptionTotals? = null,
     val accounts: List<Account> = emptyList(),
     val categories: List<Category> = emptyList(),
     val editor: SubscriptionEditorState? = null,
@@ -153,8 +154,14 @@ class SubscriptionsViewModel @Inject constructor(
             fun item(subscription: Subscription) = SubscriptionItem(
                 subscription = subscription,
                 daysUntilRenewal = ChronoUnit.DAYS.between(today, subscription.nextPaymentDate),
-                monthlyEquivalent = subscription.monthlyEquivalent(),
-                yearlyEquivalent = subscription.yearlyEquivalent(),
+                monthlyEquivalent = CommitmentCalculator.perMonth(
+                    subscription.amount,
+                    subscription.cycle,
+                ),
+                yearlyEquivalent = CommitmentCalculator.perYear(
+                    subscription.amount,
+                    subscription.cycle,
+                ),
                 categoryName = subscription.categoryId?.let { categoryNames[it] },
             )
 
@@ -447,7 +454,7 @@ fun SubscriptionsScreen(
 }
 
 @Composable
-private fun CostCard(cost: SubscriptionCost) {
+private fun CostCard(cost: SubscriptionTotals) {
     KhaataCard {
         CardHeader(
             title = pluralStringResource(

@@ -45,18 +45,6 @@ data class Subscription(
         }
     }
 
-    /**
-     * Cost normalised to a month, for comparing services on different billing cycles.
-     *
-     * Approximate for weekly and daily cycles by construction — see
-     * [Frequency.approximateMonthsPerOccurrence] — which is why the UI labels it "about".
-     */
-    fun monthlyEquivalent(): Money =
-        amount.times(BigDecimal.ONE.divide(BigDecimal(cycle.approximateMonthsPerOccurrence.toString()), ai.labs32.khaata.core.money.MoneyMath.PRECISION))
-
-    /** Cost normalised to a year — the number that changes minds about a subscription. */
-    fun yearlyEquivalent(): Money =
-        amount.times(BigDecimal(cycle.occurrencesPerYear.toString()))
 }
 
 // ---------------------------------------------------------------------------------------------

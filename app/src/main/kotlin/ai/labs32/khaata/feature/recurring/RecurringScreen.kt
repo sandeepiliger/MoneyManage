@@ -63,6 +63,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.R
+import ai.labs32.khaata.core.calc.Commitment
+import ai.labs32.khaata.core.calc.CommitmentCalculator
 import ai.labs32.khaata.core.calc.RecurrenceCalculator
 import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.model.Account
@@ -72,7 +74,6 @@ import ai.labs32.khaata.core.model.RecurringRule
 import ai.labs32.khaata.core.model.TransactionType
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
-import ai.labs32.khaata.core.money.MoneyMath
 import ai.labs32.khaata.core.money.MoneyParser
 import ai.labs32.khaata.core.ui.components.CardHeader
 import ai.labs32.khaata.core.ui.components.ColorBadge
@@ -100,7 +101,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -112,14 +112,6 @@ data class RecurringRuleItem(
     val accountName: String?,
     val categoryName: String?,
 )
-
-/** What the whole set of active rules commits the user to in a typical month. */
-data class RecurringCommitment(
-    val outgoingPerMonth: Money,
-    val incomingPerMonth: Money,
-) {
-    val netPerMonth: Money get() = incomingPerMonth - outgoingPerMonth
-}
 
 data class RecurringEditorState(
     val id: String? = null,
@@ -148,7 +140,7 @@ data class RecurringUiState(
     val due: List<DueOccurrence> = emptyList(),
     val active: List<RecurringRuleItem> = emptyList(),
     val paused: List<RecurringRuleItem> = emptyList(),
-    val commitment: RecurringCommitment? = null,
+    val commitment: Commitment? = null,
     val accounts: List<Account> = emptyList(),
     val categories: List<Category> = emptyList(),
     val editor: RecurringEditorState? = null,
@@ -192,7 +184,7 @@ class RecurringViewModel @Inject constructor(
                 due = due.take(MAX_DUE_SHOWN),
                 active = active.map(::item).sortedBy { it.nextDueOn ?: LocalDate.MAX },
                 paused = paused.map(::item),
-                commitment = commitmentOf(active),
+                commitment = CommitmentCalculator.summarise(active),
                 accounts = accounts,
                 categories = categories,
             )
@@ -208,38 +200,6 @@ class RecurringViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
-    }
-
-    /**
-     * Normalises every active rule to a monthly figure.
-     *
-     * Weekly and daily rules are converted with an approximate factor, which is why the UI labels
-     * the result "about". Presenting it as exact would be a small lie that compounds across a
-     * dozen rules.
-     */
-    private fun commitmentOf(rules: List<RecurringRule>): RecurringCommitment {
-        val currency = rules.firstOrNull()?.amount?.currency ?: CurrencyCode.DEFAULT
-        var out = Money.zero(currency)
-        var incoming = Money.zero(currency)
-
-        rules.forEach { rule ->
-            // A transfer moves money between the user's own accounts, so it is neither an outgoing
-            // commitment nor income — counting it would inflate both sides.
-            if (rule.type == TransactionType.TRANSFER) return@forEach
-            // Mirrors Subscription.monthlyEquivalent so the two screens cannot disagree about
-            // what a quarterly ₹3,000 costs per month.
-            val monthsPerOccurrence = BigDecimal(rule.frequency.approximateMonthsPerOccurrence.toString())
-                .multiply(BigDecimal(rule.interval))
-            val perMonth = rule.amount.times(
-                BigDecimal.ONE.divide(monthsPerOccurrence, MoneyMath.PRECISION),
-            )
-            when (rule.type) {
-                TransactionType.EXPENSE -> out += perMonth
-                TransactionType.INCOME -> incoming += perMonth
-                TransactionType.TRANSFER -> Unit
-            }
-        }
-        return RecurringCommitment(outgoingPerMonth = out, incomingPerMonth = incoming)
     }
 
     // ---- Due occurrences ---------------------------------------------------------------------
@@ -646,7 +606,7 @@ private fun DueCard(
 }
 
 @Composable
-private fun CommitmentCard(commitment: RecurringCommitment) {
+private fun CommitmentCard(commitment: Commitment) {
     KhaataCard {
         CardHeader(
             title = stringResource(R.string.recurring_commitment_title),

@@ -4,6 +4,8 @@ import ai.labs32.khaata.core.calc.BudgetCalculator
 import ai.labs32.khaata.core.calc.BudgetProgress
 import ai.labs32.khaata.core.calc.CashflowAnalyzer
 import ai.labs32.khaata.core.common.DateRange
+import ai.labs32.khaata.core.calc.monthlyEquivalent
+import ai.labs32.khaata.core.calc.yearlyEquivalent
 import ai.labs32.khaata.core.model.Budget
 import ai.labs32.khaata.core.model.BudgetStatus
 import ai.labs32.khaata.core.model.Category

@@ -45,6 +45,7 @@ import ai.labs32.khaata.core.calc.CashflowSummary
 import ai.labs32.khaata.core.calc.CategorySpend
 import ai.labs32.khaata.core.calc.MerchantSpend
 import ai.labs32.khaata.core.common.DateRange
+import ai.labs32.khaata.core.common.ReportPeriod
 import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
@@ -82,47 +83,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
-
-/**
- * The periods offered in the filter row.
- *
- * A fixed, short list rather than a free date-range picker as the primary control: nearly every
- * question people actually ask is "this month", "last month" or "this year", and a picker makes
- * those three cost four taps each. The financial year is included because in India that is the
- * period that matters at tax time, and it does not start in January.
- */
-enum class ReportPeriod {
-    THIS_MONTH,
-    LAST_MONTH,
-    LAST_30_DAYS,
-    LAST_3_MONTHS,
-    LAST_6_MONTHS,
-    THIS_YEAR,
-    FINANCIAL_YEAR,
-    ;
-
-    fun range(today: LocalDate): DateRange = when (this) {
-        THIS_MONTH -> DateRange.ofMonth(today)
-        LAST_MONTH -> DateRange.ofMonth(YearMonth.from(today).minusMonths(1))
-        LAST_30_DAYS -> DateRange.lastDays(today, 30)
-        LAST_3_MONTHS -> DateRange.lastDays(today, 90)
-        LAST_6_MONTHS -> DateRange.lastDays(today, 182)
-        THIS_YEAR -> DateRange.ofYear(today)
-        FINANCIAL_YEAR -> DateRange.ofFinancialYear(today)
-    }
-
-    /** How many trailing months the trend charts should draw for this period. */
-    val trendMonths: Int
-        get() = when (this) {
-            THIS_MONTH, LAST_MONTH, LAST_30_DAYS -> 6
-            LAST_3_MONTHS -> 6
-            LAST_6_MONTHS -> 6
-            THIS_YEAR, FINANCIAL_YEAR -> 12
-        }
-}
 
 data class ReportsUiState(
     val isLoading: Boolean = true,

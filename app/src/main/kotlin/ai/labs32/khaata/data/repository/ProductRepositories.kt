@@ -8,7 +8,9 @@ import ai.labs32.khaata.core.calc.InvestmentCalculator
 import ai.labs32.khaata.core.calc.LoanCalculator
 import ai.labs32.khaata.core.calc.LoanStatus
 import ai.labs32.khaata.core.calc.PortfolioSummary
+import ai.labs32.khaata.core.calc.CommitmentCalculator
 import ai.labs32.khaata.core.calc.RecurrenceCalculator
+import ai.labs32.khaata.core.calc.SubscriptionTotals
 import ai.labs32.khaata.core.common.DateRange
 import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.database.dao.CreditCardDao
@@ -200,15 +202,14 @@ class SubscriptionRepository @Inject constructor(
     suspend fun findById(id: String): Subscription? =
         subscriptionDao.findById(id)?.toDomainOrNull()
 
-    /** Total cost of active subscriptions, normalised per month and per year. */
-    fun observeCostSummary(currency: CurrencyCode = CurrencyCode.DEFAULT): Flow<SubscriptionCost> =
-        observeActive().map { subscriptions ->
-            SubscriptionCost(
-                count = subscriptions.size,
-                perMonth = subscriptions.sumOfMoney(currency) { it.monthlyEquivalent() },
-                perYear = subscriptions.sumOfMoney(currency) { it.yearlyEquivalent() },
-            )
-        }
+    /**
+     * Total cost of active subscriptions, normalised per month and per year.
+     *
+     * Delegated to [CommitmentCalculator] so this screen and the recurring screen cannot disagree
+     * about what a quarterly charge costs per month.
+     */
+    fun observeCostSummary(currency: CurrencyCode = CurrencyCode.DEFAULT): Flow<SubscriptionTotals> =
+        observeActive().map { CommitmentCalculator.summariseSubscriptions(it, currency) }
 
     fun observeUpcoming(days: Int = 30): Flow<List<ScheduledOccurrence>> =
         observeActive().map {
@@ -277,8 +278,6 @@ class SubscriptionRepository @Inject constructor(
 
     suspend fun deleteDemoData() = subscriptionDao.deleteDemoData()
 }
-
-data class SubscriptionCost(val count: Int, val perMonth: Money, val perYear: Money)
 
 // =============================================================================================
 // Credit cards

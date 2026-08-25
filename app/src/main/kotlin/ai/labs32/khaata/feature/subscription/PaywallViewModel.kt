@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.core.analytics.AnalyticsEvent
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
 import ai.labs32.khaata.core.billing.BillingConnectionState
+import ai.labs32.khaata.core.common.IsoPeriod
 import ai.labs32.khaata.core.billing.BillingProvider
 import ai.labs32.khaata.core.billing.PurchaseState
 import ai.labs32.khaata.core.entitlement.Feature
@@ -120,7 +121,7 @@ class PaywallViewModel @Inject constructor(
                                 productId = product.productId,
                                 tier = product.tier,
                                 formattedPrice = product.formattedPrice,
-                                freeTrialDays = product.freeTrialPeriod?.let(::trialDays),
+                                freeTrialDays = IsoPeriod.days(product.freeTrialPeriod),
                                 features = featuresIntroducedBy(product.tier),
                             )
                         },
@@ -138,25 +139,6 @@ class PaywallViewModel @Inject constructor(
      */
     private fun featuresIntroducedBy(tier: Tier): List<Feature> =
         Feature.entries.filter { it.minimumTier == tier }
-
-    /**
-     * Trial length in days from an ISO-8601 period such as `P7D`.
-     *
-     * Returns null for anything unrecognised, so an unexpected format produces no badge rather
-     * than a wrong one. The number is returned rather than a phrase because the phrase belongs in
-     * a string resource.
-     */
-    private fun trialDays(isoPeriod: String): Int? {
-        val match = Regex("^P(\\d+)([DWMY])$").find(isoPeriod.uppercase()) ?: return null
-        val (amount, unit) = match.destructured
-        return when (unit) {
-            "D" -> amount.toInt()
-            "W" -> amount.toInt() * 7
-            "M" -> amount.toInt() * 30
-            "Y" -> amount.toInt() * 365
-            else -> null
-        }
-    }
 
     fun purchase(activity: Activity, productId: String) {
         analytics.track(AnalyticsEvent.PurchaseStarted(productId))

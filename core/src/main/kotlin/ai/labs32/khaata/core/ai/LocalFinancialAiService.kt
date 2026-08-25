@@ -5,6 +5,8 @@ import ai.labs32.khaata.core.calc.CashflowAnalyzer
 import ai.labs32.khaata.core.common.DateRange
 import ai.labs32.khaata.core.insights.Evidence
 import ai.labs32.khaata.core.categorize.MerchantNormaliser
+import ai.labs32.khaata.core.calc.monthlyEquivalent
+import ai.labs32.khaata.core.calc.yearlyEquivalent
 import ai.labs32.khaata.core.model.Category
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.money.Money

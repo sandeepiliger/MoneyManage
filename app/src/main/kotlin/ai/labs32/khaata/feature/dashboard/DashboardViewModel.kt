@@ -29,7 +29,7 @@ import ai.labs32.khaata.data.repository.LoanRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
 import ai.labs32.khaata.data.repository.RecurringRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
-import ai.labs32.khaata.data.repository.SubscriptionCost
+import ai.labs32.khaata.core.calc.SubscriptionTotals
 import ai.labs32.khaata.data.repository.SubscriptionRepository
 import ai.labs32.khaata.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -73,7 +73,7 @@ data class DashboardUiState(
     val recentTransactions: List<Transaction> = emptyList(),
     val goals: List<GoalProgress> = emptyList(),
     val accounts: List<AccountBalance> = emptyList(),
-    val subscriptionCost: SubscriptionCost? = null,
+    val subscriptionCost: SubscriptionTotals? = null,
     val netWorthTrend: List<Pair<String, Float>> = emptyList(),
     val topInsight: Insight? = null,
 
@@ -338,7 +338,7 @@ class DashboardViewModel @Inject constructor(
 
     private data class UpcomingData(
         val occurrences: List<ScheduledOccurrence>,
-        val subscriptionCost: SubscriptionCost,
+        val subscriptionCost: SubscriptionTotals,
         val pendingImportCount: Int,
     )
 
