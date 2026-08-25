@@ -1,3 +1,27 @@
+// The Hilt Gradle plugin's `AggregateDepsTask` calls `ClassName.canonicalName()`, which exists as a
+// method only from JavaPoet 1.13 onward — in 1.10 `canonicalName` is a bare field. AGP puts the
+// older JavaPoet on this root buildscript classpath, and because plugin classloader scopes delegate
+// parent-first, that older copy shadows the newer one Hilt resolves for itself down in `:app`. The
+// result is `NoSuchMethodError: java.lang.String com.squareup.javapoet.ClassName.canonicalName()`
+// at configuration time. Pinning the newer JavaPoet here, in the parent scope, is what actually
+// settles the conflict — bumping Hilt does not, because the shadowing happens above it.
+//
+// JavaPoet comes from Maven Central, so this costs a JVM-only build nothing.
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.squareup:javapoet:1.13.0")
+    }
+    // Declaring the newer version is not on its own enough: AGP asks for 1.10.0 by name on this same
+    // configuration, and whichever copy the classloader reaches first then decides it. `force` makes
+    // the resolution deterministic instead.
+    configurations.classpath {
+        resolutionStrategy.force("com.squareup:javapoet:1.13.0")
+    }
+}
+
 // Plugin aliases are applied per-module rather than declared `apply false` here, so that
 // configuring `:core` never forces resolution of the Android Gradle Plugin classpath.
 //
