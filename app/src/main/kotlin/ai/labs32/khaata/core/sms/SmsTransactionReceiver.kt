@@ -35,31 +35,48 @@ class SmsTransactionReceiver : BroadcastReceiver() {
     @Inject lateinit var notifier: KhaataNotifier
 
     override fun onReceive(context: Context, intent: Intent) {
+        // TEMPORARY DIAGNOSTIC: every branch below now logs its outcome (never the message body)
+        // so `adb logcat -s SmsReceiver:*` gives a definitive answer to "is this even firing" and
+        // "if so, why did it not stage anything" instead of guessing. Revert once confirmed.
+        KhaataLog.d(TAG, "onReceive: action=${intent.action}")
         if (intent.action != Telephony.Sms.Intents.SMS_RECEIVED_ACTION) return
 
-        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent) ?: return
-        if (messages.isEmpty()) return
+        val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+        if (messages == null) {
+            KhaataLog.d(TAG, "getMessagesFromIntent returned null")
+            return
+        }
+        if (messages.isEmpty()) {
+            KhaataLog.d(TAG, "getMessagesFromIntent returned zero messages")
+            return
+        }
 
         // A long SMS arrives split across parts; the body has to be reassembled before parsing or
         // the amount and the reference number can land in different fragments.
         val body = messages.joinToString(separator = "") { it.displayMessageBody.orEmpty() }
         val sender = messages.first().displayOriginatingAddress
 
-        if (body.isBlank()) return
+        if (body.isBlank()) {
+            KhaataLog.d(TAG, "Message body was blank, sender=$sender")
+            return
+        }
 
         val pendingResult = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 when (val outcome = importer.import(body = body, sender = sender)) {
-                    is SmsImportOutcome.Staged -> notifier.notifyPendingImport(outcome.parsed)
+                    is SmsImportOutcome.Staged -> {
+                        KhaataLog.d(TAG, "Staged, confidence=${outcome.parsed.confidence}")
+                        notifier.notifyPendingImport(outcome.parsed)
+                    }
 
-                    // Everything else is a normal, quiet outcome. A promotional SMS is not an
-                    // error and the user should never be told about one.
-                    SmsImportOutcome.NotATransaction,
-                    SmsImportOutcome.NotEnabled,
-                    SmsImportOutcome.Duplicate,
-                    SmsImportOutcome.NoMatchingAccount,
-                    -> Unit
+                    // Everything else is a normal, quiet outcome for the user. A promotional SMS
+                    // is not an error and the user should never be told about one — but it's
+                    // logged here so the reason is visible while diagnosing why nothing shows up.
+                    SmsImportOutcome.NotATransaction -> KhaataLog.d(TAG, "Not a transaction")
+                    SmsImportOutcome.NotEnabled -> KhaataLog.d(TAG, "SMS import is not enabled")
+                    SmsImportOutcome.Duplicate -> KhaataLog.d(TAG, "Duplicate, skipped")
+                    SmsImportOutcome.NoMatchingAccount -> KhaataLog.d(TAG, "No account matched")
                 }
             } catch (error: Exception) {
                 // Never the message body — only that something went wrong handling one.
