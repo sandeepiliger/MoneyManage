@@ -384,6 +384,11 @@
     <string name="subscriptions_empty_title">No subscriptions tracked</string>
     <string name="subscriptions_empty_body">Add the services you pay for monthly. Seeing the yearly total is usually the surprising part.</string>
     <string name="subscriptions_renewing_soon">Renewing soon</string>
+    <string name="subscriptions_next_payment_on">Next %1$s</string>
+    <string name="subscriptions_yearly_preview">That is %1$s a year.</string>
+    <string name="subscriptions_cancel_title">Mark “%1$s” as cancelled?</string>
+    <string name="subscriptions_cancel_body">This only updates your records here — it does not cancel anything with the service. It stops appearing in your monthly total, and stays in the list so your yearly figures for past months remain correct.</string>
+    <string name="subscriptions_cancelled_on">Cancelled %1$s</string>
 
     <!-- ==================== Credit cards ==================== -->
     <string name="cards_title">Credit cards</string>
@@ -781,5 +786,9 @@
     <plurals name="recurring_interval_years">
         <item quantity="one">Every year</item>
         <item quantity="other">Every %1$d years</item>
+    </plurals>
+    <plurals name="subscriptions_tracked_count">
+        <item quantity="one">%1$d subscription</item>
+        <item quantity="other">%1$d subscriptions</item>
     </plurals>
 </resources>

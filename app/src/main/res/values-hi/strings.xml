@@ -342,6 +342,17 @@
     <string name="subscriptions_total_yearly">हर साल</string>
     <string name="subscriptions_empty_title">कोई सब्सक्रिप्शन नहीं</string>
     <string name="subscriptions_empty_body">जो सेवाएँ हर महीने चलती हैं उन्हें जोड़ें। सालाना जोड़ देखकर अक्सर हैरानी होती है।</string>
+    <string name="subscriptions_edit">सब्सक्रिप्शन बदलें</string>
+    <string name="subscriptions_monthly_cost">लगभग %1$s हर महीने</string>
+    <string name="subscriptions_yearly_cost">%1$s हर साल</string>
+    <string name="subscriptions_yearly_preview">यानी %1$s हर साल।</string>
+    <string name="subscriptions_next_payment_on">अगला %1$s</string>
+    <string name="subscriptions_renewing_soon">जल्द नवीनीकरण</string>
+    <string name="subscriptions_cancel">बंद के रूप में दर्ज करें</string>
+    <string name="subscriptions_cancelled">बंद</string>
+    <string name="subscriptions_cancelled_on">%1$s को बंद</string>
+    <string name="subscriptions_cancel_title">“%1$s” को बंद के रूप में दर्ज करें?</string>
+    <string name="subscriptions_cancel_body">यह सिर्फ़ आपके यहाँ के रिकॉर्ड में बदलाव है — सेवा वहाँ बंद नहीं होती। यह महीने के जोड़ से हट जाएगा, पर सूची में रहेगा ताकि पुराने महीनों के आँकड़े सही बने रहें।</string>
 
     <!-- Credit cards -->
     <string name="cards_title">क्रेडिट कार्ड</string>
@@ -562,5 +573,9 @@
     <plurals name="recurring_interval_years">
         <item quantity="one">हर साल</item>
         <item quantity="other">हर %1$d साल</item>
+    </plurals>
+    <plurals name="subscriptions_tracked_count">
+        <item quantity="one">%1$d सब्सक्रिप्शन</item>
+        <item quantity="other">%1$d सब्सक्रिप्शन</item>
     </plurals>
 </resources>
