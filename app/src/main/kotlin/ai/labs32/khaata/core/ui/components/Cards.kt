@@ -290,6 +290,37 @@ fun StatPair(
     }
 }
 
+/**
+ * A single figure on its own tinted ground.
+ *
+ * [StatPair] sets two figures as bare text side by side, which makes income and expense read as
+ * one continuous block. Giving each its own tinted tile separates them at a glance and lets the
+ * tint carry the semantic (income/expense) without colour being the only signal -- the label and
+ * the amount's own sign still say which is which.
+ */
+@Composable
+fun KhaataStatTile(
+    label: String,
+    modifier: Modifier = Modifier,
+    tint: Color = MaterialTheme.colorScheme.primary,
+    value: @Composable () -> Unit,
+) {
+    Column(
+        modifier
+            .clip(KhaataShapeTokens.statTile)
+            .background(tint.copy(alpha = 0.10f))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = tint,
+        )
+        Spacer(Modifier.height(2.dp))
+        value()
+    }
+}
+
 /** A tappable row inside a card or settings list, sized to the minimum touch target. */
 @Composable
 fun SettingsRow(

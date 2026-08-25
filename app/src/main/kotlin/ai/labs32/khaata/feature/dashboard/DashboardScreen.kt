@@ -1,7 +1,5 @@
 package ai.labs32.khaata.feature.dashboard
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,12 +53,14 @@ import ai.labs32.khaata.core.ui.components.EmptyState
 import ai.labs32.khaata.core.ui.components.ErrorState
 import ai.labs32.khaata.core.ui.components.HeroAmount
 import ai.labs32.khaata.core.ui.components.KhaataCard
+import ai.labs32.khaata.core.ui.components.KhaataCardTier
+import ai.labs32.khaata.core.ui.components.KhaataHeroCard
+import ai.labs32.khaata.core.ui.components.KhaataStatTile
 import ai.labs32.khaata.core.ui.components.LabelledProgress
 import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.components.MoneyText
 import ai.labs32.khaata.core.ui.components.StatPair
 import ai.labs32.khaata.core.ui.components.TrendLineChart
-import ai.labs32.khaata.core.ui.theme.KhaataShapeTokens
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.feature.shared.TransactionRow
@@ -213,19 +213,19 @@ private fun DashboardHeader(
         },
     )
 
-    Column(Modifier.padding(top = spacing.default, bottom = spacing.small)) {
+    KhaataHeroCard(modifier = Modifier.padding(top = spacing.small, bottom = spacing.tiny)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
                     text = state.displayName?.let { "$greeting, $it" } ?: greeting,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.72f),
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = stringResource(R.string.dashboard_available_to_spend),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.72f),
                 )
             }
             IconButton(onClick = onToggleVisibility) {
@@ -234,13 +234,14 @@ private fun DashboardHeader(
                     contentDescription = stringResource(
                         if (state.amountsHidden) R.string.a11y_show_amounts else R.string.a11y_hide_amounts,
                     ),
+                    tint = Color.White.copy(alpha = 0.90f),
                 )
             }
         }
 
         Spacer(Modifier.height(4.dp))
 
-        HeroAmount(money = state.availableToSpend, hidden = state.amountsHidden)
+        HeroAmount(money = state.availableToSpend, hidden = state.amountsHidden, color = Color.White)
 
         state.netWorth?.let { netWorth ->
             Spacer(Modifier.height(6.dp))
@@ -248,16 +249,16 @@ private fun DashboardHeader(
                 Text(
                     text = stringResource(R.string.dashboard_net_worth),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.72f),
                 )
                 Spacer(Modifier.width(6.dp))
                 if (state.amountsHidden) {
-                    Text("••••", style = MaterialTheme.typography.labelLarge)
+                    Text("••••", style = MaterialTheme.typography.labelLarge, color = Color.White)
                 } else {
                     MoneyText(
                         money = netWorth.netWorth,
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.White,
                     )
                 }
             }
@@ -267,51 +268,60 @@ private fun DashboardHeader(
 
 @Composable
 private fun DemoBanner(onManage: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(KhaataShapeTokens.cardCompact)
-            .background(MaterialTheme.colorScheme.secondaryContainer)
-            .clickable(onClick = onManage)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    // A call to action, not a passive summary, so it takes the Emphasized tier and the brass
+    // secondaryContainer tone rather than the tier's own default container -- the banner needs to
+    // read as "act on this" against the rest of the dashboard, which a neutral card tone wouldn't do.
+    KhaataCard(
+        onClick = onManage,
+        tier = KhaataCardTier.Emphasized,
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
     ) {
-        Text(
-            text = stringResource(R.string.dashboard_demo_banner),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = stringResource(R.string.dashboard_demo_exit),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.dashboard_demo_banner),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.dashboard_demo_exit),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
     }
 }
 
 @Composable
 private fun PendingImportsBanner(count: Int, onOpen: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clip(KhaataShapeTokens.cardCompact)
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable(onClick = onOpen)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    // Same reasoning as DemoBanner: this is the prompt to go reconcile pending imports, so it
+    // gets the Emphasized tier and the primaryContainer tone that marks it as actionable.
+    KhaataCard(
+        onClick = onOpen,
+        tier = KhaataCardTier.Emphasized,
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        Text(
-            text = stringResource(R.string.dashboard_pending_imports, count),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = stringResource(R.string.action_confirm),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.dashboard_pending_imports, count),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = stringResource(R.string.action_confirm),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
     }
 }
 
@@ -322,28 +332,35 @@ private fun SpendingOverviewCard(state: DashboardUiState) {
     val summary = state.monthSummary ?: return
     val money = KhaataTheme.money
 
-    KhaataCard {
+    KhaataCard(tier = KhaataCardTier.Emphasized) {
         CardHeader(title = stringResource(R.string.dashboard_this_month))
         Spacer(Modifier.height(KhaataTheme.spacing.medium))
 
-        StatPair(
-            leadingLabel = stringResource(R.string.dashboard_income),
-            leadingValue = {
+        Row(Modifier.fillMaxWidth()) {
+            KhaataStatTile(
+                label = stringResource(R.string.dashboard_income),
+                tint = money.income,
+                modifier = Modifier.weight(1f),
+            ) {
                 MoneyText(
                     money = summary.income,
                     style = KhaataTextStyles.amountLarge,
                     color = money.income,
                 )
-            },
-            trailingLabel = stringResource(R.string.dashboard_expenses),
-            trailingValue = {
+            }
+            Spacer(Modifier.width(KhaataTheme.spacing.small))
+            KhaataStatTile(
+                label = stringResource(R.string.dashboard_expenses),
+                tint = money.expense,
+                modifier = Modifier.weight(1f),
+            ) {
                 MoneyText(
                     money = summary.expense,
                     style = KhaataTextStyles.amountLarge,
                     color = money.expense,
                 )
-            },
-        )
+            }
+        }
 
         Spacer(Modifier.height(KhaataTheme.spacing.default))
 
