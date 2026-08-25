@@ -20,6 +20,7 @@ import ai.labs32.khaata.core.database.entity.NotificationLogEntity
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyFormatter
+import ai.labs32.khaata.core.sms.ParsedSms
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -190,6 +191,41 @@ class KhaataNotifier @Inject constructor(
         return post(dedupeKey, NotificationChannels.REMINDERS, notification)
     }
 
+    /**
+     * Tells the user an imported transaction is waiting for them to confirm it.
+     *
+     * Carries the merchant and the amount in the expanded notification and neither on the lock
+     * screen, and never any part of the SMS itself. Low priority: this is not urgent, it is a
+     * queue the user clears when convenient, and an interrupting sound for every card swipe would
+     * have the feature turned off within a day.
+     */
+    suspend fun notifyPendingImport(parsed: ParsedSms): Boolean {
+        if (!hasPermission()) return false
+        // The reference number identifies the payment, so re-parsing the same message — a carrier
+        // redelivery, say — replaces the notification rather than stacking a second one.
+        val dedupeKey = "import:${parsed.referenceNumber ?: parsed.hashCode()}"
+        if (notificationLogDao.exists(dedupeKey)) return false
+
+        val title = context.getString(R.string.notification_import_title)
+        val notification = baseBuilder(NotificationChannels.REMINDERS)
+            .setContentTitle(title)
+            .setContentText(
+                context.getString(
+                    R.string.notification_import_body,
+                    parsed.merchantDisplayName ?: context.getString(R.string.notification_import_unknown_merchant),
+                    MoneyFormatter.plain(parsed.amount),
+                ),
+            )
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPublicVersion(
+                baseBuilder(NotificationChannels.REMINDERS).setContentTitle(title).build(),
+            )
+            .setContentIntent(pendingImportsIntent())
+            .build()
+
+        return post(dedupeKey, NotificationChannels.REMINDERS, notification)
+    }
+
     private fun baseBuilder(channelId: String): NotificationCompat.Builder =
         NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -228,6 +264,13 @@ class KhaataNotifier @Inject constructor(
         return PendingIntent.getActivity(context, 0, intent, PENDING_INTENT_FLAGS)
     }
 
+    private fun pendingImportsIntent(): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+            .setAction(ACTION_REVIEW_IMPORTS)
+            .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        return PendingIntent.getActivity(context, 2, intent, PENDING_INTENT_FLAGS)
+    }
+
     private fun quickAddIntent(): PendingIntent {
         val intent = Intent(context, MainActivity::class.java)
             .setAction(ACTION_QUICK_ADD)
@@ -243,6 +286,7 @@ class KhaataNotifier @Inject constructor(
 
     companion object {
         const val ACTION_QUICK_ADD = "ai.labs32.khaata.action.QUICK_ADD"
+        const val ACTION_REVIEW_IMPORTS = "ai.labs32.khaata.action.REVIEW_IMPORTS"
 
         private const val TAG = "KhaataNotifier"
 

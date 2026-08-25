@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import android.content.Context
 import ai.labs32.khaata.R
 import ai.labs32.khaata.core.model.AppSettings
 import ai.labs32.khaata.core.ui.components.CardHeader
@@ -48,7 +49,9 @@ import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.EntitlementRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import ai.labs32.khaata.core.entitlement.Feature
+import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,6 +70,7 @@ data class PrivacyUiState(
 
 @HiltViewModel
 class PrivacyDashboardViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
     entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
@@ -103,8 +107,19 @@ class PrivacyDashboardViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setCloudAiEnabled(enabled) }
     }
 
+    /**
+     * Turns bank-SMS reading on or off.
+     *
+     * The receiver component itself is enabled and disabled alongside the flag, so a user who has
+     * this off has no SMS receiver registered with the system at all. A stored boolean the
+     * receiver checks at delivery time would still mean the app was being handed every message the
+     * phone receives, which is not the same promise.
+     */
     fun setSmsImport(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setSmsImportEnabled(enabled) }
+        viewModelScope.launch {
+            settingsRepository.setSmsImportEnabled(enabled)
+            SmsTransactionReceiver.setEnabled(context, enabled)
+        }
     }
 }
 

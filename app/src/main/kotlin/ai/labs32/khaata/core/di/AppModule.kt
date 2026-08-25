@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import ai.labs32.khaata.BuildConfig
 import ai.labs32.khaata.core.ads.AdConfigProvider
+import ai.labs32.khaata.core.ads.AdImpressionStore
+import ai.labs32.khaata.core.ads.PersistedAdImpressionStore
 import ai.labs32.khaata.core.ads.AdProvider
 import ai.labs32.khaata.core.ads.AdMobAdProvider
 import ai.labs32.khaata.core.ads.NoOpAdProvider
@@ -166,6 +168,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAdConfigProvider(): AdConfigProvider = StaticAdConfigProvider()
+
+    @Provides
+    @Singleton
+    fun provideAdImpressionStore(store: PersistedAdImpressionStore): AdImpressionStore = store
 
     @Provides
     @Singleton
