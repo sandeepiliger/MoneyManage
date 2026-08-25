@@ -25,6 +25,10 @@ include(":core")
 // Android application. Requires the Android SDK.
 // JVM-only environments (domain-test CI, sandboxes without the Android SDK) opt out with:
 //     ./gradlew :core:test -Pkhaata.androidModule=false
+// This flag alone keeps `:app` out of the module graph. To also keep the root
+// `build.gradle.kts` plugins block from ever touching Google's Maven (AGP is
+// published there and nowhere else), pass the matching system property too:
+//     ./gradlew :core:test -Pkhaata.androidModule=false -Dkhaata.androidModule=false
 if (providers.gradleProperty("khaata.androidModule").orNull != "false") {
     include(":app")
 }

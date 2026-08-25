@@ -112,8 +112,9 @@ design choice about how the app talks to people.
 ## Quick start
 
 ```bash
-# The JVM half — this works anywhere with a JDK 17+.
-./gradlew -Pkhaata.androidModule=false :core:test
+# The JVM half — this works anywhere with a JDK 17+. The -D flag keeps the root
+# build.gradle.kts plugins block from touching Google's Maven (AGP lives there only).
+./gradlew -Pkhaata.androidModule=false -Dkhaata.androidModule=false :core:test
 
 # The whole thing, once an Android SDK is available.
 ./gradlew assembleDebug

@@ -3,7 +3,7 @@
 ## What actually ran
 
 ```
-./gradlew -Pkhaata.androidModule=false :core:test
+./gradlew -Pkhaata.androidModule=false -Dkhaata.androidModule=false :core:test
 → 369 tests, 0 failures, 27 test classes
 ```
 

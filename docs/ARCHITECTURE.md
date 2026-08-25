@@ -27,8 +27,10 @@ parser reading the digits of a date as an amount.
 a useful demonstration of the point: the module boundary is real enough that half the project
 compiles and tests with no Android toolchain present.
 
-The Gradle property `khaata.androidModule=false` drops `:app` from the build entirely, which is
-what makes `./gradlew -Pkhaata.androidModule=false :core:test` work anywhere.
+The Gradle property `khaata.androidModule=false` drops `:app` from the build entirely, and the
+matching system property keeps the root `build.gradle.kts` plugins block from resolving AGP (which
+is published only on Google's Maven) — together, `./gradlew -Pkhaata.androidModule=false
+-Dkhaata.androidModule=false :core:test` works anywhere.
 
 ---
 

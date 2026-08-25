@@ -21,7 +21,7 @@ through core library desugaring, which is why `isCoreLibraryDesugaringEnabled = 
 
 ```bash
 # The JVM half. Works with only a JDK — no Android SDK needed.
-./gradlew -Pkhaata.androidModule=false :core:test
+./gradlew -Pkhaata.androidModule=false -Dkhaata.androidModule=false :core:test
 
 # The whole app.
 ./gradlew assembleDebug
@@ -31,8 +31,10 @@ through core library desugaring, which is why `isCoreLibraryDesugaringEnabled = 
 ```
 
 `-Pkhaata.androidModule=false` removes `:app` from the Gradle build entirely (see
-`settings.gradle.kts`). Useful in CI for a fast correctness check, and necessary in any environment
-without access to Google's Maven repository.
+`settings.gradle.kts`). The matching `-Dkhaata.androidModule=false` system property keeps the root
+`build.gradle.kts` plugins block from also resolving the Android Gradle Plugin, which is published
+only on Google's Maven — both flags together are what's necessary in any environment without access
+to that repository. Useful in CI for a fast correctness check too.
 
 **No credentials are required to build or run.** Every external integration degrades to something
 harmless — see the table below.
