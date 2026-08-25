@@ -1,5 +1,6 @@
 package ai.labs32.khaata
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,7 +16,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
@@ -45,6 +48,12 @@ import javax.inject.Inject
  *
  * The splash screen is held until the first real state has loaded, so the app never flashes an
  * empty dashboard on the way to onboarding or to the lock screen.
+ *
+ * `launchMode="singleTask"` means a notification or shortcut tapped while the app is already
+ * running is delivered to the *existing* instance via [onNewIntent], not a fresh [onCreate]. A
+ * deep link read only in `onCreate` therefore works exactly once, from a cold start, and silently
+ * does nothing the rest of the time — which is why [pendingDeepLink] is Compose state updated from
+ * both places, rather than a value computed once from `intent`.
  */
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
@@ -53,6 +62,8 @@ class MainActivity : FragmentActivity() {
 
     @Inject lateinit var adProvider: AdProvider
     @Inject lateinit var notifier: KhaataNotifier
+
+    private var pendingDeepLink by mutableStateOf<DeepLink?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -64,8 +75,7 @@ class MainActivity : FragmentActivity() {
 
         enableEdgeToEdge()
 
-        val openQuickAdd = intent?.action == KhaataNotifier.ACTION_QUICK_ADD ||
-            intent?.action == ACTION_QUICK_ADD_ALIAS
+        pendingDeepLink = DeepLink.from(intent)
 
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,7 +90,8 @@ class MainActivity : FragmentActivity() {
                         )
 
                         else -> KhaataApp(
-                            openQuickAdd = openQuickAdd,
+                            deepLink = pendingDeepLink,
+                            onDeepLinkConsumed = { pendingDeepLink = null },
                             lockState = state.lockState,
                             onUnlocked = viewModel::onUnlocked,
                         )
@@ -88,6 +99,12 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingDeepLink = DeepLink.from(intent)
     }
 
     override fun onResume() {
@@ -107,6 +124,21 @@ class MainActivity : FragmentActivity() {
     }
 }
 
+/** Where a tapped notification or shortcut should take the user once the app is on screen. */
+private enum class DeepLink {
+    QUICK_ADD,
+    REVIEW_IMPORTS,
+    ;
+
+    companion object {
+        fun from(intent: Intent?): DeepLink? = when (intent?.action) {
+            KhaataNotifier.ACTION_QUICK_ADD, MainActivity.ACTION_QUICK_ADD_ALIAS -> QUICK_ADD
+            KhaataNotifier.ACTION_REVIEW_IMPORTS -> REVIEW_IMPORTS
+            else -> null
+        }
+    }
+}
+
 /**
  * The app shell: bottom navigation, the add button, and the lock overlay.
  *
@@ -115,7 +147,8 @@ class MainActivity : FragmentActivity() {
  */
 @Composable
 private fun KhaataApp(
-    openQuickAdd: Boolean,
+    deepLink: DeepLink?,
+    onDeepLinkConsumed: () -> Unit,
     lockState: LockState,
     onUnlocked: () -> Unit,
 ) {
@@ -126,10 +159,18 @@ private fun KhaataApp(
     val topLevel = remember(currentRoute) { TopLevelDestination.fromRoute(currentRoute) }
     val showChrome = topLevel != null
 
-    // A notification's "Record it" action opens straight into entry rather than making the user
-    // find the button.
-    LaunchedEffect(openQuickAdd) {
-        if (openQuickAdd) navController.navigate(Routes.ADD_TRANSACTION)
+    // A notification's "Record it" action opens straight into entry, and "new transaction to
+    // confirm" opens straight into the review list, rather than making the user find either.
+    // Consuming the link back to null (rather than keying off the enum alone) is what makes a
+    // second tap of the same notification navigate again while the app is already open --
+    // MainActivity.onNewIntent sets the same value, but LaunchedEffect only reruns on a change.
+    LaunchedEffect(deepLink) {
+        when (deepLink) {
+            DeepLink.QUICK_ADD -> navController.navigate(Routes.ADD_TRANSACTION)
+            DeepLink.REVIEW_IMPORTS -> navController.navigate(Routes.PENDING_IMPORTS)
+            null -> return@LaunchedEffect
+        }
+        onDeepLinkConsumed()
     }
 
     Box(Modifier.fillMaxSize()) {

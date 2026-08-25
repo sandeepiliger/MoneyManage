@@ -1,5 +1,9 @@
 package ai.labs32.khaata.feature.settings
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,7 +48,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -78,6 +84,25 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val message = state.message?.let { settingsMessageText(it) }
+
+    // One shared launcher for all three notification-backed toggles below: POST_NOTIFICATIONS is
+    // a single app-level permission, so whichever toggle asks first is the only prompt the user
+    // ever sees. `onGranted` is swapped in right before each `launch()` so the same launcher can
+    // report back to whichever switch triggered it.
+    var onNotificationPermissionResult by remember { mutableStateOf<(Boolean) -> Unit>({}) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted -> onNotificationPermissionResult(granted) }
+
+    fun requestNotificationsThen(onResult: (Boolean) -> Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onNotificationPermissionResult = onResult
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            // No runtime prompt exists below API 33; notifications are granted by default there.
+            onResult(true)
+        }
+    }
 
     LaunchedEffect(message) {
         if (message != null) {
@@ -186,7 +211,13 @@ fun SettingsScreen(
                     trailing = {
                         Switch(
                             checked = state.budgetAlertsEnabled,
-                            onCheckedChange = viewModel::setBudgetAlerts,
+                            onCheckedChange = { wanted ->
+                                if (wanted) {
+                                    requestNotificationsThen(viewModel::setBudgetAlerts)
+                                } else {
+                                    viewModel.setBudgetAlerts(false)
+                                }
+                            },
                         )
                     },
                 )
@@ -195,7 +226,13 @@ fun SettingsScreen(
                     trailing = {
                         Switch(
                             checked = state.billRemindersEnabled,
-                            onCheckedChange = viewModel::setBillReminders,
+                            onCheckedChange = { wanted ->
+                                if (wanted) {
+                                    requestNotificationsThen(viewModel::setBillReminders)
+                                } else {
+                                    viewModel.setBillReminders(false)
+                                }
+                            },
                         )
                     },
                 )
@@ -204,7 +241,13 @@ fun SettingsScreen(
                     trailing = {
                         Switch(
                             checked = state.dailyReminderEnabled,
-                            onCheckedChange = viewModel::setDailyReminder,
+                            onCheckedChange = { wanted ->
+                                if (wanted) {
+                                    requestNotificationsThen(viewModel::setDailyReminder)
+                                } else {
+                                    viewModel.setDailyReminder(false)
+                                }
+                            },
                         )
                     },
                 )

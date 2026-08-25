@@ -11,6 +11,7 @@ import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.AppLockMode
 import ai.labs32.khaata.core.model.ThemePreference
 import ai.labs32.khaata.core.money.CurrencyCode
+import ai.labs32.khaata.core.notifications.KhaataNotifier
 import ai.labs32.khaata.core.security.AppLockManager
 import ai.labs32.khaata.core.security.BiometricAvailability
 import ai.labs32.khaata.core.security.BiometricAuthenticator
@@ -88,6 +89,7 @@ class SettingsViewModel @Inject constructor(
     private val demoDataManager: DemoDataManager,
     private val appLockManager: AppLockManager,
     private val biometricAuthenticator: BiometricAuthenticator,
+    private val notifier: KhaataNotifier,
     private val analytics: AnalyticsProvider,
 ) : ViewModel() {
 
@@ -201,16 +203,26 @@ class SettingsViewModel @Inject constructor(
 
     // ---- Notifications -----------------------------------------------------------------------
 
+    /**
+     * Turning any of these three switches on is pointless without a granted POST_NOTIFICATIONS
+     * permission: nothing here posts a notification without checking [KhaataNotifier.hasPermission]
+     * first, so switching this on without the grant leaves it showing "on" forever while silently
+     * doing nothing. The composable requests the permission before calling these with `true`; this
+     * check is what stops the setting from lying if it is ever reached another way.
+     */
     fun setBudgetAlerts(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setBudgetAlertsEnabled(enabled) }
+        val effective = enabled && notifier.hasPermission()
+        viewModelScope.launch { settingsRepository.setBudgetAlertsEnabled(effective) }
     }
 
     fun setBillReminders(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setBillRemindersEnabled(enabled) }
+        val effective = enabled && notifier.hasPermission()
+        viewModelScope.launch { settingsRepository.setBillRemindersEnabled(effective) }
     }
 
     fun setDailyReminder(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setDailyReminderEnabled(enabled) }
+        val effective = enabled && notifier.hasPermission()
+        viewModelScope.launch { settingsRepository.setDailyReminderEnabled(effective) }
     }
 
     fun setDailyReminderTime(minuteOfDay: Int) {

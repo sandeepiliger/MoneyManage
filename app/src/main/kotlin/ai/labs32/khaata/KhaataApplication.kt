@@ -9,6 +9,8 @@ import androidx.work.Configuration
 import ai.labs32.khaata.core.analytics.AnalyticsEvent
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
 import ai.labs32.khaata.core.logging.KhaataLog
+import ai.labs32.khaata.core.model.AppSettings
+import ai.labs32.khaata.core.notifications.KhaataNotifier
 import ai.labs32.khaata.core.notifications.NotificationChannels
 import ai.labs32.khaata.core.security.AppLockManager
 import ai.labs32.khaata.core.sms.SmsPermission
@@ -46,6 +48,7 @@ class KhaataApplication : Application(), Configuration.Provider {
     @Inject lateinit var analyticsProvider: AnalyticsProvider
     @Inject lateinit var appLockManager: AppLockManager
     @Inject lateinit var workScheduler: WorkScheduler
+    @Inject lateinit var notifier: KhaataNotifier
 
     /**
      * Scope for startup work.
@@ -96,6 +99,7 @@ class KhaataApplication : Application(), Configuration.Provider {
                 .onFailure { KhaataLog.w(TAG, "Entitlement refresh unavailable") }
 
             reconcileSmsReceiver(settings.smsImportEnabled)
+            reconcileNotificationSettings(settings)
 
             workScheduler.scheduleAll(settings)
         }
@@ -118,6 +122,21 @@ class KhaataApplication : Application(), Configuration.Provider {
         }
         runCatching { SmsTransactionReceiver.setEnabled(this, shouldReceive) }
             .onFailure { KhaataLog.e(TAG, "Could not reconcile the SMS receiver", it) }
+    }
+
+    /**
+     * Stands the three notification-backed settings down if POST_NOTIFICATIONS has been revoked.
+     *
+     * Every place that actually posts one of these already checks [KhaataNotifier.hasPermission]
+     * first, so a revoked permission was never going to cause a leaked notification -- but without
+     * this, the switch in Settings would keep reading "on" for a feature that has gone silently
+     * dead, which is the same failure mode as the SMS toggle above.
+     */
+    private suspend fun reconcileNotificationSettings(settings: AppSettings) {
+        if (notifier.hasPermission()) return
+        if (settings.budgetAlertsEnabled) settingsRepository.setBudgetAlertsEnabled(false)
+        if (settings.billRemindersEnabled) settingsRepository.setBillRemindersEnabled(false)
+        if (settings.dailyReminderEnabled) settingsRepository.setDailyReminderEnabled(false)
     }
 
     /**

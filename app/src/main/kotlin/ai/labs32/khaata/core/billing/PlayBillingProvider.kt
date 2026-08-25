@@ -20,9 +20,14 @@ import com.android.billingclient.api.acknowledgePurchase
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -49,6 +54,11 @@ class PlayBillingProvider @Inject constructor(
 
     private val _purchases = MutableStateFlow<List<BillingPurchase>>(emptyList())
     override val purchases: StateFlow<List<BillingPurchase>> = _purchases.asStateFlow()
+
+    // Acknowledging a fresh purchase happens off the PurchasesUpdatedListener callback, which is
+    // not itself suspending. This is scoped to the provider's own lifetime (a Hilt singleton), not
+    // any screen's, since the purchase must be acknowledged whether or not anything is watching.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
@@ -159,10 +169,9 @@ class PlayBillingProvider @Inject constructor(
             val result = billingClient.queryPurchasesAsync(params)
             val mapped = result.purchasesList.map { it.toBillingPurchase() }
             _purchases.value = mapped
-            // Anything not yet acknowledged is acknowledged now: Play auto-refunds after three
-            // days, so a restore is the last chance to catch one that slipped through.
-            mapped.filter { it.state == PurchaseState.PURCHASED && !it.isAcknowledged }
-                .forEach { acknowledge(it.purchaseToken) }
+            // A safety net for anything that slipped through onPurchasesUpdated -- e.g. the app
+            // was killed between the purchase and the acknowledgement completing.
+            acknowledgeUnacknowledged(mapped)
             mapped
         }.onFailure { KhaataLog.w(TAG, "Purchase restore failed") }
     }
@@ -177,10 +186,25 @@ class PlayBillingProvider @Inject constructor(
         }
     }
 
+    private suspend fun acknowledgeUnacknowledged(purchases: List<BillingPurchase>) {
+        purchases.filter { it.state == PurchaseState.PURCHASED && !it.isAcknowledged }
+            .forEach {
+                acknowledge(it.purchaseToken)
+                    .onFailure { error -> KhaataLog.w(TAG, "Acknowledgement failed", error) }
+            }
+    }
+
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
         when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> {
-                _purchases.value = purchases.orEmpty().map { it.toBillingPurchase() }
+                val mapped = purchases.orEmpty().map { it.toBillingPurchase() }
+                _purchases.value = mapped
+                // Play auto-refunds a purchase not acknowledged within three days. This listener
+                // fires the instant checkout completes, so acknowledging here -- rather than
+                // waiting for restorePurchases() to run on some future cold start -- is what
+                // actually keeps that window from mattering. The callback itself isn't suspending,
+                // hence the scope.
+                scope.launch { acknowledgeUnacknowledged(mapped) }
             }
             BillingClient.BillingResponseCode.USER_CANCELED -> {
                 // Not an error; the user changed their mind.
@@ -193,6 +217,7 @@ class PlayBillingProvider @Inject constructor(
     override fun release() {
         if (billingClient.isReady) billingClient.endConnection()
         _connectionState.value = BillingConnectionState.DISCONNECTED
+        scope.cancel()
     }
 
     private fun ProductDetails.toBillingProduct(): BillingProduct? {
