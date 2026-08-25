@@ -46,6 +46,7 @@
     <string name="action_reset">Reset</string>
     <string name="action_search">Search</string>
     <string name="action_filter">Filter</string>
+    <string name="date_field_none">Not set</string>
 
     <!-- ==================== States ==================== -->
     <string name="state_loading">Loading</string>
@@ -137,6 +138,7 @@
     <string name="transaction_amount">Amount</string>
     <string name="transaction_account">Account</string>
     <string name="transaction_to_account">To account</string>
+    <string name="transaction_from_account">From account</string>
     <string name="transaction_category">Category</string>
     <string name="transaction_merchant">Merchant</string>
     <string name="transaction_note">Note</string>
@@ -270,8 +272,46 @@
     <string name="categories_none">No category</string>
     <string name="categories_uncategorised">Uncategorised</string>
     <string name="categories_system_cannot_delete">Built-in categories can be hidden but not deleted, so your past reports keep their labels.</string>
-    <string name="categories_delete_orphan_warning">%1$d transaction(s) will become uncategorised.</string>
     <string name="categories_search_hint">Search categories</string>
+    <string name="categories_group">Group</string>
+    <string name="categories_icon">Icon</string>
+    <string name="categories_colour">Colour</string>
+    <string name="categories_colour_selected">Selected colour</string>
+    <string name="categories_top_level">Nothing — it is a main category</string>
+    <string name="categories_built_in">Built-in</string>
+    <string name="categories_hide">Hide</string>
+    <string name="categories_show">Show</string>
+    <string name="categories_hidden_badge">Hidden</string>
+    <string name="categories_hide_named">Hide %1$s</string>
+    <string name="categories_show_hidden">Show hidden categories</string>
+    <string name="categories_hide_hidden">Hide the hidden categories</string>
+    <string name="categories_hidden_confirmation">Hidden. Past transactions keep this label.</string>
+    <string name="categories_shown_confirmation">Showing again.</string>
+    <string name="categories_empty_title">No categories yet</string>
+    <string name="categories_empty_body">Add one, or reinstall the built-in set from Settings.</string>
+    <string name="categories_no_matches_title">Nothing matched</string>
+    <string name="categories_no_matches_body">Try a shorter word, or add this as a new category.</string>
+    <string name="categories_delete_title">Delete “%1$s”?</string>
+    <string name="categories_delete_body">Your transactions are not deleted, but they lose this label and it cannot be put back. Hiding the category keeps the labels and takes it out of the picker.</string>
+    <string name="categories_deleted">Category deleted.</string>
+
+    <!-- ==================== Category groups ==================== -->
+    <string name="category_group_food">Food &amp; Drink</string>
+    <string name="category_group_transport">Transport</string>
+    <string name="category_group_bills">Bills &amp; Utilities</string>
+    <string name="category_group_lifestyle">Lifestyle</string>
+    <string name="category_group_financial">Financial</string>
+    <string name="category_group_family">Home &amp; Family</string>
+    <string name="category_group_income">Income</string>
+    <string name="category_group_transfer">Transfers</string>
+    <string name="category_group_other">Other</string>
+
+    <!-- ==================== Category validation ==================== -->
+    <string name="validation_category_name_required">Give the category a name</string>
+    <string name="validation_category_name_too_long">That name is too long</string>
+    <string name="validation_category_name_duplicate">There is already a category with that name here</string>
+    <string name="validation_category_parent_too_deep">Categories only go two levels deep</string>
+    <string name="validation_category_parent_has_children">Move or delete this category\'s subcategories first</string>
 
     <!-- ==================== Recurring ==================== -->
     <string name="recurring_title">Recurring</string>
@@ -287,10 +327,38 @@
     <string name="recurring_next_due">Next: %1$s</string>
     <string name="recurring_overdue">Overdue</string>
     <string name="recurring_due_today">Due today</string>
-    <string name="recurring_due_in_days">In %1$d day(s)</string>
-    <string name="recurring_confirm_post">Record this now</string>
+    <string name="recurring_confirm_post">Record it</string>
+    <string name="recurring_skip">Didn\'t happen</string>
     <string name="recurring_empty_title">Nothing recurring yet</string>
     <string name="recurring_empty_body">Add your rent, salary, EMIs and SIPs so they are never a surprise.</string>
+    <string name="recurring_active">Active</string>
+    <string name="recurring_paused">Paused</string>
+    <string name="recurring_paused_badge">Paused</string>
+    <string name="recurring_finished">Finished</string>
+    <string name="recurring_pause">Pause %1$s</string>
+    <string name="recurring_resume">Resume %1$s</string>
+    <string name="recurring_was_due">Was due %1$s</string>
+    <string name="recurring_posted">Recorded.</string>
+    <string name="recurring_auto_post_badge">Recorded automatically</string>
+    <string name="recurring_interval">How often</string>
+    <string name="recurring_interval_every_one">Every time</string>
+    <string name="recurring_reminder_same_day">On the day</string>
+    <string name="recurring_commitment_title">Every month, roughly</string>
+    <string name="recurring_commitment_approximate">Weekly and daily items are converted, so this is close rather than exact.</string>
+    <string name="recurring_going_out">Going out</string>
+    <string name="recurring_coming_in">Coming in</string>
+    <string name="recurring_delete_title">Delete “%1$s”?</string>
+    <string name="recurring_delete_body">The rule stops. Transactions it already recorded stay where they are.</string>
+    <string name="validation_end_before_start">The end date is before the start date</string>
+
+    <!-- ==================== Frequencies ==================== -->
+    <string name="frequency_daily">Daily</string>
+    <string name="frequency_weekly">Weekly</string>
+    <string name="frequency_fortnightly">Fortnightly</string>
+    <string name="frequency_monthly">Monthly</string>
+    <string name="frequency_quarterly">Quarterly</string>
+    <string name="frequency_half_yearly">Every 6 months</string>
+    <string name="frequency_yearly">Yearly</string>
 
     <string name="frequency_daily">Daily</string>
     <string name="frequency_weekly">Weekly</string>
@@ -659,4 +727,59 @@
     <string name="currency_inr">Indian Rupee</string>
     <string name="language_english">English</string>
     <string name="language_hindi">हिन्दी</string>
+
+    <!--
+      ==================== Counted phrases ====================
+      Anything whose wording changes with a number lives here rather than as a "%1$d item(s)"
+      string. "1 transaction(s) will become uncategorised" is exactly the sort of thing a user
+      reads in a delete dialog and stops trusting.
+    -->
+    <plurals name="categories_subcategory_count">
+        <item quantity="one">%1$d subcategory</item>
+        <item quantity="other">%1$d subcategories</item>
+    </plurals>
+    <plurals name="categories_delete_children">
+        <item quantity="one">Its %1$d subcategory is deleted too.</item>
+        <item quantity="other">Its %1$d subcategories are deleted too.</item>
+    </plurals>
+    <plurals name="categories_delete_orphan_warning">
+        <item quantity="one">%1$d transaction becomes uncategorised.</item>
+        <item quantity="other">%1$d transactions become uncategorised.</item>
+    </plurals>
+    <plurals name="categories_deleted_with_orphans">
+        <item quantity="one">Deleted. %1$d transaction is now uncategorised.</item>
+        <item quantity="other">Deleted. %1$d transactions are now uncategorised.</item>
+    </plurals>
+    <plurals name="recurring_due_in_days">
+        <item quantity="one">In %1$d day</item>
+        <item quantity="other">In %1$d days</item>
+    </plurals>
+    <plurals name="recurring_awaiting_confirmation">
+        <item quantity="one">%1$d waiting for you</item>
+        <item quantity="other">%1$d waiting for you</item>
+    </plurals>
+    <plurals name="recurring_reminder_days_before">
+        <item quantity="one">%1$d day before</item>
+        <item quantity="other">%1$d days before</item>
+    </plurals>
+    <plurals name="recurring_interval_days">
+        <item quantity="one">Every day</item>
+        <item quantity="other">Every %1$d days</item>
+    </plurals>
+    <plurals name="recurring_interval_weeks">
+        <item quantity="one">Every week</item>
+        <item quantity="other">Every %1$d weeks</item>
+    </plurals>
+    <plurals name="recurring_interval_fortnights">
+        <item quantity="one">Every fortnight</item>
+        <item quantity="other">Every %1$d fortnights</item>
+    </plurals>
+    <plurals name="recurring_interval_months">
+        <item quantity="one">Every month</item>
+        <item quantity="other">Every %1$d months</item>
+    </plurals>
+    <plurals name="recurring_interval_years">
+        <item quantity="one">Every year</item>
+        <item quantity="other">Every %1$d years</item>
+    </plurals>
 </resources>

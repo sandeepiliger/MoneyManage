@@ -68,6 +68,33 @@ class RecurringRepository @Inject constructor(
     fun observeUpcoming(days: Int = 30): Flow<List<ScheduledOccurrence>> =
         observeActive().map { RecurrenceCalculator.upcomingFromRules(it, clock.today(), days) }
 
+    /**
+     * Occurrences that have come due on rules the user chose to confirm manually.
+     *
+     * These are the whole point of [RecurringRule.autoPost] defaulting to off: the app knows rent
+     * was due on the 5th but not whether it actually went out, so it asks instead of asserting.
+     */
+    fun observeAwaitingConfirmation(): Flow<List<DueOccurrence>> =
+        observeActive().map { rules ->
+            val today = clock.today()
+            rules.filterNot { it.autoPost }
+                .flatMap { rule ->
+                    RecurrenceCalculator.duePostings(rule, today)
+                        .map { DueOccurrence(rule = rule, dueOn = it) }
+                }
+                .sortedBy { it.dueOn }
+        }
+
+    /**
+     * Marks an occurrence handled without writing a transaction.
+     *
+     * For the month the gym was closed, or the EMI already captured from an SMS. Advancing
+     * `lastPostedOn` is the only side effect, so the reminder stops without inventing a payment
+     * that never happened.
+     */
+    suspend fun skipOccurrence(ruleId: String, date: LocalDate) =
+        recurringDao.markPosted(ruleId, date)
+
     suspend fun create(rule: RecurringRule): String {
         val withId = rule.copy(id = rule.id.ifBlank { UUID.randomUUID().toString() })
         recurringDao.upsert(withId.toEntity())
@@ -147,6 +174,9 @@ class RecurringRepository @Inject constructor(
 
     suspend fun deleteDemoData() = recurringDao.deleteDemoData()
 }
+
+/** A recurring occurrence that has come due and is waiting for the user to confirm it. */
+data class DueOccurrence(val rule: RecurringRule, val dueOn: LocalDate)
 
 // =============================================================================================
 // Subscriptions

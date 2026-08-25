@@ -240,6 +240,49 @@
     <string name="categories_name">श्रेणी का नाम</string>
     <string name="categories_none">कोई श्रेणी नहीं</string>
     <string name="categories_uncategorised">बिना श्रेणी</string>
+    <string name="categories_edit">श्रेणी बदलें</string>
+    <string name="categories_parent">किसके अंदर</string>
+    <string name="categories_top_level">किसी के अंदर नहीं — यह मुख्य श्रेणी है</string>
+    <string name="categories_group">समूह</string>
+    <string name="categories_icon">आइकॉन</string>
+    <string name="categories_colour">रंग</string>
+    <string name="categories_colour_selected">चुना हुआ रंग</string>
+    <string name="categories_search_hint">श्रेणी खोजें</string>
+    <string name="categories_built_in">पहले से मौजूद</string>
+    <string name="categories_hide">छिपाएँ</string>
+    <string name="categories_show">दिखाएँ</string>
+    <string name="categories_hidden_badge">छिपी हुई</string>
+    <string name="categories_hide_named">%1$s को छिपाएँ</string>
+    <string name="categories_show_hidden">छिपी श्रेणियाँ दिखाएँ</string>
+    <string name="categories_hide_hidden">छिपी श्रेणियाँ हटा दें</string>
+    <string name="categories_hidden_confirmation">छिपा दी गई। पुराने लेन-देन पर यह नाम बना रहेगा।</string>
+    <string name="categories_shown_confirmation">फिर से दिख रही है।</string>
+    <string name="categories_empty_title">अभी कोई श्रेणी नहीं</string>
+    <string name="categories_empty_body">एक जोड़ें, या सेटिंग्स से पहले से बनी श्रेणियाँ वापस लाएँ।</string>
+    <string name="categories_no_matches_title">कुछ नहीं मिला</string>
+    <string name="categories_no_matches_body">छोटा शब्द आज़माएँ, या इसे नई श्रेणी के रूप में जोड़ें।</string>
+    <string name="categories_delete_title">“%1$s” हटाएँ?</string>
+    <string name="categories_delete_body">आपके लेन-देन नहीं हटेंगे, पर उन पर से यह नाम हट जाएगा और वापस नहीं आएगा। श्रेणी छिपाने पर नाम बना रहता है और वह सूची से हट जाती है।</string>
+    <string name="categories_deleted">श्रेणी हटा दी गई।</string>
+    <string name="categories_system_cannot_delete">पहले से मौजूद श्रेणियाँ छिपाई जा सकती हैं, हटाई नहीं — ताकि पुरानी रिपोर्ट के नाम बने रहें।</string>
+
+    <!-- Category groups -->
+    <string name="category_group_food">खाना-पीना</string>
+    <string name="category_group_transport">आना-जाना</string>
+    <string name="category_group_bills">बिल और सुविधाएँ</string>
+    <string name="category_group_lifestyle">लाइफ़स्टाइल</string>
+    <string name="category_group_financial">वित्तीय</string>
+    <string name="category_group_family">घर और परिवार</string>
+    <string name="category_group_income">आमदनी</string>
+    <string name="category_group_transfer">ट्रांसफ़र</string>
+    <string name="category_group_other">अन्य</string>
+
+    <!-- Category validation -->
+    <string name="validation_category_name_required">श्रेणी को कोई नाम दें</string>
+    <string name="validation_category_name_too_long">यह नाम बहुत लंबा है</string>
+    <string name="validation_category_name_duplicate">यहाँ इसी नाम की श्रेणी पहले से है</string>
+    <string name="validation_category_parent_too_deep">श्रेणियाँ सिर्फ़ दो स्तर तक जाती हैं</string>
+    <string name="validation_category_parent_has_children">पहले इसकी उप-श्रेणियाँ हटाएँ या कहीं और ले जाएँ</string>
 
     <!-- Recurring -->
     <string name="recurring_title">हर महीने के</string>
@@ -254,6 +297,32 @@
     <string name="recurring_due_today">आज देना है</string>
     <string name="recurring_empty_title">अभी कुछ नहीं</string>
     <string name="recurring_empty_body">किराया, सैलरी, ईएमआई और एसआईपी जोड़ें ताकि कभी चौंकना न पड़े।</string>
+    <string name="recurring_edit">बदलें</string>
+    <string name="recurring_end_date">कब तक (ज़रूरी नहीं)</string>
+    <string name="recurring_reminder_days">कितने दिन पहले याद दिलाएँ</string>
+    <string name="recurring_reminder_same_day">उसी दिन</string>
+    <string name="recurring_interval">कितनी बार</string>
+    <string name="recurring_interval_every_one">हर बार</string>
+    <string name="recurring_confirm_post">दर्ज करें</string>
+    <string name="recurring_skip">नहीं हुआ</string>
+    <string name="recurring_active">चालू</string>
+    <string name="recurring_paused">रुके हुए</string>
+    <string name="recurring_paused_badge">रुका हुआ</string>
+    <string name="recurring_finished">पूरा हो गया</string>
+    <string name="recurring_pause">%1$s रोकें</string>
+    <string name="recurring_resume">%1$s फिर चालू करें</string>
+    <string name="recurring_was_due">%1$s को देना था</string>
+    <string name="recurring_posted">दर्ज हो गया।</string>
+    <string name="recurring_auto_post_badge">अपने आप दर्ज</string>
+    <string name="recurring_commitment_title">हर महीने, लगभग</string>
+    <string name="recurring_commitment_approximate">हफ़्ते और रोज़ वाले हिसाब बदले गए हैं, इसलिए यह लगभग है।</string>
+    <string name="recurring_going_out">जा रहा है</string>
+    <string name="recurring_coming_in">आ रहा है</string>
+    <string name="recurring_delete_title">“%1$s” हटाएँ?</string>
+    <string name="recurring_delete_body">यह नियम बंद हो जाएगा। जो लेन-देन पहले दर्ज हो चुके हैं, वे बने रहेंगे।</string>
+    <string name="validation_end_before_start">आख़िरी तारीख़ शुरू की तारीख़ से पहले है</string>
+    <string name="transaction_from_account">किस खाते से</string>
+    <string name="date_field_none">तय नहीं</string>
 
     <string name="frequency_daily">रोज़</string>
     <string name="frequency_weekly">हर हफ़्ते</string>
@@ -444,4 +513,54 @@
     <string name="more_title">और</string>
     <string name="demo_badge">सैंपल डेटा</string>
     <string name="offline_badge">ऑफ़लाइन</string>
+
+    <!-- Counted phrases -->
+    <plurals name="categories_subcategory_count">
+        <item quantity="one">%1$d उप-श्रेणी</item>
+        <item quantity="other">%1$d उप-श्रेणियाँ</item>
+    </plurals>
+    <plurals name="categories_delete_children">
+        <item quantity="one">इसकी %1$d उप-श्रेणी भी हट जाएगी।</item>
+        <item quantity="other">इसकी %1$d उप-श्रेणियाँ भी हट जाएँगी।</item>
+    </plurals>
+    <plurals name="categories_delete_orphan_warning">
+        <item quantity="one">%1$d लेन-देन बिना श्रेणी का हो जाएगा।</item>
+        <item quantity="other">%1$d लेन-देन बिना श्रेणी के हो जाएँगे।</item>
+    </plurals>
+    <plurals name="categories_deleted_with_orphans">
+        <item quantity="one">हटा दी गई। %1$d लेन-देन अब बिना श्रेणी का है।</item>
+        <item quantity="other">हटा दी गई। %1$d लेन-देन अब बिना श्रेणी के हैं।</item>
+    </plurals>
+    <plurals name="recurring_due_in_days">
+        <item quantity="one">%1$d दिन में</item>
+        <item quantity="other">%1$d दिन में</item>
+    </plurals>
+    <plurals name="recurring_awaiting_confirmation">
+        <item quantity="one">%1$d आपकी पुष्टि का इंतज़ार में</item>
+        <item quantity="other">%1$d आपकी पुष्टि का इंतज़ार में</item>
+    </plurals>
+    <plurals name="recurring_reminder_days_before">
+        <item quantity="one">%1$d दिन पहले</item>
+        <item quantity="other">%1$d दिन पहले</item>
+    </plurals>
+    <plurals name="recurring_interval_days">
+        <item quantity="one">हर दिन</item>
+        <item quantity="other">हर %1$d दिन</item>
+    </plurals>
+    <plurals name="recurring_interval_weeks">
+        <item quantity="one">हर हफ़्ते</item>
+        <item quantity="other">हर %1$d हफ़्ते</item>
+    </plurals>
+    <plurals name="recurring_interval_fortnights">
+        <item quantity="one">हर दो हफ़्ते</item>
+        <item quantity="other">हर %1$d पखवाड़े</item>
+    </plurals>
+    <plurals name="recurring_interval_months">
+        <item quantity="one">हर महीने</item>
+        <item quantity="other">हर %1$d महीने</item>
+    </plurals>
+    <plurals name="recurring_interval_years">
+        <item quantity="one">हर साल</item>
+        <item quantity="other">हर %1$d साल</item>
+    </plurals>
 </resources>

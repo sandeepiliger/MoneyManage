@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -168,7 +169,11 @@ fun UpcomingRow(
     val dueLabel = when {
         isOverdue -> stringResource(R.string.recurring_overdue)
         daysUntil == 0L -> stringResource(R.string.recurring_due_today)
-        else -> stringResource(R.string.recurring_due_in_days, daysUntil.toInt())
+        else -> pluralStringResource(
+            R.plurals.recurring_due_in_days,
+            daysUntil.toInt(),
+            daysUntil.toInt(),
+        )
     }
 
     Row(

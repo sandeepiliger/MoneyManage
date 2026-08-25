@@ -131,6 +131,14 @@ class CategoryRepository @Inject constructor(
 
     suspend fun update(category: Category) = categoryDao.upsert(category.toEntity())
 
+    /**
+     * How many transactions currently point at [categoryId].
+     *
+     * Exposed so a delete can be described before it happens rather than reported after it.
+     */
+    suspend fun transactionCount(categoryId: String): Int =
+        transactionDao.countForCategory(categoryId)
+
     suspend fun setArchived(id: String, archived: Boolean) = categoryDao.setArchived(id, archived)
 
     /**

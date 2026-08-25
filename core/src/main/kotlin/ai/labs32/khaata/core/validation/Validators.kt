@@ -223,6 +223,61 @@ object BudgetValidator {
     }
 }
 
+/** Validates a category being created or edited. */
+object CategoryValidator {
+
+    /**
+     * Validates a category name and its place in the tree.
+     *
+     * [siblingNames] is deliberately scoped to siblings rather than to every category: "Insurance"
+     * under Health and "Insurance" under Financial are two different things people genuinely track
+     * separately, and rejecting the second because the first exists would be wrong. Two children of
+     * the same parent sharing a name, on the other hand, is always a mistake — the picker would
+     * show the same word twice with no way to tell them apart.
+     *
+     * The two-level limit is enforced here rather than only in the UI, because a subcategory whose
+     * parent is itself a subcategory would break every roll-up in reports and budgets.
+     */
+    fun validate(
+        name: String?,
+        siblingNames: Set<String>,
+        parentIsSubcategory: Boolean,
+        hasChildren: Boolean,
+        isBecomingSubcategory: Boolean,
+    ): ValidationResult<Unit> {
+        val errors = buildList {
+            val trimmed = name?.trim()
+            when {
+                trimmed.isNullOrBlank() ->
+                    add(ValidationError("name", "name_required", "Give the category a name"))
+                trimmed.length > MAX_NAME_LENGTH ->
+                    add(ValidationError("name", "name_too_long", "That name is too long"))
+                siblingNames.any { it.equals(trimmed, ignoreCase = true) } ->
+                    add(ValidationError("name", "name_duplicate", "There is already a category with that name here"))
+            }
+
+            if (parentIsSubcategory) {
+                add(ValidationError("parent", "parent_too_deep", "Categories only go two levels deep"))
+            }
+
+            // Moving a parent that has children under another parent would orphan them into a
+            // third level, so it is refused while the children exist.
+            if (hasChildren && isBecomingSubcategory) {
+                add(
+                    ValidationError(
+                        "parent",
+                        "parent_has_children",
+                        "Move or delete this category's subcategories first",
+                    ),
+                )
+            }
+        }
+        return if (errors.isEmpty()) ValidationResult.Valid(Unit) else ValidationResult.Invalid(errors)
+    }
+
+    private const val MAX_NAME_LENGTH = 40
+}
+
 /** Validates a goal being created or edited. */
 object GoalValidator {
 
