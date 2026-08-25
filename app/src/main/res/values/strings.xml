@@ -354,14 +354,6 @@
     <!-- ==================== Frequencies ==================== -->
     <string name="frequency_daily">Daily</string>
     <string name="frequency_weekly">Weekly</string>
-    <string name="frequency_fortnightly">Fortnightly</string>
-    <string name="frequency_monthly">Monthly</string>
-    <string name="frequency_quarterly">Quarterly</string>
-    <string name="frequency_half_yearly">Every 6 months</string>
-    <string name="frequency_yearly">Yearly</string>
-
-    <string name="frequency_daily">Daily</string>
-    <string name="frequency_weekly">Weekly</string>
     <string name="frequency_fortnightly">Every 2 weeks</string>
     <string name="frequency_monthly">Monthly</string>
     <string name="frequency_quarterly">Every 3 months</string>
