@@ -39,12 +39,27 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
+      # The debug APK runs unminified and debuggable, which makes Compose scrolling markedly
+      # slower than what a user would actually get. This is the same code built the way it ships
+      # -- R8, resource shrinking, no debug flag -- signed with the debug key purely so it can be
+      # sideloaded. This is the build to judge performance on.
+      - name: Assemble optimised (release) APK
+        run: ./gradlew :app:assembleRelease -Pkhaata.debugSignRelease=true --stacktrace
+
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: khaata-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Upload optimised APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: khaata-release-apk
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 14
 
       - name: Upload lint report on failure

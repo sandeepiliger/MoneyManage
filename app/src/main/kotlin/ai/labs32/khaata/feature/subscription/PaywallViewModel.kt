@@ -124,7 +124,13 @@ class PaywallViewModel @Inject constructor(
                                 freeTrialDays = IsoPeriod.days(product.freeTrialPeriod),
                                 features = featuresIntroducedBy(product.tier),
                             )
-                        },
+                        }
+                        // A tier whose every feature is still unbuilt has nothing to sell. This
+                        // drops the whole plan rather than showing a priced card with an empty
+                        // feature list, which would read as a display bug and charge real money
+                        // for nothing. Today that is the FAMILY tier; the filter is written
+                        // against what is shipped, so the plan reappears on its own once it is.
+                        .filter { it.features.isNotEmpty() },
                 )
             }
         }
@@ -138,7 +144,7 @@ class PaywallViewModel @Inject constructor(
      * entitlement check will then refuse.
      */
     private fun featuresIntroducedBy(tier: Tier): List<Feature> =
-        Feature.entries.filter { it.minimumTier == tier }
+        Feature.SHIPPED.filter { it.minimumTier == tier }
 
     fun purchase(activity: Activity, productId: String) {
         analytics.track(AnalyticsEvent.PurchaseStarted(productId))

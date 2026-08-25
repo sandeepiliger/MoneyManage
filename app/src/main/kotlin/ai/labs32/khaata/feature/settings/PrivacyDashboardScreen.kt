@@ -28,6 +28,8 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -49,6 +51,7 @@ import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.EntitlementRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import ai.labs32.khaata.core.entitlement.Feature
+import ai.labs32.khaata.core.sms.SmsPermission
 import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -117,8 +120,28 @@ class PrivacyDashboardViewModel @Inject constructor(
      */
     fun setSmsImport(enabled: Boolean) {
         viewModelScope.launch {
-            settingsRepository.setSmsImportEnabled(enabled)
-            SmsTransactionReceiver.setEnabled(context, enabled)
+            // Turning this on takes a granted runtime permission as well as the flag: without one
+            // the receiver is registered but never delivered to, which reads to the user as the
+            // feature silently not working. The caller requests it and only then gets here.
+            val effective = enabled && SmsPermission.isGranted(context)
+            settingsRepository.setSmsImportEnabled(effective)
+            SmsTransactionReceiver.setEnabled(context, effective)
+        }
+    }
+
+    /**
+     * Re-checks the permission and stands the flag down if it has been revoked.
+     *
+     * A user can revoke SMS access from Android settings at any time, and nothing tells the app.
+     * Without this the switch would keep showing "on" for a feature the system has already stopped
+     * delivering to.
+     */
+    fun syncSmsPermissionState() {
+        viewModelScope.launch {
+            if (settingsRepository.current().smsImportEnabled && !SmsPermission.isGranted(context)) {
+                settingsRepository.setSmsImportEnabled(false)
+                SmsTransactionReceiver.setEnabled(context, false)
+            }
         }
     }
 }
@@ -145,7 +168,15 @@ fun PrivacyDashboardScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val settings = state.settings
 
-    LaunchedEffect(Unit) { viewModel.markSeen() }
+    val smsPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants -> viewModel.setSmsImport(grants.values.all { it }) }
+
+    LaunchedEffect(Unit) {
+        viewModel.markSeen()
+        // Catches a permission revoked from Android settings while the app was in the background.
+        viewModel.syncSmsPermissionState()
+    }
 
     Scaffold(
         topBar = {
@@ -295,7 +326,16 @@ fun PrivacyDashboardScreen(
                     trailing = {
                         Switch(
                             checked = settings.smsImportEnabled,
-                            onCheckedChange = viewModel::setSmsImport,
+                            onCheckedChange = { wanted ->
+                                if (wanted) {
+                                    // Ask every time it is switched on. Android returns the current
+                                    // grants without showing a dialog when they are already held,
+                                    // so this costs a user who has granted them nothing.
+                                    smsPermissionLauncher.launch(SmsPermission.REQUIRED)
+                                } else {
+                                    viewModel.setSmsImport(false)
+                                }
+                            },
                         )
                     },
                 )

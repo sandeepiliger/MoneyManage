@@ -48,10 +48,34 @@ class EntitlementManagerTest {
     }
 
     @Test
-    fun `family includes every tier below it`() {
+    fun `family includes every shipped tier below it`() {
         val family = Entitlement(Tier.FAMILY, expiresAt = nextYear)
-        for (feature in Feature.entries) {
+        for (feature in Feature.SHIPPED) {
             assertThat(manager.isUnlocked(feature, family, now)).isTrue()
+        }
+    }
+
+    @Test
+    fun `a feature that is not built yet never unlocks, even on the top tier`() {
+        val family = Entitlement(Tier.FAMILY, expiresAt = nextYear)
+
+        // Paying for the highest tier must not report an unbuilt feature as available: the
+        // paywall reads the same flag, so an entitlement granted here would be a feature sold
+        // and never delivered.
+        val unshipped = Feature.entries.filterNot { it.isShipped }
+        assertThat(unshipped).isNotEmpty()
+
+        for (feature in unshipped) {
+            assertThat(manager.isUnlocked(feature, family, now)).isFalse()
+        }
+    }
+
+    @Test
+    fun `every shipped feature is reachable from the tier that sells it`() {
+        // Guards the inverse mistake: marking something shipped that no tier can actually reach.
+        for (feature in Feature.SHIPPED) {
+            val entitlement = Entitlement(feature.minimumTier, expiresAt = nextYear)
+            assertThat(manager.isUnlocked(feature, entitlement, now)).isTrue()
         }
     }
 

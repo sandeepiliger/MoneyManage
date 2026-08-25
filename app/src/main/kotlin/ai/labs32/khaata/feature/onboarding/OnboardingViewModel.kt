@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.onboarding
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.core.analytics.AnalyticsEvent
@@ -12,6 +13,8 @@ import ai.labs32.khaata.core.model.AppLockMode
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyParser
+import ai.labs32.khaata.core.sms.SmsPermission
+import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import ai.labs32.khaata.data.demo.DemoDataManager
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.BudgetRepository
@@ -19,6 +22,7 @@ import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -89,6 +93,7 @@ data class OnboardingUiState(
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val profileRepository: ProfileRepository,
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
@@ -237,7 +242,14 @@ class OnboardingViewModel @Inject constructor(
                 }
 
                 settingsRepository.setLockMode(state.lockMode)
-                settingsRepository.setSmsImportEnabled(state.smsImportEnabled)
+
+                // The receiver is declared disabled in the manifest, so persisting the flag alone
+                // would leave a user who opted in here with no SMS receiver registered and no
+                // messages ever imported. Re-check the grant rather than trusting the flag: the
+                // user can revoke the permission between granting it and finishing setup.
+                val smsEnabled = state.smsImportEnabled && SmsPermission.isGranted(context)
+                settingsRepository.setSmsImportEnabled(smsEnabled)
+                SmsTransactionReceiver.setEnabled(context, smsEnabled)
 
                 profileRepository.markOnboardingComplete()
                 analytics.track(

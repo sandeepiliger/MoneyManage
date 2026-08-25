@@ -11,6 +11,8 @@ import ai.labs32.khaata.core.analytics.AnalyticsProvider
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.notifications.NotificationChannels
 import ai.labs32.khaata.core.security.AppLockManager
+import ai.labs32.khaata.core.sms.SmsPermission
+import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import ai.labs32.khaata.core.work.WorkScheduler
 import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.EntitlementRepository
@@ -93,8 +95,29 @@ class KhaataApplication : Application(), Configuration.Provider {
             runCatching { entitlementRepository.refresh() }
                 .onFailure { KhaataLog.w(TAG, "Entitlement refresh unavailable") }
 
+            reconcileSmsReceiver(settings.smsImportEnabled)
+
             workScheduler.scheduleAll(settings)
         }
+    }
+
+    /**
+     * Brings the SMS receiver's registration back in line with the stored setting and the
+     * permission that setting depends on.
+     *
+     * Three things can pull them apart: the permission being revoked from Android settings while
+     * the app was not running, an install whose component state starts at the manifest default of
+     * disabled while the setting survives, and any earlier build that persisted the flag without
+     * registering the receiver. In each case the user is left with a switch that reads "on" and a
+     * feature that quietly receives nothing, so the setting is corrected here rather than trusted.
+     */
+    private suspend fun reconcileSmsReceiver(smsImportEnabled: Boolean) {
+        val shouldReceive = smsImportEnabled && SmsPermission.isGranted(this)
+        if (smsImportEnabled && !shouldReceive) {
+            settingsRepository.setSmsImportEnabled(false)
+        }
+        runCatching { SmsTransactionReceiver.setEnabled(this, shouldReceive) }
+            .onFailure { KhaataLog.e(TAG, "Could not reconcile the SMS receiver", it) }
     }
 
     /**

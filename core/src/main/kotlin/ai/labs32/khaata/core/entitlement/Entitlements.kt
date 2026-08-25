@@ -66,6 +66,44 @@ enum class Feature(val minimumTier: Tier) {
     SHARED_HOUSEHOLD(Tier.FAMILY),
     FAMILY_BUDGETS(Tier.FAMILY),
     SHARED_GOALS(Tier.FAMILY),
+    ;
+
+    /**
+     * Whether anything behind this flag actually exists yet.
+     *
+     * The paywall builds its feature lists from [minimumTier], so a flag added here is advertised
+     * for sale the moment its product is configured in the Play console — whether or not a line of
+     * it has been written. Everything marked false below is named on the paywall and implemented
+     * nowhere, so it is withheld rather than sold: [SHIPPED] is what the entitlement check and the
+     * paywall both read.
+     *
+     * Delete an entry from [UNSHIPPED] in the same change that implements it.
+     */
+    val isShipped: Boolean get() = this !in UNSHIPPED
+
+    companion object {
+        /**
+         * Sold-but-unbuilt features, kept in one place so the list cannot quietly drift.
+         *
+         * The whole FAMILY tier is here: sharing a household ledger needs a server, which this app
+         * deliberately does not have, so these three are not close to shipping. The PRO entries are
+         * nearer — each has its storage or entitlement plumbing in place and only the UI missing.
+         */
+        private val UNSHIPPED: Set<Feature> = setOf(
+            SHARED_HOUSEHOLD,
+            FAMILY_BUDGETS,
+            SHARED_GOALS,
+            RECEIPT_ATTACHMENTS,
+            SCHEDULED_BACKUP,
+            CUSTOM_DATE_RANGES,
+            DASHBOARD_CUSTOMISATION,
+            AI_ENHANCED_INSIGHTS,
+            AI_SMART_CATEGORISATION,
+        )
+
+        /** Every feature that is actually built, in declaration order. */
+        val SHIPPED: List<Feature> get() = entries.filter { it.isShipped }
+    }
 }
 
 /** The user's current entitlement state. */
@@ -102,7 +140,7 @@ class EntitlementManager(
      * anything, because the money has not moved.
      */
     fun isUnlocked(feature: Feature, entitlement: Entitlement, now: Instant): Boolean =
-        effectiveTier(entitlement, now).includes(feature.minimumTier)
+        feature.isShipped && effectiveTier(entitlement, now).includes(feature.minimumTier)
 
     /**
      * The tier actually in force.

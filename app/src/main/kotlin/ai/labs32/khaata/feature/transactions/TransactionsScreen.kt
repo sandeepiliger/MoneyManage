@@ -153,6 +153,12 @@ private fun TransactionList(
 ) {
     val refreshState = pagedTransactions.loadState.refresh
 
+    // Indexed once per change of the underlying lists rather than scanned per row. Looking these
+    // up with `firstOrNull` inside the row made every visible row walk the whole category and
+    // account list on every frame, which is what a long ledger felt slow scrolling through.
+    val categoriesById = remember(state.categories) { state.categories.associateBy { it.id } }
+    val accountsById = remember(state.accounts) { state.accounts.associateBy { it.id } }
+
     when {
         refreshState is LoadState.Loading && pagedTransactions.itemCount == 0 -> LoadingState()
 
@@ -194,14 +200,13 @@ private fun TransactionList(
                     DateHeader(transaction.occurredOn)
                 }
 
+                val category = categoriesById[transaction.categoryId]
+
                 TransactionRow(
                     transaction = transaction,
-                    categoryName = state.categories
-                        .firstOrNull { it.id == transaction.categoryId }?.name,
-                    accountName = state.accounts
-                        .firstOrNull { it.id == transaction.accountId }?.name,
-                    categoryColorSeed = state.categories
-                        .firstOrNull { it.id == transaction.categoryId }?.colorSeed ?: 0,
+                    categoryName = category?.name,
+                    accountName = accountsById[transaction.accountId]?.name,
+                    categoryColorSeed = category?.colorSeed ?: 0,
                     onClick = { onOpenTransaction(transaction.id) },
                     showDate = false,
                 )
@@ -393,7 +398,7 @@ private fun FilterSheet(
 
         FilterSection(stringResource(R.string.transaction_account)) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.accounts) { account ->
+                items(state.accounts, key = { it.id }) { account ->
                     FilterChip(
                         selected = account.id in state.filter.accountIds,
                         onClick = { viewModel.onAccountFilterToggle(account.id) },
@@ -405,9 +410,14 @@ private fun FilterSheet(
 
         Spacer(Modifier.height(spacing.default))
 
+        // Filtered once per change rather than rebuilt on every recomposition of the sheet.
+        val topLevelCategories = remember(state.categories) {
+            state.categories.filter { it.parentId == null }
+        }
+
         FilterSection(stringResource(R.string.transaction_category)) {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.categories.filter { it.parentId == null }) { category ->
+                items(topLevelCategories, key = { it.id }) { category ->
                     FilterChip(
                         selected = category.id in state.filter.categoryIds,
                         onClick = { viewModel.onCategoryFilterToggle(category.id) },

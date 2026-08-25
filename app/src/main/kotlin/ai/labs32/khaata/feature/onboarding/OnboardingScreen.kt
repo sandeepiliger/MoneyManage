@@ -32,6 +32,7 @@ import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Sms
+import ai.labs32.khaata.core.sms.SmsPermission
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -465,13 +466,20 @@ private fun LockStep(state: OnboardingUiState, onSelect: (AppLockMode) -> Unit) 
 
 @Composable
 private fun SmsStep(state: OnboardingUiState, onChange: (Boolean) -> Unit) {
+    // RECEIVE_SMS and READ_SMS are dangerous permissions. Recording the user's intent without
+    // asking for them leaves the feature switched on in settings and silently dead in practice,
+    // because Android never delivers the broadcast, so the answer here is what decides the flag.
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+    ) { grants -> onChange(grants.values.all { it }) }
+
     PermissionStep(
         icon = Icons.Outlined.Sms,
         title = stringResource(R.string.onboarding_sms_title),
         body = stringResource(R.string.onboarding_sms_body),
         footnote = stringResource(R.string.onboarding_sms_optional),
         actionLabel = stringResource(R.string.action_enable),
-        onAction = { onChange(true) },
+        onAction = { launcher.launch(SmsPermission.REQUIRED) },
         isEnabled = state.smsImportEnabled,
     )
 }

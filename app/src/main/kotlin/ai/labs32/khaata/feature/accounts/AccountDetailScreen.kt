@@ -159,6 +159,9 @@ fun AccountDetailScreen(
     LaunchedEffect(accountId) { viewModel.load(accountId) }
     LaunchedEffect(state.isDeleted) { if (state.isDeleted) onBack() }
 
+    // Indexed once instead of scanned per row — see TransactionsScreen for the same change.
+    val categoriesById = remember(state.categories) { state.categories.associateBy { it.id } }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -231,13 +234,13 @@ fun AccountDetailScreen(
                 }
 
                 items(state.transactions, key = { it.id }) { transaction ->
+                    val category = categoriesById[transaction.categoryId]
+
                     TransactionRow(
                         transaction = transaction,
-                        categoryName = state.categories
-                            .firstOrNull { it.id == transaction.categoryId }?.name,
+                        categoryName = category?.name,
                         accountName = null,
-                        categoryColorSeed = state.categories
-                            .firstOrNull { it.id == transaction.categoryId }?.colorSeed ?: 0,
+                        categoryColorSeed = category?.colorSeed ?: 0,
                         onClick = { onOpenTransaction(transaction.id) },
                     )
                 }

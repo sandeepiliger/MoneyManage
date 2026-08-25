@@ -30,6 +30,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -232,10 +233,15 @@ private fun DraftCard(
 
         Spacer(Modifier.height(KhaataTheme.spacing.small))
 
+        // Filtered once per change rather than rebuilt on every keystroke in the draft above.
+        val topLevelCategories = remember(state.categories) {
+            state.categories.filter { it.parentId == null }
+        }
+
         androidx.compose.foundation.lazy.LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(state.categories.filter { it.parentId == null }) { category ->
+            items(topLevelCategories, key = { it.id }) { category ->
                 FilterChip(
                     selected = category.id == draft.categoryId,
                     onClick = { onCategoryChange(category.id) },
@@ -249,7 +255,7 @@ private fun DraftCard(
         androidx.compose.foundation.lazy.LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(state.accounts) { account ->
+            items(state.accounts, key = { it.id }) { account ->
                 FilterChip(
                     selected = account.id == draft.accountId,
                     onClick = { onAccountChange(account.id) },

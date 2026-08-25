@@ -115,7 +115,24 @@ android {
             buildConfigField("boolean", "VERBOSE_LOGGING", "false")
 
             val keystoreConfigured = rootProject.file("keystore.properties").exists()
-            signingConfig = if (keystoreConfigured) signingConfigs.getByName("release") else null
+
+            // An unsigned APK cannot be installed, which makes the optimised build useless for
+            // testing on a real phone — and the debug build is not representative, since it runs
+            // unminified with the debuggable flag set, which holds back ART's optimisations and
+            // makes Compose noticeably slower to scroll.
+            //
+            // `-Pkhaata.debugSignRelease=true` signs the release build with the standard debug key
+            // so it can be sideloaded for performance testing. It is not a substitute for the real
+            // key: Play rejects a debug-signed upload, and a build signed this way is for local
+            // testing only.
+            val debugSignRelease =
+                providers.gradleProperty("khaata.debugSignRelease").orNull == "true"
+
+            signingConfig = when {
+                keystoreConfigured -> signingConfigs.getByName("release")
+                debugSignRelease -> signingConfigs.getByName("debug")
+                else -> null
+            }
         }
     }
 

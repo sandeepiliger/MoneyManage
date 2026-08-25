@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -158,6 +159,10 @@ fun PendingImportsScreen(
             return@Scaffold
         }
 
+        // Indexed once instead of scanned per row — see TransactionsScreen for the same change.
+        val categoriesById = remember(state.categories) { state.categories.associateBy { it.id } }
+        val accountsById = remember(state.accounts) { state.accounts.associateBy { it.id } }
+
         LazyColumn(
             Modifier
                 .padding(padding)
@@ -175,15 +180,14 @@ fun PendingImportsScreen(
             }
 
             items(state.transactions, key = { it.id }) { transaction ->
+                val category = categoriesById[transaction.categoryId]
+
                 KhaataCard(contentPadding = PaddingValues(vertical = 8.dp)) {
                     TransactionRow(
                         transaction = transaction,
-                        categoryName = state.categories
-                            .firstOrNull { it.id == transaction.categoryId }?.name,
-                        accountName = state.accounts
-                            .firstOrNull { it.id == transaction.accountId }?.name,
-                        categoryColorSeed = state.categories
-                            .firstOrNull { it.id == transaction.categoryId }?.colorSeed ?: 0,
+                        categoryName = category?.name,
+                        accountName = accountsById[transaction.accountId]?.name,
+                        categoryColorSeed = category?.colorSeed ?: 0,
                     )
                     Row(
                         Modifier
@@ -274,6 +278,9 @@ fun RecentlyDeletedScreen(
             return@Scaffold
         }
 
+        val categoriesById = remember(state.categories) { state.categories.associateBy { it.id } }
+        val accountsById = remember(state.accounts) { state.accounts.associateBy { it.id } }
+
         LazyColumn(
             Modifier
                 .padding(padding)
@@ -281,15 +288,14 @@ fun RecentlyDeletedScreen(
             contentPadding = PaddingValues(vertical = KhaataTheme.spacing.small),
         ) {
             items(state.transactions, key = { it.id }) { transaction ->
+                val category = categoriesById[transaction.categoryId]
+
                 Column {
                     TransactionRow(
                         transaction = transaction,
-                        categoryName = state.categories
-                            .firstOrNull { it.id == transaction.categoryId }?.name,
-                        accountName = state.accounts
-                            .firstOrNull { it.id == transaction.accountId }?.name,
-                        categoryColorSeed = state.categories
-                            .firstOrNull { it.id == transaction.categoryId }?.colorSeed ?: 0,
+                        categoryName = category?.name,
+                        accountName = accountsById[transaction.accountId]?.name,
+                        categoryColorSeed = category?.colorSeed ?: 0,
                     )
                     TextButton(
                         onClick = { viewModel.restore(transaction.id) },

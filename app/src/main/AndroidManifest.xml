@@ -32,8 +32,13 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
 
-    <!-- Scheduling exact bill reminders on Android 12+. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!--
+      Re-registers the reminder work after a reboot or an app update.
+
+      SCHEDULE_EXACT_ALARM is deliberately not declared. Reminders run on WorkManager, which does
+      not use AlarmManager directly, so the permission granted nothing and only added a restricted
+      permission Play requires a declaration for.
+    -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Play Billing. -->

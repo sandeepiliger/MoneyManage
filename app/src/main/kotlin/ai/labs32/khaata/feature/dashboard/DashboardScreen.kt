@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -525,14 +526,20 @@ private fun RecentTransactionsCard(
             modifier = Modifier.padding(horizontal = 16.dp),
         )
         Spacer(Modifier.height(KhaataTheme.spacing.small))
+
+        val categoriesById = remember(state.categories) { state.categories.associateBy { it.id } }
+        val accountsById = remember(state.accounts) {
+            state.accounts.associateBy { it.account.id }
+        }
+
         state.recentTransactions.forEach { transaction ->
+            val category = categoriesById[transaction.categoryId]
+
             TransactionRow(
                 transaction = transaction,
-                categoryName = state.categories.firstOrNull { it.id == transaction.categoryId }?.name,
-                accountName = state.accounts.firstOrNull { it.account.id == transaction.accountId }
-                    ?.account?.name,
-                categoryColorSeed = state.categories
-                    .firstOrNull { it.id == transaction.categoryId }?.colorSeed ?: 0,
+                categoryName = category?.name,
+                accountName = accountsById[transaction.accountId]?.account?.name,
+                categoryColorSeed = category?.colorSeed ?: 0,
                 onClick = { onOpenTransaction(transaction.id) },
             )
         }
