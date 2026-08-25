@@ -439,6 +439,8 @@
     <string name="reports_daily_spending">Daily spending</string>
     <string name="reports_period_this_month">This month</string>
     <string name="reports_period_last_month">Last month</string>
+    <string name="reports_period_7_days">Last 7 days</string>
+    <string name="reports_period_30_days">Last 30 days</string>
     <string name="reports_period_3_months">Last 3 months</string>
     <string name="reports_period_6_months">Last 6 months</string>
     <string name="reports_period_year">This year</string>

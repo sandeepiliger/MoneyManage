@@ -356,6 +356,8 @@
     <string name="reports_cash_flow">नकदी प्रवाह</string>
     <string name="reports_period_this_month">इस महीने</string>
     <string name="reports_period_last_month">पिछले महीने</string>
+    <string name="reports_period_7_days">पिछले 7 दिन</string>
+    <string name="reports_period_30_days">पिछले 30 दिन</string>
     <string name="reports_period_year">इस साल</string>
     <string name="reports_transfers_excluded">अपने ही खातों के बीच ट्रांसफ़र को खर्च नहीं गिना जाता।</string>
 
