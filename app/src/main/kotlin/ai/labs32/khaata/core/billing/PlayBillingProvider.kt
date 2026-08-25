@@ -190,7 +190,7 @@ class PlayBillingProvider @Inject constructor(
         purchases.filter { it.state == PurchaseState.PURCHASED && !it.isAcknowledged }
             .forEach {
                 acknowledge(it.purchaseToken)
-                    .onFailure { error -> KhaataLog.w(TAG, "Acknowledgement failed", error) }
+                    .onFailure { error -> KhaataLog.e(TAG, "Acknowledgement failed", error) }
             }
     }
 
