@@ -1,11 +1,13 @@
 package ai.labs32.khaata.core.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -37,29 +40,59 @@ import ai.labs32.khaata.core.ui.theme.KhaataShapeTokens
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 
 /**
+ * How much visual weight a card carries.
+ *
+ * A dashboard of eleven identically-styled cards has no focal point -- the eye has nowhere to
+ * land, and nothing tells the reader which number matters most. These tiers exist so a screen can
+ * say that explicitly: [Flat] recedes into a list, [Raised] is the ordinary default, and
+ * [Emphasized] is reserved for the one or two surfaces per screen that should draw the eye first.
+ */
+enum class KhaataCardTier { Flat, Raised, Emphasized }
+
+/**
  * The app's card surface.
  *
- * One component so elevation, corner radius and padding are identical everywhere. Elevation is
- * kept low deliberately: a dashboard of ten heavily shadowed cards looks cluttered, and the
- * hierarchy that matters here comes from typography and spacing rather than depth.
+ * One component so corner radius and padding stay identical everywhere, while [tier] controls
+ * container tone, elevation and border together -- the three cues that make a card read as a
+ * distinct object rather than a flat rectangle. The hairline border matters more than the
+ * elevation on this palette: measured contrast between adjacent surface tones is as low as
+ * 1.06:1 in dark mode, well below what tonal elevation alone can make visible, so every tier
+ * carries a border and elevation is the secondary cue rather than the only one.
  */
 @Composable
 fun KhaataCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
-    contentPadding: androidx.compose.foundation.layout.PaddingValues =
-        androidx.compose.foundation.layout.PaddingValues(16.dp),
+    tier: KhaataCardTier = KhaataCardTier.Raised,
+    containerColor: Color? = null,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val cardModifier = modifier.fillMaxWidth()
+    val resolvedContainerColor = containerColor ?: when (tier) {
+        KhaataCardTier.Flat -> MaterialTheme.colorScheme.surfaceContainerLow
+        KhaataCardTier.Raised -> MaterialTheme.colorScheme.surfaceContainer
+        KhaataCardTier.Emphasized -> MaterialTheme.colorScheme.surfaceContainerHigh
+    }
+    val elevation = when (tier) {
+        KhaataCardTier.Flat -> 0.dp
+        KhaataCardTier.Raised -> 2.dp
+        KhaataCardTier.Emphasized -> 6.dp
+    }
+    val borderColor = when (tier) {
+        KhaataCardTier.Emphasized -> KhaataTheme.elevation.hairlineStrong
+        KhaataCardTier.Flat, KhaataCardTier.Raised -> KhaataTheme.elevation.hairline
+    }
+    val cardModifier = modifier
+        .fillMaxWidth()
+        .border(width = 1.dp, color = borderColor, shape = KhaataShapeTokens.card)
+
     if (onClick != null) {
         Card(
             onClick = onClick,
             modifier = cardModifier,
             shape = KhaataShapeTokens.card,
-            colors = CardDefaults.cardColors(containerColor = containerColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            colors = CardDefaults.cardColors(containerColor = resolvedContainerColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         ) {
             Column(Modifier.padding(contentPadding), content = content)
         }
@@ -67,12 +100,40 @@ fun KhaataCard(
         Card(
             modifier = cardModifier,
             shape = KhaataShapeTokens.card,
-            colors = CardDefaults.cardColors(containerColor = containerColor),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            colors = CardDefaults.cardColors(containerColor = resolvedContainerColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = elevation),
         ) {
             Column(Modifier.padding(contentPadding), content = content)
         }
     }
+}
+
+/**
+ * The hero surface -- the one card per screen that carries the headline figure (the running
+ * balance, the month's net position).
+ *
+ * It is an indigo gradient in *both* light and dark theme, deliberately: everywhere else on the
+ * screen adapts to the theme, but the hero is the brand moment, and a card that changed colour
+ * under the reader's finger when they toggled dark mode would undercut the "this is Khaata"
+ * recognition it exists to create. Because the surface is always dark indigo, content placed on
+ * it should always be light -- white or near-white text and icons, not `onSurface`.
+ */
+@Composable
+fun KhaataHeroCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(20.dp),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(KhaataShapeTokens.hero)
+            .background(Brush.linearGradient(KhaataTheme.elevation.heroGradient))
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(contentPadding),
+        content = content,
+    )
 }
 
 /**

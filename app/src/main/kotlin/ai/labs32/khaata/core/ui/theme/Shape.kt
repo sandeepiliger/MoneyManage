@@ -28,4 +28,12 @@ object KhaataShapeTokens {
     val keypadKey = RoundedCornerShape(16.dp)
     val progressBar = RoundedCornerShape(percent = 50)
     val avatar = RoundedCornerShape(percent = 30)
+
+    // Rounder than a regular card: the hero surface is the one element per screen meant to read
+    // as a distinct, deliberate object rather than a list item, and the extra curvature signals that.
+    val hero = RoundedCornerShape(28.dp)
+
+    // Slightly rounder than cardCompact so a row of stat tiles doesn't look like it borrowed the
+    // list-row shape.
+    val statTile = RoundedCornerShape(18.dp)
 }

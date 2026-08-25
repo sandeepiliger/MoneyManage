@@ -54,6 +54,11 @@ internal object KhaataPalette {
     val Neutral10 = Color(0xFF15151C)
     val Neutral15 = Color(0xFF1E1E27)
     val Neutral20 = Color(0xFF292933)
+    // The one genuinely new step. The dark surface ladder now runs 6 -> 10 -> 15 -> 20 for the
+    // card tiers, which leaves surfaceVariant with nowhere above it to sit: at Neutral20 it would
+    // collide with the topmost card tier, and a progress track drawn in it would disappear into
+    // the card underneath.
+    val Neutral22 = Color(0xFF2E2E3A)
     val Neutral30 = Color(0xFF3F3F4B)
     val Neutral40 = Color(0xFF575765)
     val Neutral50 = Color(0xFF70707F)
@@ -185,6 +190,50 @@ data class MoneyColors(
             warningContainer = KhaataPalette.Amber30,
             neutral = KhaataPalette.Neutral60,
             categorySwatches = KhaataPalette.CategorySwatchesDark,
+        )
+    }
+}
+
+/**
+ * Surface treatments that give the app depth.
+ *
+ * Material's tonal elevation alone is too subtle on this palette to do the job by itself: the
+ * measured contrast between background and surface was as low as 1.06:1 in dark mode, so a card
+ * sitting at the default elevation is nearly indistinguishable from the screen behind it. Cards
+ * additionally carry a hairline border to compensate. On dark surfaces a low-alpha white border is
+ * what actually reads as "this is a distinct object" -- it catches the same way a real edge catches
+ * light. On light surfaces a low-alpha black border does the equivalent job without needing the
+ * heavier drop-shadow look that light-mode elevation usually leans on.
+ */
+data class KhaataElevation(
+    val hairline: Color,
+    val hairlineStrong: Color,
+    val heroGradient: List<Color>,
+    val accentGlow: Color,
+) {
+    companion object {
+        val Dark = KhaataElevation(
+            hairline = Color(0x14FFFFFF),
+            hairlineStrong = Color(0x24FFFFFF),
+            // Same indigo family as Light's hero gradient, deliberately: the hero card is the
+            // brand moment and should look identical in both themes rather than adapting.
+            heroGradient = listOf(
+                KhaataPalette.Indigo40,
+                KhaataPalette.Indigo30,
+                KhaataPalette.Indigo20,
+            ),
+            accentGlow = Color(0x1F6E6EC7),
+        )
+
+        val Light = KhaataElevation(
+            hairline = Color(0x0F101828),
+            hairlineStrong = Color(0x1F101828),
+            heroGradient = listOf(
+                KhaataPalette.Indigo50,
+                KhaataPalette.Indigo40,
+                KhaataPalette.Indigo30,
+            ),
+            accentGlow = Color(0x146E6EC7),
         )
     }
 }
