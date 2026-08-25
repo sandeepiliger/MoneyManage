@@ -1,0 +1,58 @@
+name: Android debug build
+
+# Builds a debug APK on a GitHub-hosted runner, which has normal internet
+# access to Google's Maven repositories. The sandbox this repo is normally
+# developed in has dl.google.com blocked by org policy, so this workflow is
+# the only place the :app module actually gets compiled and packaged.
+
+on:
+  push:
+    branches:
+      - "claude/**"
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required SDK packages
+        run: |
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0" > /dev/null
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run :core tests
+        run: ./gradlew -Pkhaata.androidModule=false :core:test --stacktrace
+
+      - name: Assemble debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: khaata-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Upload lint report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            app/build/reports/
+            **/build/test-results/**/*.xml
+          retention-days: 14
