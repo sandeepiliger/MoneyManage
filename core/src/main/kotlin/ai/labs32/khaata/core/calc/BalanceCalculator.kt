@@ -5,7 +5,10 @@ import ai.labs32.khaata.core.model.AccountBalance
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
+import ai.labs32.khaata.core.money.MoneyMath
 import ai.labs32.khaata.core.money.sumOfMoney
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
 
 /**
@@ -147,6 +150,26 @@ object BalanceCalculator {
             }
             NetWorthPoint(date, running)
         }
+    }
+
+    /**
+     * Percentage change from [previous] to [current], or null when [previous] is zero.
+     *
+     * A change *from* zero has no defined percentage — reporting it as some huge (or infinite)
+     * number would look precise while meaning nothing, so the UI is expected to show no figure
+     * at all rather than a misleading one.
+     *
+     * The denominator is [previous]'s absolute value, not its signed value. Net worth and card
+     * balances are routinely negative, and a debtor whose balance improves from -1000 to -500 has
+     * cut what they owe in half — that is a +50% change, not -50%. Dividing by the signed amount
+     * would flip the sign of every improvement made against a negative starting point.
+     */
+    fun percentChange(previous: Money, current: Money): BigDecimal? {
+        if (previous.amount.signum() == 0) return null
+        return current.amount.subtract(previous.amount)
+            .divide(previous.amount.abs(), MoneyMath.PRECISION)
+            .multiply(BigDecimal("100"))
+            .setScale(1, RoundingMode.HALF_UP)
     }
 }
 

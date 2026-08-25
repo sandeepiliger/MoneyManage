@@ -5,6 +5,7 @@ import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.testing.Fixtures
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
 
@@ -186,5 +187,41 @@ class BalanceCalculatorTest {
             dates = listOf(LocalDate.of(2026, 3, 31)),
         )
         assertThat(trend.single().netWorth).isEqualTo(Money.zero())
+    }
+
+    @Test
+    fun `percent change reports a gain to one decimal place`() {
+        val result = BalanceCalculator.percentChange(previous = Money.of("1000"), current = Money.of("1124"))
+        assertThat(result).isEqualTo(BigDecimal("12.4"))
+    }
+
+    @Test
+    fun `percent change reports a loss as negative`() {
+        val result = BalanceCalculator.percentChange(previous = Money.of("1000"), current = Money.of("900"))
+        assertThat(result).isEqualTo(BigDecimal("-10.0"))
+    }
+
+    @Test
+    fun `percent change is zero when nothing moved`() {
+        val result = BalanceCalculator.percentChange(previous = Money.of("1000"), current = Money.of("1000"))
+        assertThat(result).isEqualTo(BigDecimal("0.0"))
+    }
+
+    @Test
+    fun `percent change from zero is undefined rather than infinite`() {
+        val result = BalanceCalculator.percentChange(previous = Money.of("0"), current = Money.of("500"))
+        assertThat(result).isNull()
+    }
+
+    @Test
+    fun `percent change of a halved debt reads as a positive improvement`() {
+        val result = BalanceCalculator.percentChange(previous = Money.of("-1000"), current = Money.of("-500"))
+        assertThat(result).isEqualTo(BigDecimal("50.0"))
+    }
+
+    @Test
+    fun `percent change of a doubled debt reads as a negative deterioration`() {
+        val result = BalanceCalculator.percentChange(previous = Money.of("-1000"), current = Money.of("-2000"))
+        assertThat(result).isEqualTo(BigDecimal("-100.0"))
     }
 }
