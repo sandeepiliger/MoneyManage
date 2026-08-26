@@ -52,9 +52,17 @@ jobs:
       # into this log (echo, not the artifact upload below) because the log is the only channel
       # this Claude Code session can actually read back -- the artifact download URL is Azure Blob
       # Storage, which is blocked by this org's egress policy the same way dl.google.com is.
+      # -Pkhaata.allowPlaceholderRelease=true is required because this runner has no
+      # secrets.properties, so the AdMob unit ids and the privacy/terms URLs are still the
+      # development placeholders. verifyReleaseConfig blocks a release build carrying those by
+      # default; this APK exists to measure performance and prove the optimised build compiles,
+      # and is never uploaded to Play, so opting out is correct here and only here.
       - name: Assemble optimised (release) APK
         run: |
-          ./gradlew :app:assembleRelease -Pkhaata.debugSignRelease=true -Dlint.baselines.continue=true --stacktrace
+          ./gradlew :app:assembleRelease \
+            -Pkhaata.debugSignRelease=true \
+            -Pkhaata.allowPlaceholderRelease=true \
+            -Dlint.baselines.continue=true --stacktrace
 
       - name: Print generated lint baseline
         if: always()

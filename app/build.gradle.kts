@@ -189,6 +189,72 @@ android {
     }
 }
 
+/**
+ * Refuses to build a release artifact that still carries development placeholders.
+ *
+ * Every `secret()` above falls back to a working default so the project builds with no
+ * `secrets.properties` — which is right for contributors and for CI, and wrong for anything that
+ * reaches a user. Those defaults are Google's public *test* ad units and `example.invalid` URLs;
+ * shipping them means either visibly-labelled test ads in a paid install, or a privacy-policy link
+ * that cannot resolve, which is a Play review rejection on its own.
+ *
+ * Nothing caught this before because the failure is silent: `assembleRelease` succeeds and the
+ * placeholders are simply inside the APK.
+ *
+ * `-Pkhaata.allowPlaceholderRelease=true` opts out, for release builds meant for local performance
+ * testing rather than upload. CI passes it for exactly that reason. It must never be passed for a
+ * build that will be uploaded to Play.
+ */
+val verifyReleaseConfig = tasks.register("verifyReleaseConfig") {
+    group = "verification"
+    description = "Fails if a release build would ship placeholder URLs or test ad unit IDs."
+
+    // Captured as plain values rather than read from `project` inside the action, so the task
+    // stays compatible with the configuration cache.
+    val allowPlaceholders =
+        providers.gradleProperty("khaata.allowPlaceholderRelease").orNull == "true"
+    val checked = mapOf(
+        "PRIVACY_POLICY_URL" to secret("PRIVACY_POLICY_URL", "https://example.invalid/khaata/privacy"),
+        "TERMS_URL" to secret("TERMS_URL", "https://example.invalid/khaata/terms"),
+        "SUPPORT_EMAIL" to secret("SUPPORT_EMAIL", "support@example.invalid"),
+        "ADMOB_APP_ID" to secret("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713"),
+        "ADMOB_BANNER_UNIT_ID" to secret("ADMOB_BANNER_UNIT_ID", "ca-app-pub-3940256099942544/6300978111"),
+        "ADMOB_INTERSTITIAL_UNIT_ID" to secret("ADMOB_INTERSTITIAL_UNIT_ID", "ca-app-pub-3940256099942544/1033173712"),
+        "ADMOB_REWARDED_UNIT_ID" to secret("ADMOB_REWARDED_UNIT_ID", "ca-app-pub-3940256099942544/5224354917"),
+    )
+
+    doLast {
+        if (allowPlaceholders) {
+            logger.warn(
+                "khaata: placeholder check skipped. This artifact is NOT fit to upload to Play.",
+            )
+            return@doLast
+        }
+
+        // 3940256099942544 is Google's published sample publisher id; anything under it is a test
+        // unit. example.invalid is reserved by RFC 2606 and can never resolve.
+        val problems = checked.filter { (_, value) ->
+            value.contains("example.invalid") || value.contains("3940256099942544")
+        }.keys.sorted()
+
+        if (problems.isNotEmpty()) {
+            throw GradleException(
+                buildString {
+                    appendLine("Release build blocked: these values are still development placeholders.")
+                    problems.forEach { appendLine("  - $it") }
+                    appendLine()
+                    appendLine("Set real values in secrets.properties (see docs/SETUP.md), or pass")
+                    appendLine("-Pkhaata.allowPlaceholderRelease=true for a local test build that")
+                    appendLine("will not be uploaded.")
+                },
+            )
+        }
+    }
+}
+
+tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }
+    .configureEach { dependsOn(verifyReleaseConfig) }
+
 dependencies {
     implementation(project(":core"))
 
