@@ -65,6 +65,7 @@ import ai.labs32.khaata.core.ui.components.CategoryIcons
 import ai.labs32.khaata.core.ui.components.ColorBadge
 import ai.labs32.khaata.core.ui.components.EmptyState
 import ai.labs32.khaata.core.ui.components.KhaataCard
+import ai.labs32.khaata.core.ui.components.KhaataCardTier
 import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.components.MoneyText
 import ai.labs32.khaata.core.ui.components.StatPair
@@ -456,7 +457,7 @@ fun SubscriptionsScreen(
 
 @Composable
 private fun CostCard(cost: SubscriptionTotals) {
-    KhaataCard {
+    KhaataCard(tier = KhaataCardTier.Emphasized) {
         CardHeader(
             title = pluralStringResource(
                 R.plurals.subscriptions_tracked_count,

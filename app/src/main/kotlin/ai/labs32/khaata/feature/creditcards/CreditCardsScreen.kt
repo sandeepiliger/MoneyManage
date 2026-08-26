@@ -177,7 +177,7 @@ private fun CreditCardCard(
 
         Spacer(Modifier.height(KhaataTheme.spacing.default))
 
-        MoneyText(money = status.statementBalance, style = KhaataTextStyles.amountHero)
+        MoneyText(money = status.statementBalance, style = KhaataTextStyles.amountLarge)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.cards_statement_balance),

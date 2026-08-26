@@ -45,6 +45,7 @@ import ai.labs32.khaata.core.ui.components.ChartLegend
 import ai.labs32.khaata.core.ui.components.ChartSlice
 import ai.labs32.khaata.core.ui.components.EmptyState
 import ai.labs32.khaata.core.ui.components.KhaataCard
+import ai.labs32.khaata.core.ui.components.KhaataCardTier
 import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.components.MoneyText
 import ai.labs32.khaata.core.ui.components.StatPair
@@ -153,7 +154,7 @@ private fun PortfolioCard(portfolio: PortfolioSummary) {
     val money = KhaataTheme.money
     val isProfit = portfolio.gain.isPositive
 
-    KhaataCard {
+    KhaataCard(tier = KhaataCardTier.Emphasized) {
         CardHeader(title = stringResource(R.string.investments_portfolio_total))
         Spacer(Modifier.height(KhaataTheme.spacing.small))
 

@@ -10,6 +10,7 @@
   values fall back to the English file.
 -->
 <resources>
+    <string name="app_name">खाता</string>
     <string name="app_tagline">पैसा, आसानी से।</string>
 
     <!-- Navigation -->
@@ -64,6 +65,8 @@
     <string name="a11y_amount_hidden">राशि छिपी है</string>
     <string name="a11y_show_amounts">राशि दिखाएँ</string>
     <string name="a11y_hide_amounts">राशि छिपाएँ</string>
+    <string name="a11y_close_sheet">बंद करें</string>
+    <string name="a11y_more_options">और विकल्प</string>
 
     <!-- Onboarding -->
     <string name="onboarding_welcome_title">खाता में आपका स्वागत है</string>
@@ -131,6 +134,7 @@
     <string name="dashboard_daily_pace">इस महीने बजट में रहने के लिए रोज़ लगभग %1$s रखें</string>
     <string name="insight_action_adjust_budget">बजट समायोजित करें</string>
     <string name="insight_action_snooze">स्नूज़ करें</string>
+    <string name="dashboard_pending_imports">%1$d लेन-देन आपकी पुष्टि का इंतज़ार में</string>
 
     <!-- Dashboard shortcuts -->
     <string name="dashboard_shortcuts">शॉर्टकट</string>
@@ -161,6 +165,10 @@
     <string name="transaction_date">तारीख़</string>
     <string name="transaction_tags">टैग</string>
     <string name="transaction_receipt">रसीद</string>
+    <string name="transaction_reference">रेफ़रेंस</string>
+    <string name="transaction_recorded_via">इसके ज़रिए दर्ज हुआ</string>
+    <string name="transaction_added">जोड़ा गया</string>
+    <string name="transaction_last_edited">आख़िरी बार बदला</string>
     <string name="transaction_add_title">लेन-देन जोड़ें</string>
     <string name="transaction_edit_title">लेन-देन बदलें</string>
     <string name="transaction_deleted">लेन-देन हटाया गया</string>
@@ -172,6 +180,7 @@
     <string name="transaction_filter_empty_title">कुछ नहीं मिला</string>
     <string name="transaction_filter_empty_body">फ़िल्टर कम करें या खोज हटाएँ।</string>
     <string name="transaction_search_hint">दुकान, नोट या रेफ़रेंस खोजें</string>
+    <string name="transaction_filters_active">फ़िल्टर (%1$d)</string>
     <string name="transaction_today">आज</string>
     <string name="transaction_yesterday">कल</string>
     <string name="transaction_pending_badge">पुष्टि बाकी है</string>
@@ -179,6 +188,7 @@
     <string name="transaction_source_import">इम्पोर्ट किया गया</string>
     <string name="transaction_source_recurring">हर महीने का</string>
     <string name="transaction_suggestion_hint">आमतौर पर %1$s</string>
+    <string name="transaction_overdraft_warning">इससे %1$s शून्य से नीचे चला जाएगा</string>
 
     <!-- Validation -->
     <string name="validation_amount_required">राशि डालें</string>
@@ -188,7 +198,20 @@
     <string name="validation_category_required">श्रेणी चुनें</string>
     <string name="validation_transfer_account_required">चुनें कि पैसा कहाँ जा रहा है</string>
     <string name="validation_transfer_same_account">कोई दूसरा खाता चुनें</string>
+    <string name="validation_date_too_far_future">यह तारीख़ एक साल से ज़्यादा दूर है</string>
+    <string name="validation_date_too_far_past">यह तारीख़ बहुत पुरानी है</string>
+    <string name="validation_note_too_long">नोट बहुत लंबा है</string>
     <string name="validation_name_required">कोई नाम दें</string>
+    <string name="validation_name_too_long">यह नाम बहुत लंबा है</string>
+    <string name="validation_name_duplicate">इस नाम से एक पहले से है</string>
+    <string name="validation_balance_invalid">यह सही राशि नहीं है</string>
+    <string name="validation_limit_required">बजट की राशि डालें</string>
+    <string name="validation_limit_zero">बजट शून्य से ज़्यादा होना चाहिए</string>
+    <string name="validation_alert_out_of_range">चेतावनी 1% से 100% के बीच होनी चाहिए</string>
+    <string name="validation_target_required">लक्ष्य राशि डालें</string>
+    <string name="validation_target_zero">लक्ष्य शून्य से ज़्यादा होना चाहिए</string>
+    <string name="validation_current_exceeds_target">बचाई गई राशि लक्ष्य से ज़्यादा है</string>
+    <string name="validation_date_in_past">भविष्य की कोई तारीख़ चुनें</string>
 
     <!-- Quick add -->
     <string name="quick_add_shortcut">तुरंत जोड़ें</string>
@@ -199,6 +222,7 @@
     <string name="quick_add_nl_title">बताएँ आपने क्या खर्च किया</string>
     <string name="quick_add_nl_confirm">सेव करने से पहले जाँच लें</string>
     <string name="quick_add_nl_none_found">इसमें कोई राशि नहीं मिली। कोई संख्या शामिल करें।</string>
+    <string name="quick_add_nl_count">%1$d लेन-देन मिले</string>
 
     <!-- Voice input -->
     <string name="voice_input">बोलें</string>
@@ -218,9 +242,14 @@
     <string name="accounts_include_net_worth">कुल संपत्ति में गिनें</string>
     <string name="accounts_include_available">खर्च करने लायक पैसे में गिनें</string>
     <string name="accounts_archive">आर्काइव करें</string>
+    <string name="accounts_unarchive">आर्काइव से वापस लाएँ</string>
     <string name="accounts_archived">आर्काइव किया</string>
+    <string name="accounts_delete_blocked_title">इस खाते में लेन-देन हैं</string>
+    <string name="accounts_delete_blocked_body">इसे हटाने पर आपके इतिहास से %1$d लेन-देन मिट जाएँगे। इसकी बजाय आर्काइव करें — रिकॉर्ड बने रहेंगे, बस दिखेगा नहीं।</string>
     <string name="accounts_empty_title">अभी कोई खाता नहीं</string>
     <string name="accounts_empty_body">जो बैंक खाता, वॉलेट या कार्ड सबसे ज़्यादा इस्तेमाल करते हैं, उसे जोड़ें।</string>
+    <string name="accounts_limit_reached_title">फ़्री प्लान में %1$d खाते शामिल हैं</string>
+    <string name="accounts_limit_reached_body">जितने चाहें उतने जोड़ने के लिए अपग्रेड करें।</string>
     <string name="accounts_never_credentials">खाता कभी आपका बैंकिंग पासवर्ड, पिन या OTP नहीं माँगता।</string>
 
     <string name="account_type_cash">कैश</string>
@@ -236,6 +265,7 @@
     <!-- Budgets -->
     <string name="budgets_title">बजट</string>
     <string name="budgets_add">बजट बनाएँ</string>
+    <string name="budgets_edit">बजट बदलें</string>
     <string name="budgets_name">बजट का नाम</string>
     <string name="budgets_limit">सीमा</string>
     <string name="budgets_period">अवधि</string>
@@ -245,6 +275,7 @@
     <string name="budgets_all_spending">सारा खर्च</string>
     <string name="budgets_alert_threshold">चेतावनी दें</string>
     <string name="budgets_rollover">बचा हुआ अगले महीने ले जाएँ</string>
+    <string name="budgets_rollover_help">इस अवधि में जो खर्च नहीं हुआ, वह अगली अवधि में जुड़ जाता है।</string>
     <string name="budgets_spent_of">%2$s में से %1$s</string>
     <string name="budgets_remaining">%1$s बचा है</string>
     <string name="budgets_overspent_by">%1$s ज़्यादा</string>
@@ -253,6 +284,8 @@
         <item quantity="other">%1$d दिन बचे</item>
     </plurals>
     <string name="budgets_safe_daily">रोज़ लगभग %1$s रखें तो बजट में रहेंगे</string>
+    <string name="budgets_projected">इस रफ़्तार से %1$s खर्च होने का अनुमान है</string>
+    <string name="budgets_carried_over">इसमें %1$s पिछले से लाया गया शामिल है</string>
     <string name="budgets_empty_title">अभी कोई बजट नहीं</string>
     <string name="budgets_empty_body">बजट "पैसा कहाँ गया?" को "कितना बचा है?" में बदल देता है।</string>
 
@@ -385,6 +418,7 @@
     <!-- Credit cards -->
     <string name="cards_title">क्रेडिट कार्ड</string>
     <string name="cards_add">कार्ड जोड़ें</string>
+    <string name="cards_edit">कार्ड बदलें</string>
     <string name="cards_name">कार्ड का नाम</string>
     <string name="cards_issuer">बैंक</string>
     <string name="cards_limit">क्रेडिट लिमिट</string>
@@ -393,11 +427,16 @@
     <string name="cards_outstanding">बकाया</string>
     <string name="cards_available_credit">उपलब्ध क्रेडिट</string>
     <string name="cards_utilisation">इस्तेमाल</string>
+    <string name="cards_statement_balance">इस स्टेटमेंट में</string>
     <string name="cards_minimum_due">न्यूनतम देय</string>
     <string name="cards_due_on">%1$s तक देना है</string>
     <string name="cards_overdue">भुगतान की तारीख़ निकल गई</string>
+    <string name="cards_next_statement">अगला स्टेटमेंट %1$s</string>
+    <string name="cards_spend_this_cycle">इस चक्र में खर्च</string>
     <string name="cards_interest_note">सिर्फ़ न्यूनतम चुकाने पर बाकी रकम पर ब्याज लगता रहता है।</string>
+    <string name="cards_minimum_estimate">न्यूनतम देय एक अनुमान है; असली आंकड़ा आपके स्टेटमेंट में है।</string>
     <string name="cards_empty_title">कोई कार्ड नहीं जोड़ा</string>
+    <string name="cards_empty_body">कार्ड जोड़ें ताकि उसकी देय तारीख़ और इस्तेमाल पर नज़र रख सकें।</string>
 
     <string name="utilisation_healthy">ठीक है</string>
     <string name="utilisation_elevated">बढ़ रहा है</string>
@@ -407,31 +446,51 @@
     <!-- Loans -->
     <string name="loans_title">लोन</string>
     <string name="loans_add">लोन जोड़ें</string>
+    <string name="loans_edit">लोन बदलें</string>
     <string name="loans_name">लोन का नाम</string>
     <string name="loans_lender">कहाँ से लिया</string>
     <string name="loans_principal">लोन राशि</string>
+    <string name="loans_interest_rate">ब्याज दर (% प्रति वर्ष)</string>
     <string name="loans_tenure">अवधि (महीने)</string>
+    <string name="loans_start_date">शुरुआत</string>
+    <string name="loans_emi_day">महीने की किस तारीख़ को ईएमआई</string>
+    <string name="loans_emi_override">ईएमआई राशि (वैकल्पिक)</string>
+    <string name="loans_emi_override_help">खाली छोड़ें तो हम ख़ुद हिसाब लगा लेंगे। अगर आपके बैंक का आंकड़ा अलग है तो वह डालें।</string>
     <string name="loans_emi">ईएमआई</string>
     <string name="loans_outstanding">बकाया</string>
     <string name="loans_repaid">चुकाया</string>
     <string name="loans_interest_paid">ब्याज चुकाया</string>
     <string name="loans_interest_remaining">ब्याज बाकी</string>
     <string name="loans_total_interest">कुल ब्याज</string>
+    <string name="loans_total_payable">कुल देय</string>
+    <string name="loans_instalments">%2$d में से %1$d किस्त</string>
+    <string name="loans_next_emi">अगली ईएमआई %1$s</string>
+    <string name="loans_closes">%1$s को पूरा होगा</string>
     <string name="loans_schedule">भुगतान अनुसूची</string>
+    <string name="loans_schedule_note">यह मानकर चलता है कि हर किस्त समय पर चुकाई जाएगी।</string>
     <string name="loans_empty_title">कोई लोन नहीं</string>
+    <string name="loans_empty_body">लोन जोड़ें ताकि पता चले हर ईएमआई में कितना ब्याज है और यह कब तक चुकेगा।</string>
     <string name="loans_no_advice">खाता सिर्फ़ बताता है कि आपका लोन कितना महँगा है। यह वित्तीय सलाह नहीं देता।</string>
 
     <!-- Investments -->
     <string name="investments_title">निवेश</string>
     <string name="investments_add">निवेश जोड़ें</string>
+    <string name="investments_edit">निवेश बदलें</string>
+    <string name="investments_name">नाम</string>
+    <string name="investments_kind">प्रकार</string>
     <string name="investments_invested">लगाया</string>
     <string name="investments_current_value">मौजूदा मूल्य</string>
     <string name="investments_update_value">मूल्य अपडेट करें</string>
     <string name="investments_gain">फ़ायदा</string>
     <string name="investments_loss">नुकसान</string>
     <string name="investments_return">रिटर्न</string>
+    <string name="investments_annualised">सालाना</string>
+    <string name="investments_valued_on">%1$s को मूल्यांकित</string>
+    <string name="investments_stale_value">यह मूल्य %1$d दिन पुराना है</string>
+    <string name="investments_portfolio_total">पोर्टफोलियो</string>
     <string name="investments_manual_note">मूल्य वही है जो आपने आख़िरी बार डाला था। खाता लाइव भाव नहीं लाता।</string>
     <string name="investments_empty_title">कोई निवेश नहीं</string>
+    <string name="investments_empty_body">अपने फ़ंड, डिपॉज़िट और सोना जोड़ें ताकि बाकी सब के साथ यह भी दिखे।</string>
 
     <string name="investment_kind_mutual_fund">म्यूचुअल फ़ंड</string>
     <string name="investment_kind_sip">एसआईपी</string>
@@ -439,34 +498,54 @@
     <string name="investment_kind_fixed_deposit">एफ़डी</string>
     <string name="investment_kind_recurring_deposit">आरडी</string>
     <string name="investment_kind_gold">सोना</string>
+    <string name="investment_kind_ppf">पीपीएफ़</string>
+    <string name="investment_kind_nps">एनपीएस</string>
+    <string name="investment_kind_epf">ईपीएफ़</string>
     <string name="investment_kind_other">अन्य</string>
 
     <!-- Goals -->
     <string name="goals_title">लक्ष्य</string>
     <string name="goals_add">लक्ष्य जोड़ें</string>
+    <string name="goals_edit">लक्ष्य बदलें</string>
     <string name="goals_name">किस चीज़ के लिए बचा रहे हैं?</string>
     <string name="goals_target">लक्ष्य राशि</string>
     <string name="goals_current">अब तक बचाया</string>
+    <string name="goals_target_date">कब तक? (वैकल्पिक)</string>
     <string name="goals_add_money">पैसे जोड़ें</string>
     <string name="goals_remaining">%1$s बाकी</string>
     <string name="goals_required_monthly">हर महीने %1$s से पूरा हो जाएगा</string>
     <string name="goals_achieved">पूरा हुआ</string>
     <string name="goals_on_track">ठीक चल रहा है</string>
     <string name="goals_behind">पीछे चल रहे हैं</string>
+    <string name="goals_missed_deadline">तारीख़ निकल गई</string>
+    <string name="goals_no_deadline">कोई तारीख़ तय नहीं</string>
+    <string name="goals_projected">इस रफ़्तार से, लगभग %1$s</string>
     <string name="goals_empty_title">अभी कोई लक्ष्य नहीं</string>
     <string name="goals_empty_body">इमरजेंसी फ़ंड, कोई यात्रा, नया फ़ोन — जिसके लिए भी पैसे रख रहे हों।</string>
 
     <!-- Reports -->
     <string name="reports_title">रिपोर्ट</string>
+    <string name="reports_monthly">महीने का सारांश</string>
     <string name="reports_income_vs_expense">आमदनी बनाम खर्च</string>
     <string name="reports_by_category">श्रेणी के हिसाब से</string>
     <string name="reports_by_account">खाते के हिसाब से</string>
+    <string name="reports_by_merchant">टॉप दुकानें</string>
     <string name="reports_cash_flow">नकदी प्रवाह</string>
+    <string name="reports_savings_trend">समय के साथ बचत</string>
+    <string name="reports_net_worth_trend">समय के साथ संपत्ति</string>
+    <string name="reports_budget_performance">बजट का प्रदर्शन</string>
+    <string name="reports_daily_spending">रोज़ का खर्च</string>
     <string name="reports_period_this_month">इस महीने</string>
     <string name="reports_period_last_month">पिछले महीने</string>
     <string name="reports_period_7_days">पिछले 7 दिन</string>
     <string name="reports_period_30_days">पिछले 30 दिन</string>
+    <string name="reports_period_3_months">पिछले 3 महीने</string>
+    <string name="reports_period_6_months">पिछले 6 महीने</string>
     <string name="reports_period_year">इस साल</string>
+    <string name="reports_period_financial_year">यह वित्तीय वर्ष</string>
+    <string name="reports_period_custom">अपनी तारीख़ें चुनें</string>
+    <string name="reports_empty_title">अभी पर्याप्त डेटा नहीं है</string>
+    <string name="reports_empty_body">कुछ लेन-देन दर्ज करें, आपकी रिपोर्ट भरने लगेंगी।</string>
     <string name="reports_transfers_excluded">अपने ही खातों के बीच ट्रांसफ़र को खर्च नहीं गिना जाता।</string>
     <string name="reports_average_daily">रोज़ का औसत</string>
     <string name="reports_transaction_count">लेन-देन</string>
@@ -499,34 +578,73 @@
     <string name="insights_title">जानकारी</string>
     <string name="insights_empty_title">अभी बताने लायक कुछ नहीं</string>
     <string name="insights_empty_body">एक-दो महीने का हिसाब जमा होने पर यहाँ पैटर्न दिखने लगेंगे।</string>
+    <string name="insights_dismiss">हटाएँ</string>
     <string name="insights_why">यह कैसे निकाला</string>
+    <string name="insights_severity_action">ध्यान देने लायक</string>
+    <string name="insights_severity_notable">देखने लायक</string>
+    <string name="insights_severity_info">सामान्य जानकारी</string>
 
     <!-- AI -->
     <string name="ai_title">अपने पैसे के बारे में पूछें</string>
     <string name="ai_input_hint">कोई सवाल पूछें</string>
+    <string name="ai_send_question">सवाल भेजें</string>
     <string name="ai_suggestions">ये पूछकर देखें</string>
+    <string name="ai_thinking">पता लगाया जा रहा है</string>
+    <string name="ai_not_understood">यह समझ नहीं आया। इनमें से कोई आज़माएँ:</string>
+    <string name="ai_no_data">इसका जवाब देने लायक अभी पर्याप्त रिकॉर्ड नहीं है।</string>
+    <string name="ai_unavailable">असिस्टेंट अभी उपलब्ध नहीं है।</string>
     <string name="ai_source_on_device">आपके फ़ोन पर निकाला गया</string>
+    <string name="ai_source_cloud">क्लाउड एआई से बनाया गया</string>
+    <string name="ai_evidence_title">इस आधार पर</string>
     <string name="ai_never_acts">असिस्टेंट सिर्फ़ सवालों के जवाब देता है। यह अपने आप कोई पैसा नहीं जोड़ता, बदलता या भेजता।</string>
     <string name="ai_cloud_disabled">क्लाउड एआई बंद है। जवाब आपके फ़ोन पर ही निकाले जाते हैं।</string>
+    <string name="ai_cloud_enable_title">क्लाउड एआई इस्तेमाल करें?</string>
+    <string name="ai_cloud_enable_body">आपके सवाल और उससे जुड़े आंकड़ों का सारांश एक एआई प्रोवाइडर को भेजा जाएगा। जब तक आप इसे चालू नहीं करते, कुछ नहीं भेजा जाता।</string>
 
     <!-- SMS -->
+    <string name="sms_import_title">बैंक मैसेज</string>
     <string name="sms_review_title">इन लेन-देन की पुष्टि करें</string>
     <string name="sms_review_body">ये आपके बैंक मैसेज में मिले। जाँचकर सही वाले सेव करें।</string>
+    <string name="sms_review_accept">सेव करें</string>
+    <string name="sms_review_reject">हटाएँ</string>
+    <string name="sms_review_check_fields">ये विवरण जाँच लें</string>
     <string name="sms_permission_title">SMS पढ़ने की अनुमति दें?</string>
     <string name="sms_permission_body">खाता सिर्फ़ वही मैसेज पढ़ता है जो बैंक लेन-देन जैसे लगते हैं, आपके फ़ोन पर ही। मैसेज कहीं सेव या भेजे नहीं जाते, और आपकी पुष्टि के बिना कुछ दर्ज नहीं होता।</string>
+    <string name="sms_permission_denied">इसके बिना भी आप लेन-देन ख़ुद डाल सकते हैं या CSV इम्पोर्ट कर सकते हैं।</string>
+    <string name="sms_no_messages">आपके मैसेज में कोई नया लेन-देन नहीं मिला।</string>
 
     <!-- Backup -->
     <string name="backup_title">बैकअप और एक्सपोर्ट</string>
     <string name="backup_create">बैकअप बनाएँ</string>
     <string name="backup_restore">बैकअप से वापस लाएँ</string>
     <string name="backup_export_csv">CSV में एक्सपोर्ट करें</string>
+    <string name="backup_import_csv">CSV से इम्पोर्ट करें</string>
+    <string name="backup_created">बैकअप बन गया</string>
+    <string name="backup_export_created">एक्सपोर्ट बन गया</string>
+    <string name="backup_restore_title">यह बैकअप वापस लाएँ?</string>
+    <string name="backup_restore_summary">%1$d खाते, %2$d लेन-देन, %3$d बजट</string>
+    <string name="backup_restore_mode">जो पहले से यहाँ है उसका क्या करें?</string>
+    <string name="backup_mode_merge_skip">जो नया है वह जोड़ें, जो है वह रहने दें</string>
+    <string name="backup_mode_merge_overwrite">नया जोड़ें और मौजूदा अपडेट करें</string>
+    <string name="backup_mode_replace">सब कुछ बदल दें</string>
+    <string name="backup_mode_replace_warning">इससे ऐप में मौजूद सब कुछ हमेशा के लिए मिट जाएगा।</string>
+    <string name="backup_restore_done">%1$d रिकॉर्ड वापस लाए गए</string>
+    <string name="backup_restore_rejected">%1$d रिकॉर्ड पढ़े नहीं जा सके और छोड़ दिए गए</string>
+    <string name="backup_invalid">यह फ़ाइल खाता बैकअप के रूप में नहीं पढ़ी जा सकी।</string>
+    <string name="backup_too_new">यह बैकअप खाता के नए वर्शन से बना है। इसे वापस लाने के लिए ऐप अपडेट करें।</string>
     <string name="backup_local_only">बैकअप आपके फ़ोन में सेव होता है। कुछ भी अपलोड नहीं होता।</string>
+    <string name="backup_last_created">आख़िरी बैकअप: %1$s</string>
+    <string name="backup_never">अभी कोई बैकअप नहीं</string>
 
     <!-- Settings -->
     <string name="settings_title">सेटिंग्स</string>
     <string name="settings_profile">प्रोफ़ाइल</string>
+    <string name="settings_display_name">आपका नाम</string>
     <string name="settings_currency">करेंसी</string>
     <string name="settings_language">भाषा</string>
+    <string name="settings_month_start">महीना किस तारीख़ से शुरू हो</string>
+    <string name="settings_month_start_help">अगर आप सैलरी की तारीख़ से महीना गिनते हैं तो इसे वही तारीख़ बना दें।</string>
+    <string name="settings_appearance">दिखावट</string>
     <string name="settings_theme">थीम</string>
     <string name="settings_theme_system">सिस्टम के अनुसार</string>
     <string name="settings_theme_light">लाइट</string>
@@ -536,21 +654,64 @@
     <string name="settings_lock_off">बंद</string>
     <string name="settings_lock_biometric">फ़िंगरप्रिंट या चेहरा</string>
     <string name="settings_lock_pin">पिन</string>
+    <string name="settings_change_pin">पिन बदलें</string>
+    <string name="settings_lock_after">इतनी देर बाद लॉक करें</string>
+    <string name="settings_lock_immediately">तुरंत</string>
+    <string name="settings_lock_seconds">%1$d सेकंड</string>
+    <string name="settings_lock_minute">1 मिनट</string>
+    <string name="settings_hide_amounts">लॉक स्क्रीन पर राशि छिपाएँ</string>
     <string name="settings_notifications">नोटिफ़िकेशन</string>
+    <string name="settings_budget_alerts">बजट चेतावनी</string>
+    <string name="settings_bill_reminders">बिल और ईएमआई की याद</string>
+    <string name="settings_daily_reminder">खर्च दर्ज करने की रोज़ याद</string>
+    <string name="settings_reminder_time">याद दिलाने का समय</string>
+    <string name="settings_data">आपका डेटा</string>
+    <string name="settings_manage_categories">श्रेणियाँ</string>
+    <string name="settings_manage_accounts">खाते</string>
+    <string name="settings_recently_deleted">हाल में हटाए गए</string>
+    <string name="settings_merchant_rules">सीखी हुई दुकानें</string>
+    <string name="settings_forget_learned">खाता ने जो सीखा है वह भुलाएँ</string>
+    <string name="settings_ai">एआई असिस्टेंट</string>
     <string name="settings_privacy">प्राइवेसी</string>
+    <string name="settings_subscription">खाता प्रो</string>
+    <string name="settings_help">मदद</string>
     <string name="settings_about">ऐप के बारे में</string>
+    <string name="settings_version">वर्शन %1$s</string>
+    <string name="settings_privacy_policy">प्राइवेसी पॉलिसी</string>
+    <string name="settings_terms">इस्तेमाल की शर्तें</string>
     <string name="settings_delete_all">मेरा सारा डेटा हटाएँ</string>
+    <string name="settings_delete_all_title">सब कुछ हटाएँ?</string>
     <string name="settings_delete_all_body">यह इस फ़ोन से हर खाता, लेन-देन, बजट और लक्ष्य हमेशा के लिए हटा देगा। यह वापस नहीं आएगा। पहले बैकअप बना लें।</string>
+    <string name="settings_delete_all_confirm">हाँ, सब कुछ हटाएँ</string>
+    <string name="settings_delete_all_done">सारा डेटा हटा दिया गया</string>
 
     <!-- Privacy -->
     <string name="privacy_title">प्राइवेसी</string>
     <string name="privacy_summary">खाता इसलिए बनाया गया है कि आपका वित्तीय डेटा आपके फ़ोन में ही रहे।</string>
     <string name="privacy_stored_title">इस फ़ोन में क्या रखा है</string>
+    <string name="privacy_stored_body">आपके खाते, लेन-देन, बजट, लक्ष्य और सेटिंग्स। यह सब ऐप के प्राइवेट स्टोरेज में है, जिसे कोई और ऐप नहीं पढ़ सकता।</string>
     <string name="privacy_local_title">आपके फ़ोन पर क्या होता है</string>
+    <string name="privacy_local_body">हर हिसाब, हर जानकारी, श्रेणी के सुझाव, लिखकर एंट्री करना और बैंक SMS पढ़ना। इनमें से किसी को भी इंटरनेट की ज़रूरत नहीं।</string>
     <string name="privacy_leaves_title">फ़ोन से क्या बाहर जा सकता है</string>
     <string name="privacy_leaves_none">फ़िलहाल: कुछ नहीं।</string>
+    <string name="privacy_leaves_ads">विज्ञापन के अनुरोध, अगर आप फ़्री प्लान पर हैं। इनमें आपका वित्तीय डेटा शामिल नहीं होता।</string>
+    <string name="privacy_leaves_billing">Google Play के साथ ख़रीद की जाँच, अगर आपने सब्सक्राइब किया है।</string>
+    <string name="privacy_leaves_ai">आपका सवाल और जवाब देने के लिए ज़रूरी आंकड़े, सिर्फ़ तब जब आप क्लाउड एआई चालू करें।</string>
     <string name="privacy_never_title">क्या कभी बाहर नहीं जाता</string>
     <string name="privacy_never_body">आपकी राशि, दुकानें, बैलेंस, खाता नंबर और बैंक मैसेज। ये न हमें भेजे जाते हैं, न किसी और को।</string>
+    <string name="privacy_controls_title">आपके नियंत्रण</string>
+    <string name="privacy_analytics">उपयोग आँकड़े</string>
+    <string name="privacy_analytics_help">कौन-से फ़ीचर इस्तेमाल होते हैं, इसकी बिना पहचान वाली गिनती। कभी राशि, दुकान या बैलेंस नहीं। डिफ़ॉल्ट रूप से बंद।</string>
+    <string name="privacy_crash_reporting">क्रैश रिपोर्ट</string>
+    <string name="privacy_crash_help">क्रैश ठीक करने में मदद करता है। इसमें आपका वित्तीय डेटा कभी शामिल नहीं होता। डिफ़ॉल्ट रूप से बंद।</string>
+    <string name="privacy_cloud_ai">क्लाउड एआई प्रोसेसिंग</string>
+    <string name="privacy_cloud_ai_help">असिस्टेंट को क्लाउड मॉडल इस्तेमाल करने देता है। डिफ़ॉल्ट रूप से बंद; फ़ोन पर चलने वाला असिस्टेंट इसके बिना भी काम करता है।</string>
+    <string name="privacy_sms_access">बैंक SMS पढ़ें</string>
+    <string name="privacy_sms_help">आपके फ़ोन पर ही पढ़े जाते हैं, कभी अपलोड नहीं होते। डिफ़ॉल्ट रूप से बंद।</string>
+    <string name="privacy_sms_permission_denied">SMS की अनुमति नहीं दी गई। इसे चालू करने के लिए फ़ोन की ऐप सेटिंग्स में जाकर अनुमति दें।</string>
+    <string name="action_open_settings">सेटिंग्स खोलें</string>
+    <string name="privacy_export_data">सब कुछ एक्सपोर्ट करें</string>
+    <string name="privacy_delete_data">सब कुछ हटाएँ</string>
     <string name="privacy_no_account">खाता में कोई अकाउंट या साइन-इन नहीं है। कोई सर्वर आपका डेटा नहीं रखता।</string>
 
     <!-- Lock -->
@@ -558,26 +719,48 @@
     <string name="lock_unlock">अनलॉक करें</string>
     <string name="lock_enter_pin">अपना पिन डालें</string>
     <string name="lock_set_pin">पिन सेट करें</string>
+    <string name="lock_pin_length_hint">%1$d से %2$d अंकों के बीच। खाता खोलने के लिए यह चाहिए होगा, इसलिए ऐसा कुछ चुनें जो भूलें नहीं।</string>
     <string name="lock_confirm_pin">दोबारा डालें</string>
     <string name="lock_pin_mismatch">दोनों पिन अलग हैं। फिर कोशिश करें।</string>
     <string name="lock_pin_incorrect">ग़लत पिन</string>
+    <string name="lock_pin_attempts_left">ग़लत पिन। रुकने से पहले %1$d कोशिश बाकी।</string>
+    <string name="lock_locked_out">बहुत बार कोशिश हो गई। %1$d सेकंड बाद फिर कोशिश करें।</string>
     <string name="lock_use_pin">पिन इस्तेमाल करें</string>
     <string name="lock_use_biometric">फ़िंगरप्रिंट इस्तेमाल करें</string>
+    <string name="lock_storage_unavailable">इस डिवाइस पर सुरक्षित स्टोरेज उपलब्ध नहीं है, इसलिए पिन सेट नहीं की जा सकती।</string>
     <string name="biometric_prompt_title">खाता अनलॉक करें</string>
     <string name="biometric_prompt_subtitle">पुष्टि करें कि यह आप ही हैं</string>
+    <string name="biometric_not_enrolled">पहले अपने फ़ोन की सेटिंग्स में फ़िंगरप्रिंट या स्क्रीन लॉक सेट करें।</string>
+    <string name="biometric_no_hardware">इस डिवाइस में फ़िंगरप्रिंट अनलॉक नहीं है। इसकी बजाय पिन इस्तेमाल करें।</string>
 
     <!-- Notifications -->
     <string name="notification_channel_bills">बिल की याद</string>
+    <string name="notification_channel_bills_description">बिल, ईएमआई या सब्सक्रिप्शन की देय तारीख़ से पहले याद</string>
     <string name="notification_channel_budgets">बजट चेतावनी</string>
+    <string name="notification_channel_budgets_description">जब कोई बजट लगभग ख़त्म हो या बजट से ज़्यादा खर्च हो जाए</string>
     <string name="notification_channel_reminders">रोज़ की याद</string>
+    <string name="notification_channel_reminders_description">आज का खर्च दर्ज करने की याद</string>
+    <string name="notification_bill_title">%1$s की देय तारीख़ %2$s है</string>
+    <string name="notification_bill_body">%1$s</string>
+    <string name="notification_budget_title">%1$s बजट</string>
+    <string name="notification_budget_nearing">आपने इसका %1$d%% इस्तेमाल कर लिया है</string>
+    <string name="notification_budget_over">आप %1$s ज़्यादा खर्च कर चुके हैं</string>
+    <string name="notification_import_title">नया लेन-देन, पुष्टि बाकी है</string>
+    <string name="notification_import_body">%1$s · %2$s</string>
+    <string name="notification_import_unknown_merchant">अनजान दुकान</string>
     <string name="notification_daily_title">आज कुछ दर्ज करना है?</string>
     <string name="notification_daily_body">बस दो सेकंड लगेंगे।</string>
     <string name="notification_action_record">दर्ज करें</string>
+    <string name="notification_action_dismiss">हटाएँ</string>
+    <string name="notification_permission_rationale">नोटिफ़िकेशन की अनुमति दें ताकि हम बिल की देय तारीख़ से पहले याद दिला सकें।</string>
 
     <!-- Misc -->
     <string name="more_title">और</string>
     <string name="demo_badge">सैंपल डेटा</string>
     <string name="offline_badge">ऑफ़लाइन</string>
+    <string name="currency_inr">भारतीय रुपया</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी</string>
 
     <!-- Counted phrases -->
     <plurals name="categories_subcategory_count">
@@ -642,6 +825,10 @@
     </plurals>
 
     <!-- Settings cluster -->
+    <string name="settings_demo_mode">सैंपल डेटा</string>
+    <string name="settings_demo_enable">सैंपल डेटा लोड करें</string>
+    <string name="settings_demo_disable">सैंपल डेटा हटाएँ</string>
+    <string name="settings_demo_body">ऐप में असली जैसा सैंपल डेटा भर देता है ताकि आप देख सकें कि यह कैसे काम करता है। हर जगह साफ़ लेबल किया गया है, और एक टैप में हटाया जा सकता है।</string>
     <string name="settings_demo_loaded">सैंपल डेटा लोड हो गया। यह हर जगह लेबल किया गया है और कभी भी हटाया जा सकता है।</string>
     <string name="settings_demo_cleared">सैंपल डेटा हटा दिया गया।</string>
     <string name="settings_demo_blocked">आपके अपने रिकॉर्ड पहले से हैं। पहले उन्हें हटाएँ, या सैंपल डेटा नए इंस्टॉल पर देखें।</string>
@@ -693,6 +880,30 @@
     <string name="backup_csv_account_matching">जिन पंक्तियों में ऐसा खाता है जो यहाँ नहीं है, उन्हें ग़लत खाते में डालने के बजाय छोड़ दिया जाता है।</string>
 
     <!-- Paywall -->
+    <string name="paywall_title">खाता प्रो</string>
+    <string name="paywall_subtitle">खाता का मुख्य हिस्सा हमेशा फ़्री है। प्रो में अतिरिक्त सुविधाएँ हैं।</string>
+    <string name="paywall_free_always">लेन-देन दर्ज करना, बजट, लक्ष्य, रिपोर्ट और अपना डेटा एक्सपोर्ट करना — यह हमेशा फ़्री रहेगा।</string>
+    <string name="paywall_restore">ख़रीद वापस लाएँ</string>
+    <string name="paywall_unavailable">इस डिवाइस पर ख़रीद उपलब्ध नहीं है।</string>
+    <string name="paywall_pending">आपका भुगतान प्रोसेस हो रहा है। यूपीआई से इसमें थोड़ा समय लग सकता है — क्लियर होते ही चीज़ें अनलॉक हो जाएँगी।</string>
+    <string name="paywall_current_plan">आपका प्लान</string>
+    <string name="paywall_manage">सब्सक्रिप्शन प्रबंधित करें</string>
+    <string name="paywall_tier_free">फ़्री</string>
+    <string name="paywall_tier_pro">प्रो</string>
+    <string name="paywall_tier_ai_pro">एआई प्रो</string>
+    <string name="paywall_tier_family">फ़ैमिली</string>
+    <string name="paywall_feature_ad_free">कोई विज्ञापन नहीं</string>
+    <string name="paywall_feature_unlimited_accounts">असीमित खाते</string>
+    <string name="paywall_feature_advanced_reports">एडवांस्ड रिपोर्ट</string>
+    <string name="paywall_feature_receipts">रसीद अटैचमेंट</string>
+    <string name="paywall_feature_scheduled_backup">शेड्यूल्ड बैकअप</string>
+    <string name="paywall_feature_rollover">बजट रोलओवर</string>
+    <string name="paywall_feature_ai_assistant">क्लाउड एआई असिस्टेंट</string>
+    <string name="paywall_feature_ai_insights">एआई से बेहतर जानकारी</string>
+    <string name="paywall_feature_ai_categorisation">स्मार्ट श्रेणीकरण</string>
+    <string name="paywall_feature_shared">साझा घरेलू हिसाब</string>
+    <string name="paywall_feature_family_budgets">फ़ैमिली बजट</string>
+    <string name="paywall_feature_shared_goals">साझा लक्ष्य</string>
     <string name="paywall_feature_custom_ranges">कोई भी तारीख़ सीमा</string>
     <string name="paywall_feature_dashboard">डैशबोर्ड अपने हिसाब से</string>
     <string name="paywall_feature_included">शामिल है</string>

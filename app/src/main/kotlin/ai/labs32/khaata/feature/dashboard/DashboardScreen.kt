@@ -49,6 +49,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -85,6 +87,7 @@ import ai.labs32.khaata.feature.shared.TransactionRow
 import ai.labs32.khaata.feature.shared.UpcomingRow
 import ai.labs32.khaata.feature.shared.budgetStatusLabel
 import ai.labs32.khaata.feature.shared.budgetStatusColor
+import ai.labs32.khaata.feature.shared.chartMoneyFormatter
 import ai.labs32.khaata.navigation.Routes
 
 /**
@@ -306,8 +309,12 @@ private fun DashboardHeader(
                         )
                         Spacer(Modifier.width(6.dp))
                         if (state.amountsHidden) {
+                            val hiddenDescription = stringResource(R.string.a11y_amount_hidden)
                             Text(
                                 text = "••••",
+                                modifier = Modifier.clearAndSetSemantics {
+                                    contentDescription = hiddenDescription
+                                },
                                 style = MaterialTheme.typography.labelLarge,
                                 color = Color.White,
                             )
@@ -823,14 +830,7 @@ private fun CategoryBreakdownCard(state: DashboardUiState, onSeeAll: () -> Unit)
             ChartLegend(
                 modifier = Modifier.weight(1f),
                 slices = slices,
-                valueFormatter = { value ->
-                    MoneyFormatter.compact(
-                        ai.labs32.khaata.core.money.Money.of(
-                            java.math.BigDecimal(value.toDouble()),
-                            state.currency,
-                        ),
-                    )
-                },
+                valueFormatter = chartMoneyFormatter(state.currency),
             )
         }
     }
@@ -973,7 +973,14 @@ private fun AccountsCard(state: DashboardUiState, onSeeAll: () -> Unit) {
                     }
                 }
                 if (state.amountsHidden) {
-                    Text("••••", style = MaterialTheme.typography.bodyMedium)
+                    val hiddenDescription = stringResource(R.string.a11y_amount_hidden)
+                    Text(
+                        text = "••••",
+                        modifier = Modifier.clearAndSetSemantics {
+                            contentDescription = hiddenDescription
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 } else {
                     MoneyText(
                         money = balance.displayBalance,
@@ -1034,14 +1041,7 @@ private fun NetWorthTrendCard(state: DashboardUiState) {
         Spacer(Modifier.height(KhaataTheme.spacing.default))
         TrendLineChart(
             points = state.netWorthTrend.map { (label, value) -> ChartPoint(label, value) },
-            valueFormatter = { value ->
-                MoneyFormatter.compact(
-                    ai.labs32.khaata.core.money.Money.of(
-                        java.math.BigDecimal(value.toDouble()),
-                        state.currency,
-                    ),
-                )
-            },
+            valueFormatter = chartMoneyFormatter(state.currency),
         )
     }
 }

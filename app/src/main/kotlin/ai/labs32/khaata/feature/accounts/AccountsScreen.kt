@@ -45,6 +45,7 @@ import ai.labs32.khaata.core.ui.components.CardHeader
 import ai.labs32.khaata.core.ui.components.ColorBadge
 import ai.labs32.khaata.core.ui.components.EmptyState
 import ai.labs32.khaata.core.ui.components.KhaataCard
+import ai.labs32.khaata.core.ui.components.KhaataCardTier
 import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.components.MoneyText
 import ai.labs32.khaata.core.ui.components.StatPair
@@ -200,7 +201,7 @@ fun AccountsScreen(
 private fun NetWorthCard(state: AccountsUiState) {
     val netWorth = state.netWorth ?: return
 
-    KhaataCard {
+    KhaataCard(tier = KhaataCardTier.Emphasized) {
         CardHeader(title = stringResource(R.string.dashboard_net_worth))
         Spacer(Modifier.height(KhaataTheme.spacing.small))
 

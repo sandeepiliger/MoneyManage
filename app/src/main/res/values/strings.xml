@@ -164,6 +164,10 @@
     <string name="transaction_date">Date</string>
     <string name="transaction_tags">Tags</string>
     <string name="transaction_receipt">Receipt</string>
+    <string name="transaction_reference">Reference</string>
+    <string name="transaction_recorded_via">Recorded via</string>
+    <string name="transaction_added">Added</string>
+    <string name="transaction_last_edited">Last edited</string>
     <string name="transaction_add_title">Add transaction</string>
     <string name="transaction_edit_title">Edit transaction</string>
     <string name="transaction_deleted">Transaction deleted</string>
@@ -581,6 +585,7 @@
     <!-- ==================== AI assistant ==================== -->
     <string name="ai_title">Ask about your money</string>
     <string name="ai_input_hint">Ask a question</string>
+    <string name="ai_send_question">Send question</string>
     <string name="ai_suggestions">Try asking</string>
     <string name="ai_thinking">Working it out</string>
     <string name="ai_not_understood">We did not follow that. Try one of these:</string>
@@ -660,6 +665,7 @@
     <string name="settings_lock_off">Off</string>
     <string name="settings_lock_biometric">Fingerprint or face</string>
     <string name="settings_lock_pin">PIN</string>
+    <string name="settings_change_pin">Change PIN</string>
     <string name="settings_lock_after">Lock after</string>
     <string name="settings_lock_immediately">Immediately</string>
     <string name="settings_lock_seconds">%1$d seconds</string>
@@ -788,6 +794,7 @@
     <string name="lock_unlock">Unlock</string>
     <string name="lock_enter_pin">Enter your PIN</string>
     <string name="lock_set_pin">Set a PIN</string>
+    <string name="lock_pin_length_hint">Between %1$d and %2$d digits. You will need this to open Khaata, so pick something you will not forget.</string>
     <string name="lock_confirm_pin">Enter it again</string>
     <string name="lock_pin_mismatch">Those did not match. Try again.</string>
     <string name="lock_pin_incorrect">Incorrect PIN</string>

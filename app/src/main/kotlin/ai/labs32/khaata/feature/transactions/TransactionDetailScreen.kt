@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
@@ -229,6 +230,7 @@ private fun DetailContent(state: TransactionDetailUiState, modifier: Modifier = 
     val transaction = state.transaction ?: return
     val spacing = KhaataTheme.spacing
     val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy") }
+    val timestampFormatter = remember { DateTimeFormatter.ofPattern("d MMM yyyy") }
 
     Column(
         modifier
@@ -280,7 +282,7 @@ private fun DetailContent(state: TransactionDetailUiState, modifier: Modifier = 
                 )
             }
             transaction.referenceNumber?.let {
-                DetailRow(label = "Reference", value = it)
+                DetailRow(label = stringResource(R.string.transaction_reference), value = it)
             }
         }
 
@@ -290,17 +292,17 @@ private fun DetailContent(state: TransactionDetailUiState, modifier: Modifier = 
         // user typed, so where it came from is stated rather than hidden.
         KhaataCard {
             DetailRow(
-                label = "Recorded via",
+                label = stringResource(R.string.transaction_recorded_via),
                 value = sourceLabel(transaction.source),
             )
             DetailRow(
-                label = "Added",
-                value = transaction.createdAt.toString().substringBefore('T'),
+                label = stringResource(R.string.transaction_added),
+                value = transaction.createdAt.atZone(ZoneId.systemDefault()).format(timestampFormatter),
             )
             if (transaction.updatedAt != transaction.createdAt) {
                 DetailRow(
-                    label = "Last edited",
-                    value = transaction.updatedAt.toString().substringBefore('T'),
+                    label = stringResource(R.string.transaction_last_edited),
+                    value = transaction.updatedAt.atZone(ZoneId.systemDefault()).format(timestampFormatter),
                 )
             }
         }

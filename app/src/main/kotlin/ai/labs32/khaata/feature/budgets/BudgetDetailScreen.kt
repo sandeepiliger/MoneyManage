@@ -45,6 +45,7 @@ import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.ui.components.CardHeader
 import ai.labs32.khaata.core.ui.components.KhaataCard
+import ai.labs32.khaata.core.ui.components.KhaataCardTier
 import ai.labs32.khaata.core.ui.components.LabelledProgress
 import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.components.MoneyText
@@ -231,7 +232,7 @@ fun BudgetDetailScreen(
 private fun BudgetSummaryCard(progress: BudgetProgress) {
     val statusColor = budgetStatusColor(progress.status)
 
-    KhaataCard {
+    KhaataCard(tier = KhaataCardTier.Emphasized) {
         CardHeader(
             title = budgetStatusLabel(progress.status),
             subtitle = pluralStringResource(

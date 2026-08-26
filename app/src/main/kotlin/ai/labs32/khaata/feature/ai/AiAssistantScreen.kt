@@ -352,7 +352,7 @@ private fun QuestionInput(
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.Send,
-                contentDescription = stringResource(R.string.action_next),
+                contentDescription = stringResource(R.string.ai_send_question),
                 tint = if (enabled && value.isNotBlank()) {
                     MaterialTheme.colorScheme.primary
                 } else {

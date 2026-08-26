@@ -1019,7 +1019,7 @@ private fun ColorPicker(
                 val isSelected = seed == selected
                 Box(
                     Modifier
-                        .size(44.dp)
+                        .size(KhaataTheme.spacing.touchTarget)
                         .clickable { onSelect(seed) }
                         // Colour alone cannot convey which swatch is chosen — a user who cannot
                         // distinguish two of them would have no way to tell. The selected one

@@ -47,6 +47,7 @@ import ai.labs32.khaata.core.model.Category
 import ai.labs32.khaata.core.model.MerchantRule
 import ai.labs32.khaata.core.ui.components.EmptyState
 import ai.labs32.khaata.core.ui.components.KhaataCard
+import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -209,7 +210,9 @@ fun MerchantRulesScreen(
 
             Spacer(Modifier.height(KhaataTheme.spacing.small))
 
-            if (state.rules.isEmpty() && !state.isLoading) {
+            if (state.isLoading) {
+                LoadingState()
+            } else if (state.rules.isEmpty()) {
                 EmptyState(
                     icon = Icons.Outlined.Storefront,
                     title = stringResource(R.string.merchant_rules_empty_title),

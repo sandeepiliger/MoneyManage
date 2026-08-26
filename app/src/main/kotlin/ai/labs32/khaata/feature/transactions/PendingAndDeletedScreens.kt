@@ -44,6 +44,7 @@ import ai.labs32.khaata.core.model.Category
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.ui.components.EmptyState
 import ai.labs32.khaata.core.ui.components.KhaataCard
+import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
@@ -151,7 +152,12 @@ fun PendingImportsScreen(
             )
         },
     ) { padding ->
-        if (state.transactions.isEmpty() && !state.isLoading) {
+        if (state.isLoading) {
+            LoadingState(modifier = Modifier.padding(padding))
+            return@Scaffold
+        }
+
+        if (state.transactions.isEmpty()) {
             EmptyState(
                 icon = Icons.Outlined.MarkEmailRead,
                 title = stringResource(R.string.sms_no_messages),
@@ -272,7 +278,12 @@ fun RecentlyDeletedScreen(
             )
         },
     ) { padding ->
-        if (state.transactions.isEmpty() && !state.isLoading) {
+        if (state.isLoading) {
+            LoadingState(modifier = Modifier.padding(padding))
+            return@Scaffold
+        }
+
+        if (state.transactions.isEmpty()) {
             EmptyState(
                 icon = Icons.Outlined.DeleteOutline,
                 title = stringResource(R.string.settings_recently_deleted),

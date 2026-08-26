@@ -153,7 +153,7 @@ private fun LoanCard(status: LoanStatus, onClick: () -> Unit) {
 
         Spacer(Modifier.height(KhaataTheme.spacing.default))
 
-        MoneyText(money = status.outstandingPrincipal, style = KhaataTextStyles.amountHero)
+        MoneyText(money = status.outstandingPrincipal, style = KhaataTextStyles.amountLarge)
         Text(
             text = stringResource(R.string.loans_outstanding),
             style = MaterialTheme.typography.labelMedium,
