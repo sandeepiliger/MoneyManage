@@ -76,13 +76,18 @@ class CategoryRepository @Inject constructor(
      */
     suspend fun suggestFor(merchant: String?): CategorySuggestion? {
         if (merchant.isNullOrBlank()) return null
-        val rules = merchantRuleDao.getAll().map { it.toDomain() }
+        // merchantKey is uniquely indexed (Entities.kt), so at most one row can ever match this
+        // merchant — a point lookup replaces what used to be a full-table scan on every
+        // category-suggestion call.
+        val key = ai.labs32.khaata.core.categorize.MerchantNormaliser.normalise(merchant) ?: return null
+        val rules = listOfNotNull(merchantRuleDao.findByMerchantKey(key)?.toDomain())
         return categorizer.suggest(merchant, rules)
     }
 
     /** Records an explicit user choice, which outranks every learned and seeded rule. */
     suspend fun setUserRule(merchant: String, categoryId: String, accountId: String?) {
-        val rules = merchantRuleDao.getAll().map { it.toDomain() }
+        val key = ai.labs32.khaata.core.categorize.MerchantNormaliser.normalise(merchant) ?: return
+        val rules = listOfNotNull(merchantRuleDao.findByMerchantKey(key)?.toDomain())
         val updated = categorizer.learn(
             merchantText = merchant,
             categoryId = categoryId,
@@ -91,7 +96,6 @@ class CategoryRepository @Inject constructor(
             isExplicitUserChoice = true,
             newRuleId = { UUID.randomUUID().toString() },
         )
-        val key = ai.labs32.khaata.core.categorize.MerchantNormaliser.normalise(merchant) ?: return
         updated.firstOrNull { it.merchantKey == key }?.let { merchantRuleDao.upsert(it.toEntity()) }
     }
 
@@ -103,6 +107,14 @@ class CategoryRepository @Inject constructor(
     suspend fun forgetLearnedRules() = merchantRuleDao.deleteLearned()
 
     suspend fun userDefinedRuleCount(): Int = merchantRuleDao.userDefinedCount()
+
+    /** Every merchant rule, for a backup export. Bulk by nature — there is no smaller unit to ask for. */
+    suspend fun getAllMerchantRules(): List<ai.labs32.khaata.core.model.MerchantRule> =
+        merchantRuleDao.getAll().map { it.toDomain() }
+
+    /** Applies a backup's merchant rules in one write. */
+    suspend fun upsertAllMerchantRules(rules: List<ai.labs32.khaata.core.model.MerchantRule>) =
+        merchantRuleDao.upsertAll(rules.map { it.toEntity() })
 
     // ---- Writes ------------------------------------------------------------------------------
 

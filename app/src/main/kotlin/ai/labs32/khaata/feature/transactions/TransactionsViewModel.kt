@@ -15,7 +15,6 @@ import ai.labs32.khaata.core.model.TransactionType
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyParser
-import ai.labs32.khaata.core.money.sumOfMoney
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
@@ -113,15 +112,12 @@ class TransactionsViewModel @Inject constructor(
             _uiState.update { it.copy(filteredTotal = null, filteredCount = 0) }
             return
         }
-        val matching = transactionRepository.listFiltered(filter)
+        // Summed and counted by SQL (TransactionDao.filteredSpendTotal) rather than loading every
+        // matching row into memory — this list can be years of history.
         val currency = _uiState.value.currency
+        val result = transactionRepository.filteredTotal(filter, currency)
         _uiState.update {
-            it.copy(
-                filteredTotal = matching
-                    .filter { transaction -> transaction.countsAsSpending }
-                    .sumOfMoney(currency) { transaction -> transaction.amount },
-                filteredCount = matching.size,
-            )
+            it.copy(filteredTotal = result.total, filteredCount = result.count)
         }
     }
 

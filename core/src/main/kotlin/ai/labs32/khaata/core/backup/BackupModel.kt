@@ -64,6 +64,8 @@ data class BackupFile(
         loanCount = loans.size,
         investmentCount = investments.size,
         creditCardCount = creditCards.size,
+        tagCount = tags.size,
+        merchantRuleCount = merchantRules.size,
     )
 
     companion object {
@@ -86,10 +88,13 @@ data class BackupSummary(
     val loanCount: Int,
     val investmentCount: Int,
     val creditCardCount: Int,
+    val tagCount: Int,
+    val merchantRuleCount: Int,
 ) {
     val totalRecords: Int
         get() = accountCount + transactionCount + categoryCount + budgetCount + goalCount +
-            recurringCount + subscriptionCount + loanCount + investmentCount + creditCardCount
+            recurringCount + subscriptionCount + loanCount + investmentCount + creditCardCount +
+            tagCount + merchantRuleCount
 }
 
 /**

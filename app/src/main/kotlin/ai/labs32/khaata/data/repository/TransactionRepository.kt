@@ -246,6 +246,34 @@ class TransactionRepository @Inject constructor(
 
     // ---- Aggregates --------------------------------------------------------------------------
 
+    /**
+     * The total and row count for [filter], computed by SQL rather than by loading every matching
+     * row into memory and summing in Kotlin. Mirrors [listFiltered]'s WHERE clause exactly — see
+     * `TransactionDao.filteredSpendTotal`.
+     */
+    suspend fun filteredTotal(
+        filter: TransactionFilter,
+        currency: ai.labs32.khaata.core.money.CurrencyCode,
+    ): FilteredTransactionTotal {
+        val row = transactionDao.filteredSpendTotal(
+            fromDate = filter.dateRange?.start,
+            toDate = filter.dateRange?.endInclusive,
+            type = filter.type,
+            accountIds = filter.accountIds.toList(),
+            accountCount = filter.accountIds.size,
+            categoryIds = filter.categoryIds.toList(),
+            categoryCount = filter.categoryIds.size,
+            minMinor = filter.minAmount?.minorUnits,
+            maxMinor = filter.maxAmount?.minorUnits,
+            query = filter.query?.takeIf { it.isNotBlank() },
+            tagPattern = filter.tagPattern(),
+        )
+        return FilteredTransactionTotal(
+            total = Money.ofMinor(row.totalMinor, currency),
+            count = row.count,
+        )
+    }
+
     fun observeTotalSpend(range: DateRange, currency: ai.labs32.khaata.core.money.CurrencyCode): Flow<Money> =
         transactionDao.observeTotalSpend(range.start, range.endInclusive)
             .map { Money.ofMinor(it, currency) }
@@ -284,7 +312,9 @@ class TransactionRepository @Inject constructor(
         isExplicitUserChoice: Boolean,
     ) {
         val key = MerchantNormaliser.normalise(merchant) ?: return
-        val existing = merchantRuleDao.getAll().map { it.toDomain() }
+        // merchantKey is uniquely indexed (Entities.kt), so at most one row can ever match — a
+        // point lookup replaces what used to be a full-table scan on every transaction save.
+        val existing = listOfNotNull(merchantRuleDao.findByMerchantKey(key)?.toDomain())
         val updated = categorizer.learn(
             merchantText = merchant,
             categoryId = categoryId,
@@ -362,3 +392,6 @@ data class TransactionFilter(
 }
 
 enum class TransactionSort { DATE_DESC, AMOUNT_DESC }
+
+/** Result of [TransactionRepository.filteredTotal]. */
+data class FilteredTransactionTotal(val total: Money, val count: Int)

@@ -214,6 +214,53 @@ interface TransactionDao {
         tagPattern: String?,
     ): List<TransactionEntity>
 
+    /**
+     * Aggregate counterpart of [listFiltered]: the same WHERE clause, but summed and counted by
+     * SQLite instead of loaded row-by-row into Kotlin.
+     *
+     * The spend sum mirrors `Transaction.countsAsSpending` (`isEffective && type == EXPENSE`):
+     * `isEffective` is already guaranteed by the `deletedAt IS NULL AND isPending = 0` clause
+     * below, so only the type comparison needs restating here. [count] mirrors the unfiltered
+     * row count `listFiltered(...).size` — every matching row, not just expenses.
+     */
+    @Query(
+        """
+        SELECT
+          COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount_minor_units ELSE 0 END), 0) AS totalMinor,
+          COUNT(*) AS count
+        FROM transactions
+        WHERE deletedAt IS NULL
+          AND isPending = 0
+          AND (:fromDate IS NULL OR occurredOn >= :fromDate)
+          AND (:toDate IS NULL OR occurredOn <= :toDate)
+          AND (:type IS NULL OR type = :type)
+          AND (:accountCount = 0 OR accountId IN (:accountIds) OR transferAccountId IN (:accountIds))
+          AND (:categoryCount = 0 OR categoryId IN (:categoryIds))
+          AND (:minMinor IS NULL OR amount_minor_units >= :minMinor)
+          AND (:maxMinor IS NULL OR amount_minor_units <= :maxMinor)
+          AND (
+                :query IS NULL
+                OR merchant LIKE '%' || :query || '%'
+                OR note LIKE '%' || :query || '%'
+                OR referenceNumber LIKE '%' || :query || '%'
+              )
+          AND (:tagPattern IS NULL OR tags LIKE '%' || :tagPattern || '%')
+        """,
+    )
+    suspend fun filteredSpendTotal(
+        fromDate: LocalDate?,
+        toDate: LocalDate?,
+        type: TransactionType?,
+        accountIds: List<String>,
+        accountCount: Int,
+        categoryIds: List<String>,
+        categoryCount: Int,
+        minMinor: Long?,
+        maxMinor: Long?,
+        query: String?,
+        tagPattern: String?,
+    ): FilteredTotalRow
+
     // ---- Aggregates --------------------------------------------------------------------------
 
     /**
@@ -414,4 +461,9 @@ data class DailyTotalRow(
     val date: LocalDate,
     val totalMinor: Long,
     val transactionCount: Int,
+)
+
+data class FilteredTotalRow(
+    val totalMinor: Long,
+    val count: Int,
 )

@@ -3,6 +3,7 @@ package ai.labs32.khaata.data.backup
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.room.withTransaction
 import ai.labs32.khaata.BuildConfig
 import ai.labs32.khaata.core.backup.BackupFile
 import ai.labs32.khaata.core.backup.BackupReadResult
@@ -15,6 +16,10 @@ import ai.labs32.khaata.core.backup.ImportMode
 import ai.labs32.khaata.core.backup.ImportResult
 import ai.labs32.khaata.core.backup.RejectedRecord
 import ai.labs32.khaata.core.common.KhaataClock
+import ai.labs32.khaata.core.database.KhaataDatabase
+import ai.labs32.khaata.core.database.dao.TagDao
+import ai.labs32.khaata.core.database.toDomain
+import ai.labs32.khaata.core.database.toEntity
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.model.TransactionSource
@@ -65,6 +70,7 @@ data class ExportedFile(
 @Singleton
 class BackupManager @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val database: KhaataDatabase,
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
     private val accountRepository: AccountRepository,
@@ -77,6 +83,9 @@ class BackupManager @Inject constructor(
     private val loanRepository: LoanRepository,
     private val investmentRepository: InvestmentRepository,
     private val goalRepository: GoalRepository,
+    // No TagRepository exists yet; TagDao already exposes the bulk getAll/upsertAll/deleteAll a
+    // backup needs, so it is injected directly rather than inventing a repository for one caller.
+    private val tagDao: TagDao,
     private val clock: KhaataClock,
 ) {
 
@@ -101,7 +110,8 @@ class BackupManager @Inject constructor(
             loans = loanRepository.getAll(),
             investments = investmentRepository.getAll(),
             goals = goalRepository.getAll(),
-            merchantRules = emptyList(),
+            tags = tagDao.getAll().map { it.toDomain() },
+            merchantRules = categoryRepository.getAllMerchantRules(),
         )
     }
 
@@ -205,6 +215,18 @@ class BackupManager @Inject constructor(
      * a constraint half-way and leaves the database in a state neither old nor new.
      */
     suspend fun restore(backup: BackupFile, mode: ImportMode): Result<ImportResult> = runCatchingIo {
+        // Deletes and upserts across a dozen tables used to be independent, separately-committed
+        // operations: a throw partway through (bad data, OOM, process death) left some tables
+        // wiped and others half-populated, with no way back. Wrapping the whole thing in one Room
+        // transaction makes it all-or-nothing — a failure rolls back to exactly the state before
+        // restore() was called.
+        database.withTransaction {
+            restoreLocked(backup, mode)
+        }
+    }
+
+    /** The body of [restore], run inside the single transaction that makes it atomic. */
+    private suspend fun restoreLocked(backup: BackupFile, mode: ImportMode): ImportResult {
         if (mode == ImportMode.REPLACE_ALL) {
             transactionRepository.deleteAll()
             budgetRepository.deleteAll()
@@ -215,7 +237,8 @@ class BackupManager @Inject constructor(
             investmentRepository.deleteAll()
             goalRepository.deleteAll()
             accountRepository.deleteAll()
-            categoryRepository.deleteAll()
+            categoryRepository.deleteAll() // also clears merchant rules; see CategoryRepository.deleteAll
+            tagDao.deleteAll()
         }
 
         val existingAccountIds = accountRepository.getAll().map { it.id }.toSet()
@@ -278,6 +301,10 @@ class BackupManager @Inject constructor(
         imported["investments"] = backup.investments.size
         goalRepository.upsertAll(backup.goals)
         imported["goals"] = backup.goals.size
+        tagDao.upsertAll(backup.tags.map { it.toEntity() })
+        imported["tags"] = backup.tags.size
+        categoryRepository.upsertAllMerchantRules(backup.merchantRules)
+        imported["merchantRules"] = backup.merchantRules.size
 
         // Settings and the profile are restored only on a full replace. Merging someone's old
         // theme and lock preference into a working install is surprising and rarely wanted.
@@ -289,7 +316,7 @@ class BackupManager @Inject constructor(
         // record anything.
         categoryRepository.seedIfEmpty()
 
-        ImportResult(mode = mode, imported = imported, skipped = skipped, rejected = rejected)
+        return ImportResult(mode = mode, imported = imported, skipped = skipped, rejected = rejected)
     }
 
     /**
@@ -316,6 +343,21 @@ class BackupManager @Inject constructor(
                 )
                 continue
             }
+            // A CSV row's Currency column is independent of the account it is filed against — a
+            // bank export in USD dropped onto an INR account. TransactionDao's balance queries sum
+            // amount_minor_units with no currency predicate, so writing that row through would add
+            // USD minor units straight into an INR balance: a $100.00 row becomes -₹100.00 against
+            // what was really a ~₹8,300 expense, off by roughly 98% with nothing to flag it.
+            if (row.amount.currency != account.currency) {
+                rejected += RejectedRecord(
+                    recordType = "transaction",
+                    recordId = "line ${row.lineNumber}",
+                    reason = "Amount is in ${row.amount.currency.code} but \"${account.name}\" " +
+                        "is in ${account.currency.code}.",
+                )
+                continue
+            }
+
             val transferAccount = row.transferAccountName?.lowercase()?.let { accountsByName[it] }
             val category = row.categoryName?.lowercase()?.let { categoriesByName[it] }
 
