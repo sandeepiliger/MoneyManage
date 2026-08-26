@@ -69,6 +69,21 @@ class AppLockManager @Inject constructor(
     val isPinSet: Boolean get() = preferences?.contains(KEY_PIN_HASH) == true
 
     /**
+     * How many digits the configured PIN has, or null when none is set.
+     *
+     * Stored so the lock screen knows exactly when an entry is complete. Without it the UI has to
+     * guess, and the only way to guess is to submit at every length from the minimum up -- which
+     * asks [verifyPin] to check prefixes that can never match, and every one of those counts as a
+     * failed attempt against the lockout backoff. A user typing their own six-digit PIN correctly
+     * would burn two failures each time and lock themselves out after three normal unlocks.
+     *
+     * The length is far less sensitive than the PIN itself, and it lives in the same encrypted
+     * store; an attacker who can read it can already read the hash and salt beside it.
+     */
+    val configuredPinLength: Int?
+        get() = preferences?.getInt(KEY_PIN_LENGTH, 0)?.takeIf { it > 0 }
+
+    /**
      * Sets or replaces the PIN.
      *
      * @return false when secure storage is unavailable, so the UI can tell the user rather than
@@ -87,6 +102,7 @@ class AppLockManager @Inject constructor(
         prefs.edit()
             .putString(KEY_PIN_HASH, hash.toHexString())
             .putString(KEY_PIN_SALT, salt.toHexString())
+            .putInt(KEY_PIN_LENGTH, pin.length)
             .putInt(KEY_FAILED_ATTEMPTS, 0)
             .remove(KEY_LOCKOUT_UNTIL)
             .apply()
@@ -97,6 +113,7 @@ class AppLockManager @Inject constructor(
         preferences?.edit()
             ?.remove(KEY_PIN_HASH)
             ?.remove(KEY_PIN_SALT)
+            ?.remove(KEY_PIN_LENGTH)
             ?.remove(KEY_FAILED_ATTEMPTS)
             ?.remove(KEY_LOCKOUT_UNTIL)
             ?.apply()
@@ -220,6 +237,7 @@ class AppLockManager @Inject constructor(
         const val PREFS_NAME = "khaata_secure"
         const val KEY_PIN_HASH = "pin_hash"
         const val KEY_PIN_SALT = "pin_salt"
+        const val KEY_PIN_LENGTH = "pin_length"
         const val KEY_FAILED_ATTEMPTS = "failed_attempts"
         const val KEY_LOCKOUT_UNTIL = "lockout_until"
 

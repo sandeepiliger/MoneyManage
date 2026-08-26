@@ -67,6 +67,8 @@ data class SettingsUiState(
     val availableLockModes: List<AppLockMode> = listOf(AppLockMode.OFF, AppLockMode.PIN),
     val biometricUnavailableReason: String? = null,
     val showDeleteAllDialog: Boolean = false,
+    /** True while the PIN-creation dialog is up. PIN mode is not saved until it succeeds. */
+    val showPinSetup: Boolean = false,
     val message: SettingsMessage? = null,
 )
 
@@ -132,6 +134,7 @@ class SettingsViewModel @Inject constructor(
                     fresh.copy(
                         hasRealData = current.hasRealData,
                         showDeleteAllDialog = current.showDeleteAllDialog,
+                        showPinSetup = current.showPinSetup,
                         message = current.message,
                     )
                 }
@@ -186,11 +189,43 @@ class SettingsViewModel @Inject constructor(
      * rather than silently reviving a PIN the user set months ago and has forgotten.
      */
     fun setLockMode(mode: AppLockMode) {
+        // PIN mode needs a PIN before it means anything. Persisting the mode without one would
+        // send the user to a lock screen whose keypad can never succeed -- and on a device with
+        // no enrolled biometric there is no other way in, so the only escape is clearing app
+        // data, which destroys the ledger the lock exists to protect. The mode is therefore
+        // saved by completePinSetup, only once a PIN is actually stored.
+        if (mode == AppLockMode.PIN && !appLockManager.isPinSet) {
+            _uiState.update { it.copy(showPinSetup = true) }
+            return
+        }
+
         viewModelScope.launch {
             if (mode == AppLockMode.OFF) appLockManager.clearPin()
             settingsRepository.setLockMode(mode)
             analytics.track(AnalyticsEvent.AppLockChanged(enabled = mode != AppLockMode.OFF))
         }
+    }
+
+    /** Opens the PIN dialog to replace an existing PIN. */
+    fun changePin() = _uiState.update { it.copy(showPinSetup = true) }
+
+    fun dismissPinSetup() = _uiState.update { it.copy(showPinSetup = false) }
+
+    /**
+     * Stores [pin] and switches the lock to PIN mode.
+     *
+     * @return false when secure storage is unavailable, leaving both the PIN and the lock mode
+     *   unchanged so the dialog can say so rather than closing on a lock that was never set.
+     */
+    fun completePinSetup(pin: String): Boolean {
+        if (!appLockManager.setPin(pin)) return false
+
+        _uiState.update { it.copy(showPinSetup = false) }
+        viewModelScope.launch {
+            settingsRepository.setLockMode(AppLockMode.PIN)
+            analytics.track(AnalyticsEvent.AppLockChanged(enabled = true))
+        }
+        return true
     }
 
     fun setLockAfterSeconds(seconds: Int) {

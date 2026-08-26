@@ -65,6 +65,7 @@ import ai.labs32.khaata.core.model.ThemePreference
 import ai.labs32.khaata.core.ui.components.KhaataCard
 import ai.labs32.khaata.core.ui.components.SettingsRow
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import ai.labs32.khaata.feature.lock.PinSetupDialog
 import ai.labs32.khaata.navigation.Routes
 
 /**
@@ -178,6 +179,13 @@ fun SettingsScreen(
                     optionLabel = { lockModeLabel(it) },
                     onSelect = viewModel::setLockMode,
                 )
+                if (state.lockMode == AppLockMode.PIN) {
+                    SettingsRow(
+                        title = stringResource(R.string.settings_change_pin),
+                        icon = Icons.Default.Lock,
+                        onClick = viewModel::changePin,
+                    )
+                }
                 if (state.lockMode != AppLockMode.OFF) {
                     ChipRow(
                         label = stringResource(R.string.settings_lock_after),
@@ -382,6 +390,13 @@ fun SettingsScreen(
             },
         )
     }
+
+    if (state.showPinSetup) {
+        PinSetupDialog(
+            onConfirm = viewModel::completePinSetup,
+            onDismiss = viewModel::dismissPinSetup,
+        )
+    }
 }
 
 @Composable
@@ -393,7 +408,6 @@ private fun PlanCard(tier: Tier, onOpenPaywall: () -> Unit) {
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
             )
-            Spacer(Modifier.height(0.dp))
             Column(Modifier.padding(start = KhaataTheme.spacing.medium)) {
                 Text(
                     text = stringResource(R.string.paywall_current_plan),

@@ -13,6 +13,7 @@ import ai.labs32.khaata.core.model.AppLockMode
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyParser
+import ai.labs32.khaata.core.security.AppLockManager
 import ai.labs32.khaata.core.sms.SmsPermission
 import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import ai.labs32.khaata.data.demo.DemoDataManager
@@ -72,6 +73,8 @@ data class OnboardingUiState(
     val budgetCategoryId: String? = null,
 
     val lockMode: AppLockMode = AppLockMode.OFF,
+    /** True while the PIN-creation dialog is up. PIN mode is not selected until it succeeds. */
+    val showPinSetup: Boolean = false,
     val smsImportEnabled: Boolean = false,
     val notificationsRequested: Boolean = false,
 
@@ -100,6 +103,7 @@ class OnboardingViewModel @Inject constructor(
     private val budgetRepository: BudgetRepository,
     private val settingsRepository: SettingsRepository,
     private val demoDataManager: DemoDataManager,
+    private val appLockManager: AppLockManager,
     private val analytics: AnalyticsProvider,
     private val clock: KhaataClock,
 ) : ViewModel() {
@@ -180,7 +184,29 @@ class OnboardingViewModel @Inject constructor(
     fun onBudgetCategoryChange(categoryId: String) =
         _uiState.update { it.copy(budgetCategoryId = categoryId) }
 
-    fun onLockModeChange(mode: AppLockMode) = _uiState.update { it.copy(lockMode = mode) }
+    /**
+     * Records the chosen lock mode.
+     *
+     * Choosing PIN opens the creation dialog first and only selects the mode once a PIN actually
+     * exists -- otherwise setup would finish with PIN mode saved and no PIN behind it, sending
+     * the user to a keypad that can never succeed.
+     */
+    fun onLockModeChange(mode: AppLockMode) {
+        if (mode == AppLockMode.PIN && !appLockManager.isPinSet) {
+            _uiState.update { it.copy(showPinSetup = true) }
+            return
+        }
+        _uiState.update { it.copy(lockMode = mode) }
+    }
+
+    fun dismissPinSetup() = _uiState.update { it.copy(showPinSetup = false) }
+
+    /** @return false when secure storage is unavailable, leaving the mode unchanged. */
+    fun completePinSetup(pin: String): Boolean {
+        if (!appLockManager.setPin(pin)) return false
+        _uiState.update { it.copy(lockMode = AppLockMode.PIN, showPinSetup = false) }
+        return true
+    }
 
     fun onSmsImportChange(enabled: Boolean) = _uiState.update { it.copy(smsImportEnabled = enabled) }
 
@@ -241,7 +267,15 @@ class OnboardingViewModel @Inject constructor(
                     budgetsCreated = 1
                 }
 
-                settingsRepository.setLockMode(state.lockMode)
+                // Belt and braces: PIN mode is only reachable through completePinSetup, but a lock
+                // the user cannot open is severe enough -- clearing app data is the only way out,
+                // and it destroys the ledger -- to be worth refusing to persist unconditionally.
+                val lockMode = if (state.lockMode == AppLockMode.PIN && !appLockManager.isPinSet) {
+                    AppLockMode.OFF
+                } else {
+                    state.lockMode
+                }
+                settingsRepository.setLockMode(lockMode)
 
                 // The receiver is declared disabled in the manifest, so persisting the flag alone
                 // would leave a user who opted in here with no SMS receiver registered and no

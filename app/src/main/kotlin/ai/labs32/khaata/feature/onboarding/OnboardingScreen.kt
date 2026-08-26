@@ -63,6 +63,7 @@ import ai.labs32.khaata.core.model.AppLockMode
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import ai.labs32.khaata.feature.lock.PinSetupDialog
 
 /**
  * First-run setup.
@@ -146,6 +147,13 @@ fun OnboardingScreen(
                 )
             }
         }
+    }
+
+    if (state.showPinSetup) {
+        PinSetupDialog(
+            onConfirm = viewModel::completePinSetup,
+            onDismiss = viewModel::dismissPinSetup,
+        )
     }
 }
 

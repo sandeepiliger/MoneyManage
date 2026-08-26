@@ -28,6 +28,11 @@ data class LockUiState(
     val isPinConfigured: Boolean = false,
     val canUseBiometric: Boolean = false,
     val isUnlocked: Boolean = false,
+    /**
+     * Digits in the configured PIN, so entry can be submitted exactly once it is complete.
+     * Null when no PIN is set, or when one predates the length being recorded.
+     */
+    val pinLength: Int? = null,
 )
 
 @HiltViewModel
@@ -48,6 +53,7 @@ class LockViewModel @Inject constructor(
             it.copy(
                 mode = mode,
                 isPinConfigured = pinConfigured,
+                pinLength = appLockManager.configuredPinLength,
                 canUseBiometric = biometricAvailable,
                 // Fall back to PIN entry when biometrics are unavailable, so a device with a
                 // broken sensor is not simply stuck on a lock screen.
@@ -90,9 +96,19 @@ class LockViewModel @Inject constructor(
         val updated = state.pin + digit
         _uiState.update { it.copy(pin = updated, message = null) }
 
-        // Verified once the PIN reaches the minimum length, so a four-digit PIN needs no extra
-        // confirm tap. Longer PINs are checked at each further digit.
-        if (updated.length >= MIN_PIN_LENGTH) verify(updated)
+        // Submitted only when the entry is exactly as long as the stored PIN, so no confirm tap
+        // is needed at any length.
+        //
+        // It deliberately does NOT submit at every length from the minimum up. Each submission
+        // that does not match counts as a failed attempt inside AppLockManager and feeds the
+        // lockout backoff, so checking prefixes would charge a user two failures for every
+        // correct six-digit entry and lock them out after about three normal unlocks.
+        //
+        // When the length is unknown -- a PIN stored before it was recorded -- fall back to the
+        // maximum rather than the minimum. Waiting too long merely needs more digits typed;
+        // submitting too early silently accrues failures against a user doing nothing wrong.
+        val target = state.pinLength ?: MAX_PIN_LENGTH
+        if (updated.length >= target) verify(updated)
     }
 
     fun onPinBackspace() = _uiState.update { it.copy(pin = it.pin.dropLast(1), message = null) }
@@ -103,18 +119,14 @@ class LockViewModel @Inject constructor(
                 it.copy(isUnlocked = true, pin = "", message = null)
             }
 
-            is PinVerification.Incorrect -> {
-                // Only clear and complain once the entry is as long as it could usefully be;
-                // otherwise a five-digit PIN would be rejected after four digits.
-                if (pin.length >= MAX_PIN_LENGTH) {
-                    _uiState.update {
-                        it.copy(
-                            pin = "",
-                            message = context.getString(R.string.lock_pin_incorrect),
-                            isLockedOut = result.lockedOutSeconds > 0,
-                        )
-                    }
-                }
+            // Every submission is now a complete entry rather than a prefix, so a rejection is
+            // always a genuinely wrong PIN and is always worth reporting.
+            is PinVerification.Incorrect -> _uiState.update {
+                it.copy(
+                    pin = "",
+                    message = context.getString(R.string.lock_pin_incorrect),
+                    isLockedOut = result.lockedOutSeconds > 0,
+                )
             }
 
             is PinVerification.LockedOut -> _uiState.update {
@@ -143,7 +155,7 @@ class LockViewModel @Inject constructor(
     fun switchToBiometric() = _uiState.update { it.copy(showPinEntry = false, message = null) }
 
     private companion object {
-        const val MIN_PIN_LENGTH = 4
+        /** Upper bound on entry length; the exact length comes from [LockUiState.pinLength]. */
         const val MAX_PIN_LENGTH = 8
     }
 }
