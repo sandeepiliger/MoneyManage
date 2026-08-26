@@ -89,12 +89,14 @@ import ai.labs32.khaata.data.repository.TransactionRepository
 import ai.labs32.khaata.feature.ads.AdSlot
 import ai.labs32.khaata.feature.shared.chartMoneyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -185,6 +187,13 @@ class ReportsViewModel @Inject constructor(
                     )
                 }
             }
+            // Everything above runs off the main thread. The six CashflowAnalyzer passes in the
+            // combine block above each walk the whole transaction list, and for THIS_YEAR or
+            // FINANCIAL_YEAR that list is a year or more of ledger -- without this they execute
+            // on the collector's dispatcher, which viewModelScope makes Main. Room's Flow
+            // invalidation is also table-level, so this re-runs on ANY write to transactions
+            // anywhere in the app, not just ones inside the selected range.
+            .flowOn(Dispatchers.Default)
             .onEach { fresh ->
                 // The export fields belong to a separate, user-triggered action rather than to
                 // the ledger snapshot this flow re-emits on every change, so a database write

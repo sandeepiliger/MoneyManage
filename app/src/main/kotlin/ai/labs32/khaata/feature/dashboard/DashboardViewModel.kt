@@ -35,6 +35,7 @@ import ai.labs32.khaata.core.calc.SubscriptionTotals
 import ai.labs32.khaata.data.repository.SubscriptionRepository
 import ai.labs32.khaata.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -180,6 +181,9 @@ class DashboardViewModel @Inject constructor(
                 KhaataLog.e(TAG, "Dashboard core stream failed", error)
                 emit(_uiState.value.copy(isLoading = false, error = DATA_ERROR))
             }
+            // BalanceCalculator and CashflowAnalyzer both fold the whole month's ledger; without
+            // this they do it on the collector's dispatcher, which viewModelScope makes Main.
+            .flowOn(Dispatchers.Default)
             .onEach { _uiState.value = it }
             .launchIn(viewModelScope)
     }
@@ -218,6 +222,7 @@ class DashboardViewModel @Inject constructor(
             .catch { error ->
                 KhaataLog.e(TAG, "Dashboard secondary stream failed", error)
             }
+            .flowOn(Dispatchers.Default)
             .onEach { data ->
                 _uiState.update {
                     it.copy(
@@ -277,7 +282,9 @@ class DashboardViewModel @Inject constructor(
      * like it did nothing, since regenerating would hand back the exact same insight.
      */
     private fun refreshInsight() {
-        viewModelScope.launch {
+        // InsightEngine.generate walks three months of transactions against every budget,
+        // category and subscription. viewModelScope is Main, so it needs moving off it.
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val today = clock.today()
                 val window = DateRange(today.minusMonths(2).withDayOfMonth(1), today)
@@ -325,7 +332,9 @@ class DashboardViewModel @Inject constructor(
     private fun periodKey(): String = clock.today().let { "${it.year}-${it.monthValue}" }
 
     private fun refreshNetWorthTrend() {
-        viewModelScope.launch {
+        // Six months of balances recomputed from the full transaction history -- same reasoning
+        // as refreshInsight above.
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val today = clock.today()
                 val months = DateRange.trailingMonths(today, TREND_MONTHS)

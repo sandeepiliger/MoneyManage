@@ -10,8 +10,10 @@ import ai.labs32.khaata.core.database.toEntity
 import ai.labs32.khaata.core.model.Budget
 import ai.labs32.khaata.core.model.BudgetPeriod
 import ai.labs32.khaata.core.money.Money
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.util.UUID
@@ -69,6 +71,11 @@ class BudgetRepository @Inject constructor(
                 BudgetCalculator.evaluate(budget, transactions, today, rollup, carried)
             }
         }
+            // Each budget is evaluated by folding the whole evaluation window, and rollover
+            // budgets fold the preceding period a second time. Switched here rather than at each
+            // ViewModel so every consumer of this flow gets it off the main thread, including the
+            // ones that collect it directly.
+            .flowOn(Dispatchers.Default)
     }
 
     /** Only the budgets that need the user's attention, for the dashboard card. */

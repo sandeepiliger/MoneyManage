@@ -35,8 +35,10 @@ import ai.labs32.khaata.core.model.TransactionType
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.sumOfMoney
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import java.util.UUID
@@ -322,6 +324,9 @@ class CreditCardRepository @Inject constructor(
                 CreditCardCalculator.status(card, balance, transactions, today)
             }
         }
+            // Each card's status walks the statement window's transactions; off the main thread
+            // here so every consumer of this flow benefits rather than each ViewModel repeating it.
+            .flowOn(Dispatchers.Default)
     }
 
     suspend fun create(card: CreditCard): String {
@@ -365,7 +370,10 @@ class LoanRepository @Inject constructor(
     suspend fun findById(id: String): Loan? = loanDao.findById(id)?.toDomainOrNull()
 
     fun observeStatuses(): Flow<List<LoanStatus>> =
-        observeOpen().map { loans -> loans.map { LoanCalculator.status(it, clock.today()) } }
+        observeOpen()
+            .map { loans -> loans.map { LoanCalculator.status(it, clock.today()) } }
+            // Amortisation is recomputed per loan on every emission.
+            .flowOn(Dispatchers.Default)
 
     suspend fun statusFor(id: String): LoanStatus? =
         findById(id)?.let { LoanCalculator.status(it, clock.today()) }
@@ -439,7 +447,9 @@ class InvestmentRepository @Inject constructor(
     suspend fun findById(id: String): Investment? = investmentDao.findById(id)?.toDomainOrNull()
 
     fun observePortfolio(currency: CurrencyCode = CurrencyCode.DEFAULT): Flow<PortfolioSummary> =
-        observeOpen().map { InvestmentCalculator.portfolio(it, clock.today(), currency) }
+        observeOpen()
+            .map { InvestmentCalculator.portfolio(it, clock.today(), currency) }
+            .flowOn(Dispatchers.Default)
 
     suspend fun create(investment: Investment): String {
         val withId = investment.copy(id = investment.id.ifBlank { UUID.randomUUID().toString() })
