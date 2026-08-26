@@ -48,6 +48,39 @@ class BankSmsParserTest {
         assertThat(parsed.merchantKey).isEqualTo("rahul")
     }
 
+    @Test
+    fun `parses a bank-worded UPI sent debit`() {
+        // The shape a bank itself sends, as opposed to the UPI app's own confirmation below --
+        // "Sent" rather than "debited" as the direction word.
+        val parsed = parse(
+            "Sent Rs.500.00 From HDFC Bank A/C x4321 To john@okhdfcbank On 26-08-26 " +
+                "Ref 412345678999 Not You? Call 18002586161",
+        )!!
+
+        assertThat(parsed.type).isEqualTo(TransactionType.EXPENSE)
+        assertThat(parsed.amount).isEqualTo(Money.of("500"))
+        assertThat(parsed.accountSuffix).isEqualTo("4321")
+    }
+
+    @Test
+    fun `parses a UPI app's own 'you sent' confirmation, with no account suffix at all`() {
+        // GPay/PhonePe-style confirmations rarely quote a masked account -- they know it, but
+        // don't say it. Direction and amount must still be extracted from wording alone.
+        val parsed = parse("You sent ₹500 to John Doe using UPI. UPI transaction ID 412345678999.")!!
+
+        assertThat(parsed.type).isEqualTo(TransactionType.EXPENSE)
+        assertThat(parsed.amount).isEqualTo(Money.of("500"))
+        assertThat(parsed.accountSuffix).isNull()
+    }
+
+    @Test
+    fun `parses 'money sent successfully' phrasing`() {
+        val parsed = parse("Money sent successfully! Rs 500 to Jane via UPI. Txn ID 412345678999")!!
+
+        assertThat(parsed.type).isEqualTo(TransactionType.EXPENSE)
+        assertThat(parsed.amount).isEqualTo(Money.of("500"))
+    }
+
     // ---- Cards -------------------------------------------------------------------------------
 
     @Test

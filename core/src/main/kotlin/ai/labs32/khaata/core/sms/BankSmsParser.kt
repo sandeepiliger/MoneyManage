@@ -171,6 +171,25 @@ object BankSmsParser {
         )
     }
 
+    /**
+     * Why [parse] would reject [body], for diagnostic logging only.
+     *
+     * Every earlier round of "SMS import isn't working" reports ended in guessing at real-world
+     * message wording this module has never seen, because a rejection carried no reason a
+     * developer could act on -- only "returned null". This mirrors [parse]'s own gates, in the
+     * same order, so a `SmsReceiver`/`SmsImporter` log line can say which one actually tripped
+     * without the message body ever leaving the device, still less being pasted into a bug
+     * report. Call only when [parse] has already returned null for the same body.
+     */
+    fun diagnoseRejection(body: String): RejectionReason {
+        val lower = body.lowercase()
+        return when {
+            NON_TRANSACTION_MARKERS.any { lower.contains(it) } -> RejectionReason.NON_TRANSACTION_MARKER
+            detectDirection(lower) == null -> RejectionReason.NO_DIRECTION_WORD
+            else -> RejectionReason.NO_AMOUNT
+        }
+    }
+
     private fun detectDirection(lower: String): TransactionType? {
         val debitAt = DEBIT_WORDS.mapNotNull { indexOrNull(lower, it) }.minOrNull()
         val creditAt = CREDIT_WORDS.mapNotNull { indexOrNull(lower, it) }.minOrNull()
@@ -287,4 +306,16 @@ data class ParsedSms(
 /** The rail a payment travelled over, where the message says. */
 enum class PaymentRail {
     UPI, NEFT, IMPS, RTGS, ATM, POS, EMI, MANDATE, CHEQUE,
+}
+
+/** Which of [BankSmsParser.parse]'s gates rejected a message. See [BankSmsParser.diagnoseRejection]. */
+enum class RejectionReason {
+    /** Matched a phrase like "OTP" or "is due" — a real rejection, not a bug to chase. */
+    NON_TRANSACTION_MARKER,
+
+    /** No debit or credit word was found at all. */
+    NO_DIRECTION_WORD,
+
+    /** A direction word was found, but no `Rs`/`INR`/`₹`-marked amount was. */
+    NO_AMOUNT,
 }

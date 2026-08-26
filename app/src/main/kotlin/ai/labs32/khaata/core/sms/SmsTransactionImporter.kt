@@ -80,7 +80,13 @@ class SmsTransactionImporter @Inject constructor(
             receivedOn = clock.today(),
             sender = sender,
             currency = currency,
-        ) ?: return SmsImportOutcome.NotATransaction
+        )
+        if (parsed == null) {
+            // Never the body — only which gate rejected it, so "not detected" reports are
+            // diagnosable from logcat instead of another round of guessing at real-world wording.
+            KhaataLog.d(TAG, "Not a transaction: ${BankSmsParser.diagnoseRejection(body)}")
+            return SmsImportOutcome.NotATransaction
+        }
 
         val accounts = accountRepository.getAll().filterNot { it.isArchived }
         val account = matchAccount(parsed, accounts) ?: return SmsImportOutcome.NoMatchingAccount
