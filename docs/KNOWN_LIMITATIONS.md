@@ -4,25 +4,30 @@ Everything here is a real gap, stated plainly rather than left to be discovered.
 
 ## The big one
 
-**The `:app` module has never been compiled.**
+**No screen has ever rendered.**
 
-`dl.google.com` is blocked by the egress policy of the environment this was built in, so the
-Android Gradle Plugin, the Android SDK and every AndroidX artifact were unreachable. I confirmed
-this with `curl` and with `$HTTPS_PROXY/__agentproxy/status`, and did not route around it.
+The app now **compiles**. A GitHub Actions workflow (`.github/workflows/android-build.yml`)
+builds `:app:assembleDebug` and the R8-minified `:app:assembleRelease` on every push, against
+API 36, and both succeed. The development sandbox still has `dl.google.com` blocked by egress
+policy, so `:app` cannot be compiled there — CI is the only compiler, and it is the gate that
+matters.
 
-What follows from that:
+What that leaves:
 
-- `:app` has **not** been type-checked. Expect import errors, signature mismatches and Compose API
-  drift on the first real build. The code is written carefully and cross-referenced against the
-  actual declarations in this repository — I checked signatures as I went, and fixed several
-  mismatches that way — but "carefully written" is not "compiles".
-- Android **lint has not run**. `abortOnError = true`, so it must pass before a release.
-- **No screen has ever rendered.** Layouts, spacing and theming are unverified by eye.
-- The app-module tests are written but have **never executed**.
+- **Nobody has looked at this app.** Layouts, spacing, theming and every interaction are
+  unverified by eye. Compiling is not running.
+- Android **lint has never actually gated a build**. `abortOnError = true` and a `lint-baseline.xml`
+  is configured, but no baseline is committed; CI passes `-Dlint.baselines.continue=true`, which
+  generates one and continues instead of failing. Someone must commit a real baseline, or run lint
+  and fix what it finds, before the first release.
+- The app-module unit tests and the instrumentation tests are written but have **never executed** —
+  CI runs neither `testDebugUnitTest` nor `connectedAndroidTest`.
+- Play Billing has never connected and AdMob has never rendered; both need an internal-testing
+  track run.
 
-What *was* verified: `:core` compiles and **369 tests pass**, covering money arithmetic, budgets,
-loans, cards, recurrence, parsing, insights, backup and entitlements. That is the half where a bug
-is most expensive, and it is genuinely tested — see [TESTING.md](TESTING.md).
+What *is* verified: `:core` compiles and its tests pass on every CI run, covering money
+arithmetic, budgets, loans, cards, recurrence, parsing, insights, backup and entitlements. That is
+the half where a bug is most expensive — see [TESTING.md](TESTING.md).
 
 ---
 
@@ -34,7 +39,7 @@ is most expensive, and it is genuinely tested — see [TESTING.md](TESTING.md).
 | **No UMP consent flow** | Blocks an EEA/UK release with ads. Not required for India. |
 | **Receipt attachments** | `receipts` table and `RECEIPT_ATTACHMENTS` entitlement exist; there is no camera or file-picker UI behind them. |
 | **Scheduled backups** | The `SCHEDULED_BACKUP` entitlement exists; no worker performs one. Backup is manual only. |
-| **Family sharing** | The FAMILY tier's three features are named in `Feature` and priced on the paywall, but **nothing implements them.** Do not sell this tier until they exist. |
+| **Family sharing** | The FAMILY tier's three features are named in `Feature` but **nothing implements them.** They are listed in `Feature.UNSHIPPED`, so `isUnlocked` refuses them and `PaywallViewModel` drops any tier whose every feature is unshipped — the tier does not appear on the paywall and cannot be bought. Sharing a household ledger needs a server this app deliberately does not have, so this is not close. |
 | **Notification-based import** | `notificationImportEnabled` exists in settings; no `NotificationListenerService` is implemented. |
 | **Dashboard reordering** | Card order is stored and read; there is no drag-to-reorder UI. |
 | **Multi-currency** | `Money` is currency-typed and mixed arithmetic throws, but there are no exchange rates, so an account in a second currency cannot be summed into net worth. Single-currency in practice. |
@@ -50,8 +55,9 @@ do not exist is not a limitation, it is a refund.
 - **CSV import** matches accounts and categories by name and rejects rows whose account does not
   exist. There is no mapping UI to resolve them instead — a rejected row is reported, not fixable
   in-app.
-- **Hindi** covers 517 of 717 strings (72%). Missing keys fall back to English, which is
-  correct behaviour but means some screens are mixed.
+- **Hindi is complete** — all 764 string resources are translated (verified by name-diff against
+  `values/strings.xml`). It has not been reviewed by a native speaker in the running app, so
+  register and truncation on real screens are unverified.
 
 ## Not verified
 
@@ -92,10 +98,12 @@ Distinct from the above — these are decisions, not gaps.
 
 In order:
 
-1. Get `:app` compiling. Budget real time for it.
-2. Run lint, fix what it finds.
+1. **Run the app. Look at every screen.** Nobody has. This is the single largest unknown left.
+2. Commit a real lint baseline (or run lint and fix what it finds) so `abortOnError` actually
+   gates something.
 3. Run the instrumentation tests — particularly `TransactionAggregateParityTest`, which checks the
    thing most expensive to get wrong.
-4. Run the app. Look at every screen. Nobody has.
-5. Add Compose UI tests for the transaction-entry flow first; it is the one people use daily.
-6. Either implement the FAMILY tier or remove it from the paywall.
+4. Add Compose UI tests for the transaction-entry flow first; it is the one people use daily.
+5. Before any Play upload: real values in `secrets.properties` (the build now refuses to produce a
+   release artifact carrying placeholders), an upload keystore, the SMS Permissions Declaration,
+   and the Financial features declaration.

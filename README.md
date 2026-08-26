@@ -14,23 +14,24 @@ Read this before anything else in this file.
 
 | Area | State |
 | --- | --- |
-| `:core` (money, calculations, parsing, insights, backup, entitlements) | **Compiles and 369 tests pass**, verified in this environment |
-| `:app` (Room, repositories, Compose UI, DI, workers, billing, ads) | **Written, not compiled** — no Android SDK available here |
-| Android lint | Not run |
-| Instrumentation tests | Written, not run — no emulator or device |
+| `:core` (money, calculations, parsing, insights, backup, entitlements) | **Compiles and tests pass**, on every CI run |
+| `:app` (Room, repositories, Compose UI, DI, workers, billing, ads) | **Compiles** — debug and R8-minified release, on every CI run, against API 36 |
+| Ever run on a device or emulator | **No.** Not once. This is the largest remaining unknown |
+| Android lint | Configured with `abortOnError`, but no baseline is committed and CI bootstraps one with `-Dlint.baselines.continue=true` — so it has never actually gated a build |
+| Instrumentation tests and `:app` unit tests | Written, never executed — CI runs neither |
 | Play Store readiness | Not verified; see [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) |
 
-The Android toolchain could not be installed in the environment this was built in: `dl.google.com`
-is blocked by an egress policy, so AGP, the Android SDK and the AndroidX artifacts are unreachable.
-Rather than stopping, the project is split so that the half where a bug is most expensive — money
+The Android toolchain cannot be installed in the environment this is developed in: `dl.google.com`
+is blocked by an egress policy, so AGP, the Android SDK and the AndroidX artifacts are unreachable
+there. The project is therefore split so that the half where a bug is most expensive — money
 arithmetic, budget pacing, EMI amortisation, credit-card cycles, recurrence, SMS and
-natural-language parsing, insights, backup, entitlements — is a **pure-JVM module that genuinely
-compiles here and whose tests genuinely run and can fail.** That testing caught eleven real bugs
-during development.
+natural-language parsing, insights, backup, entitlements — is a **pure-JVM module that compiles
+locally and whose tests genuinely run and can fail.** That testing caught eleven real bugs during
+development.
 
-The Android half is production code, written to the same standard, but it is **not claimed to
-compile.** Expect to fix import and signature slips on the first build. Nothing in this repository
-should be read as a claim that the app has been run.
+The Android half is compiled by CI on every push — debug and R8-minified release, against API 36.
+What it has never been is **run**: no screen in this app has ever rendered on a device or an
+emulator. Nothing here should be read as a claim that it has.
 
 ---
 
