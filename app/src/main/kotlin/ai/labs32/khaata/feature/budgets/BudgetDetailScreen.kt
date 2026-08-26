@@ -28,6 +28,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -233,7 +234,11 @@ private fun BudgetSummaryCard(progress: BudgetProgress) {
     KhaataCard {
         CardHeader(
             title = budgetStatusLabel(progress.status),
-            subtitle = stringResource(R.string.budgets_days_left, progress.daysRemaining),
+            subtitle = pluralStringResource(
+                R.plurals.budgets_days_left,
+                progress.daysRemaining,
+                progress.daysRemaining,
+            ),
         )
         Spacer(Modifier.height(KhaataTheme.spacing.default))
 
