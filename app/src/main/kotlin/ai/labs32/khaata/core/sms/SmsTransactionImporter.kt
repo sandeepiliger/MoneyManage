@@ -17,6 +17,7 @@ import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import ai.labs32.khaata.data.repository.TransactionRepository
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -84,13 +85,23 @@ class SmsTransactionImporter @Inject constructor(
     private val clock: KhaataClock,
 ) {
 
-    suspend fun import(body: String, sender: String?): SmsImportOutcome {
+    /**
+     * @param receivedOn when the message arrived, used as the transaction date for messages whose
+     *   text carries none. Defaults to today, which is right for a message arriving live; a scan
+     *   of the existing inbox must pass each message's own timestamp instead, or a year of history
+     *   would all land on the day the user turned the feature on.
+     */
+    suspend fun import(
+        body: String,
+        sender: String?,
+        receivedOn: LocalDate = clock.today(),
+    ): SmsImportOutcome {
         if (!settingsRepository.current().smsImportEnabled) return SmsImportOutcome.NotEnabled
 
         val currency = profileRepository.currency()
         val parsed = BankSmsParser.parse(
             body = body,
-            receivedOn = clock.today(),
+            receivedOn = receivedOn,
             sender = sender,
             currency = currency,
         )

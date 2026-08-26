@@ -86,6 +86,14 @@ data class AppSettings(
     val dailyReminderMinuteOfDay: Int = 21 * 60,
     val hideAmountsWhenLocked: Boolean = true,
     val hasSeenPrivacyDashboard: Boolean = false,
+    /**
+     * Whether the existing SMS inbox has already been scanned once.
+     *
+     * The scan is a one-off catch-up, not something to repeat on every launch: it walks a year of
+     * messages, and re-running it would re-parse thousands of already-imported rows to discover
+     * nothing new.
+     */
+    val hasScannedSmsInbox: Boolean = false,
 ) {
     init {
         require(lockAfterSeconds in 0..3600) {

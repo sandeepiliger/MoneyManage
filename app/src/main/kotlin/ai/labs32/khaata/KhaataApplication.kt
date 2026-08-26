@@ -13,6 +13,7 @@ import ai.labs32.khaata.core.model.AppSettings
 import ai.labs32.khaata.core.notifications.KhaataNotifier
 import ai.labs32.khaata.core.notifications.NotificationChannels
 import ai.labs32.khaata.core.security.AppLockManager
+import ai.labs32.khaata.core.sms.SmsInboxScanner
 import ai.labs32.khaata.core.sms.SmsPermission
 import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import ai.labs32.khaata.core.work.WorkScheduler
@@ -49,6 +50,7 @@ class KhaataApplication : Application(), Configuration.Provider {
     @Inject lateinit var appLockManager: AppLockManager
     @Inject lateinit var workScheduler: WorkScheduler
     @Inject lateinit var notifier: KhaataNotifier
+    @Inject lateinit var smsInboxScanner: SmsInboxScanner
 
     /**
      * Scope for startup work.
@@ -102,6 +104,13 @@ class KhaataApplication : Application(), Configuration.Provider {
             reconcileNotificationSettings(settings)
 
             workScheduler.scheduleAll(settings)
+
+            // Catches up anyone who enabled SMS import before the inbox scan existed, and anyone
+            // whose scan was cut short by the process dying. Self-guarding and a no-op once done,
+            // so this costs a settings read on every later launch and nothing more. Last, because
+            // it is the slowest task here and nothing above should wait on it.
+            runCatching { smsInboxScanner.scanIfNeeded() }
+                .onFailure { KhaataLog.e(TAG, "Inbox scan failed", it) }
         }
     }
 

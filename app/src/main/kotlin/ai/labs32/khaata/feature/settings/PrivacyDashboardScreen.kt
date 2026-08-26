@@ -63,6 +63,7 @@ import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.EntitlementRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import ai.labs32.khaata.core.entitlement.Feature
+import ai.labs32.khaata.core.sms.SmsInboxScanner
 import ai.labs32.khaata.core.sms.SmsPermission
 import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -87,6 +88,7 @@ data class PrivacyUiState(
 class PrivacyDashboardViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
+    private val smsInboxScanner: SmsInboxScanner,
     entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
 
@@ -138,6 +140,11 @@ class PrivacyDashboardViewModel @Inject constructor(
             val effective = enabled && SmsPermission.isGranted(context)
             settingsRepository.setSmsImportEnabled(effective)
             SmsTransactionReceiver.setEnabled(context, effective)
+
+            // Catch up on what is already in the inbox. Without this the app shows nothing until
+            // the user's next transaction, even though the messages explaining the last year of
+            // their spending are already on the phone -- which reads as the feature not working.
+            if (effective) smsInboxScanner.scanIfNeeded()
         }
     }
 

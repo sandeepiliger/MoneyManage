@@ -97,6 +97,8 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setPrivacyDashboardSeen(seen: Boolean) = edit { it[Keys.PRIVACY_SEEN] = seen }
 
+    suspend fun setSmsInboxScanned(scanned: Boolean) = edit { it[Keys.SMS_INBOX_SCANNED] = scanned }
+
     // ---- Notifications -----------------------------------------------------------------------
 
     suspend fun setBudgetAlertsEnabled(enabled: Boolean) = edit { it[Keys.BUDGET_ALERTS] = enabled }
@@ -151,6 +153,7 @@ class SettingsRepository @Inject constructor(
             dailyReminderMinuteOfDay = this[Keys.DAILY_REMINDER_TIME] ?: (21 * 60),
             hideAmountsWhenLocked = this[Keys.HIDE_AMOUNTS] ?: true,
             hasSeenPrivacyDashboard = this[Keys.PRIVACY_SEEN] ?: false,
+            hasScannedSmsInbox = this[Keys.SMS_INBOX_SCANNED] ?: false,
         )
     }
 
@@ -171,5 +174,6 @@ class SettingsRepository @Inject constructor(
         val DAILY_REMINDER = booleanPreferencesKey("daily_reminder_enabled")
         val DAILY_REMINDER_TIME = intPreferencesKey("daily_reminder_minute")
         val PRIVACY_SEEN = booleanPreferencesKey("privacy_dashboard_seen")
+        val SMS_INBOX_SCANNED = booleanPreferencesKey("sms_inbox_scanned")
     }
 }

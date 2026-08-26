@@ -14,6 +14,7 @@ import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyParser
 import ai.labs32.khaata.core.security.AppLockManager
+import ai.labs32.khaata.core.sms.SmsInboxScanner
 import ai.labs32.khaata.core.sms.SmsPermission
 import ai.labs32.khaata.core.sms.SmsTransactionReceiver
 import ai.labs32.khaata.data.demo.DemoDataManager
@@ -104,6 +105,7 @@ class OnboardingViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val demoDataManager: DemoDataManager,
     private val appLockManager: AppLockManager,
+    private val smsInboxScanner: SmsInboxScanner,
     private val analytics: AnalyticsProvider,
     private val clock: KhaataClock,
 ) : ViewModel() {
@@ -294,6 +296,15 @@ class OnboardingViewModel @Inject constructor(
                 )
 
                 _uiState.update { it.copy(isSaving = false, isFinished = true) }
+
+                // After the UI is released, not before: the scan walks a year of messages, and
+                // holding the finish button through it would make setup feel broken. It stages
+                // into the pending queue, so whatever it finds is waiting by the time the user
+                // looks -- and if it is cut short, the next launch's catch-up finishes the job.
+                if (smsEnabled) {
+                    runCatching { smsInboxScanner.scanIfNeeded() }
+                        .onFailure { KhaataLog.e(TAG, "Inbox scan after onboarding failed", it) }
+                }
             } catch (error: Exception) {
                 KhaataLog.e(TAG, "Onboarding completion failed", error)
                 _uiState.update {
