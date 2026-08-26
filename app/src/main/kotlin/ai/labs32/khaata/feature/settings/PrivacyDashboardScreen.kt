@@ -1,7 +1,9 @@
 package ai.labs32.khaata.feature.settings
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -188,11 +190,26 @@ fun PrivacyDashboardScreen(
     // the launcher's callback fires immediately with everything false -- so a denial (of either
     // kind) needs its own explanation. Leaving the switch to just snap back to off with nothing
     // said is the same silent-failure shape as the bug this permission handling was added to fix.
+    // Asked for straight after SMS access is granted, because a staged import the user is never
+    // told about is indistinguishable from SMS reading not working at all. POST_NOTIFICATIONS is
+    // otherwise only requested by the three reminder toggles in Settings -- which a user who came
+    // here for SMS import alone never touches -- so notifyPendingImport was silently returning
+    // false for exactly the people who had just switched the feature on.
+    //
+    // Declining is a fine outcome and not worth a second nag: imports still stage, they just
+    // arrive quietly in Pending rather than announcing themselves.
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { }
+
     val smsPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
     ) { grants ->
         val granted = grants.values.all { it }
         viewModel.setSmsImport(granted)
+        if (granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
         if (!granted) {
             coroutineScope.launch {
                 val result = snackbarHostState.showSnackbar(

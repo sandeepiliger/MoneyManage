@@ -114,20 +114,30 @@ class SmsTransactionImporter @Inject constructor(
     /**
      * Finds the account a message refers to.
      *
-     * Matched on the masked digits the bank quotes ("a/c XX4821"). When the message quotes no
-     * digits, the match is attempted only if the user has exactly one non-archived account that
-     * could plausibly hold it — with two or more, there is no safe guess and the import is
-     * refused instead.
+     * Matched on the masked digits the bank quotes ("a/c XX4821") when that is possible, and
+     * otherwise on there being exactly one account it could be.
+     *
+     * The third case below is the one that matters in practice. Almost every Indian bank SMS
+     * quotes some digits, and onboarding never asks for an account's last four -- so requiring a
+     * digit match meant the common setup (one account, no masked digits recorded) matched nothing
+     * and every message was refused. The feature looked dead for the default configuration.
+     *
+     * The safety property is kept where it actually applies: if any account *does* declare masked
+     * digits, the user has told us how to tell them apart, so a message quoting digits that match
+     * none of them is a real mismatch and is still refused rather than guessed at. Only when there
+     * is nothing to discriminate on do we fall back to "there is only one account this can be".
      */
     private fun matchAccount(parsed: ParsedSms, accounts: List<Account>): Account? {
         val suffix = parsed.accountSuffix
-        if (!suffix.isNullOrBlank()) {
-            val matches = accounts.filter { account ->
-                account.maskedIdentifier?.takeLast(suffix.length)?.equals(suffix, ignoreCase = true) == true
-            }
-            return matches.singleOrNull()
+        if (suffix.isNullOrBlank()) return accounts.singleOrNull()
+
+        val matches = accounts.filter { account ->
+            account.maskedIdentifier?.takeLast(suffix.length)?.equals(suffix, ignoreCase = true) == true
         }
-        return accounts.singleOrNull()
+        if (matches.isNotEmpty()) return matches.singleOrNull()
+
+        val noneDeclareDigits = accounts.none { !it.maskedIdentifier.isNullOrBlank() }
+        return if (noneDeclareDigits) accounts.singleOrNull() else null
     }
 
     private companion object {

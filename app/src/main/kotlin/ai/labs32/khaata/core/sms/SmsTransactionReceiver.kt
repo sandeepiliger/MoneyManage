@@ -76,7 +76,14 @@ class SmsTransactionReceiver : BroadcastReceiver() {
                     SmsImportOutcome.NotATransaction -> KhaataLog.d(TAG, "Not a transaction")
                     SmsImportOutcome.NotEnabled -> KhaataLog.d(TAG, "SMS import is not enabled")
                     SmsImportOutcome.Duplicate -> KhaataLog.d(TAG, "Duplicate, skipped")
-                    SmsImportOutcome.NoMatchingAccount -> KhaataLog.d(TAG, "No account matched")
+
+                    // The one quiet outcome worth breaking silence for: a real payment was
+                    // recognised and then dropped because no account claimed it. Rate-limited to
+                    // one a day inside the notifier.
+                    SmsImportOutcome.NoMatchingAccount -> {
+                        KhaataLog.d(TAG, "No account matched")
+                        notifier.notifyImportNeedsAccount()
+                    }
                 }
             } catch (error: Exception) {
                 // Never the message body — only that something went wrong handling one.

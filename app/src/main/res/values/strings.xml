@@ -814,6 +814,8 @@
     <string name="notification_channel_bills_description">Reminders before a bill, EMI or subscription is due</string>
     <string name="notification_channel_budgets">Budget alerts</string>
     <string name="notification_channel_budgets_description">When a budget is nearly used or overspent</string>
+    <string name="notification_channel_imports">Transactions to confirm</string>
+    <string name="notification_channel_imports_description">Payments read from bank messages, waiting for you to confirm them.</string>
     <string name="notification_channel_reminders">Daily reminders</string>
     <string name="notification_channel_reminders_description">A nudge to record what you spent today</string>
     <string name="notification_bill_title">%1$s is due %2$s</string>
@@ -824,6 +826,8 @@
     <string name="notification_import_title">New transaction to confirm</string>
     <string name="notification_import_body">%1$s · %2$s</string>
     <string name="notification_import_unknown_merchant">Unknown merchant</string>
+    <string name="notification_import_no_account_title">A payment could not be filed</string>
+    <string name="notification_import_no_account_body">We read a bank message but could not tell which of your accounts it belongs to. Add the last four digits to your account to match these automatically.</string>
     <string name="notification_daily_title">Anything to record today?</string>
     <string name="notification_daily_body">Takes a couple of seconds.</string>
     <string name="notification_action_record">Record it</string>

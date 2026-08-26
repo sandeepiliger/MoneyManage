@@ -738,6 +738,8 @@
     <string name="notification_channel_bills_description">बिल, ईएमआई या सब्सक्रिप्शन की देय तारीख़ से पहले याद</string>
     <string name="notification_channel_budgets">बजट चेतावनी</string>
     <string name="notification_channel_budgets_description">जब कोई बजट लगभग ख़त्म हो या बजट से ज़्यादा खर्च हो जाए</string>
+    <string name="notification_channel_imports">पुष्टि के लिए लेन-देन</string>
+    <string name="notification_channel_imports_description">बैंक संदेशों से पढ़े गए भुगतान, जिनकी पुष्टि आपको करनी है।</string>
     <string name="notification_channel_reminders">रोज़ की याद</string>
     <string name="notification_channel_reminders_description">आज का खर्च दर्ज करने की याद</string>
     <string name="notification_bill_title">%1$s की देय तारीख़ %2$s है</string>
@@ -748,6 +750,8 @@
     <string name="notification_import_title">नया लेन-देन, पुष्टि बाकी है</string>
     <string name="notification_import_body">%1$s · %2$s</string>
     <string name="notification_import_unknown_merchant">अनजान दुकान</string>
+    <string name="notification_import_no_account_title">एक भुगतान दर्ज नहीं हो सका</string>
+    <string name="notification_import_no_account_body">बैंक का संदेश पढ़ा गया, लेकिन यह पता नहीं चला कि वह आपके किस खाते का है। अपने खाते में आख़िरी चार अंक जोड़ें ताकि ये अपने आप मिल जाएँ।</string>
     <string name="notification_daily_title">आज कुछ दर्ज करना है?</string>
     <string name="notification_daily_body">बस दो सेकंड लगेंगे।</string>
     <string name="notification_action_record">दर्ज करें</string>

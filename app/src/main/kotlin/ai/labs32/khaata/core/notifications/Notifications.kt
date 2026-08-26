@@ -44,6 +44,20 @@ object NotificationChannels {
     const val BUDGETS = "khaata_budgets"
     const val REMINDERS = "khaata_reminders"
 
+    /**
+     * Bank messages staged for confirmation.
+     *
+     * Separate from [REMINDERS] rather than reusing it. That channel is IMPORTANCE_LOW with the
+     * badge off, which is right for a habit nudge and wrong for this: a transaction waiting to be
+     * confirmed would sit silently in the shade with nothing on the launcher icon, so a user who
+     * did not go looking saw nothing and reasonably concluded SMS reading was not working.
+     *
+     * A separate channel also lets someone mute daily nudges without muting money, and a new id
+     * is the only way to get the new importance -- Android will not let an existing channel's
+     * importance be raised.
+     */
+    const val IMPORTS = "khaata_imports"
+
     fun createAll(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
@@ -67,6 +81,21 @@ object NotificationChannels {
                 NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
                 description = context.getString(R.string.notification_channel_budgets_description)
+                setShowBadge(true)
+            },
+        )
+
+        manager.createNotificationChannel(
+            NotificationChannel(
+                IMPORTS,
+                context.getString(R.string.notification_channel_imports),
+                // DEFAULT so it carries a badge and is actually noticed. The trade-off is a second
+                // sound just after the bank's own SMS tone; if that reads as too much, lower this
+                // to IMPORTANCE_LOW but keep setShowBadge(true) -- the badge is what stops a
+                // staged transaction going unseen.
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = context.getString(R.string.notification_channel_imports_description)
                 setShowBadge(true)
             },
         )
@@ -207,7 +236,7 @@ class KhaataNotifier @Inject constructor(
         if (notificationLogDao.exists(dedupeKey)) return false
 
         val title = context.getString(R.string.notification_import_title)
-        val notification = baseBuilder(NotificationChannels.REMINDERS)
+        val notification = baseBuilder(NotificationChannels.IMPORTS)
             .setContentTitle(title)
             .setContentText(
                 context.getString(
@@ -216,14 +245,51 @@ class KhaataNotifier @Inject constructor(
                     MoneyFormatter.plain(parsed.amount),
                 ),
             )
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setPublicVersion(
-                baseBuilder(NotificationChannels.REMINDERS).setContentTitle(title).build(),
+                baseBuilder(NotificationChannels.IMPORTS).setContentTitle(title).build(),
             )
             .setContentIntent(pendingImportsIntent())
             .build()
 
-        return post(dedupeKey, NotificationChannels.REMINDERS, notification)
+        return post(dedupeKey, NotificationChannels.IMPORTS, notification)
+    }
+
+    /**
+     * Says a payment was recognised but could not be filed against an account.
+     *
+     * Without this the outcome is invisible: the message parses, matches no account, and is
+     * dropped with nothing written and nothing shown -- which is indistinguishable from SMS
+     * reading being broken, and is the shape of the complaint that led here. It is actionable in a
+     * way the other quiet outcomes are not: the fix is to record the account's last four digits,
+     * and the notification opens the app so the user can.
+     *
+     * Deliberately *not* keyed on the message. One nudge a day is enough to explain a gap in the
+     * ledger; one per unmatched SMS would be a notification per transaction, which is worse than
+     * saying nothing. A promotional SMS never reaches here -- that is NotATransaction, and stays
+     * silent as it should.
+     */
+    suspend fun notifyImportNeedsAccount(): Boolean {
+        if (!hasPermission()) return false
+
+        val dedupeKey = "import-no-account:${clock.today()}"
+        if (notificationLogDao.exists(dedupeKey)) return false
+
+        val title = context.getString(R.string.notification_import_no_account_title)
+        val notification = baseBuilder(NotificationChannels.IMPORTS)
+            .setContentTitle(title)
+            .setContentText(context.getString(R.string.notification_import_no_account_body))
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(context.getString(R.string.notification_import_no_account_body)),
+            )
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPublicVersion(
+                baseBuilder(NotificationChannels.IMPORTS).setContentTitle(title).build(),
+            )
+            .build()
+
+        return post(dedupeKey, NotificationChannels.IMPORTS, notification)
     }
 
     private fun baseBuilder(channelId: String): NotificationCompat.Builder =
