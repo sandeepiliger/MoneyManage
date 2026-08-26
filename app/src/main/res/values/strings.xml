@@ -271,7 +271,10 @@
     <string name="budgets_spent_of">%1$s of %2$s</string>
     <string name="budgets_remaining">%1$s left</string>
     <string name="budgets_overspent_by">%1$s over</string>
-    <string name="budgets_days_left">%1$d day(s) left</string>
+    <plurals name="budgets_days_left">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
     <string name="budgets_safe_daily">About %1$s a day keeps you on track</string>
     <string name="budgets_projected">On track to spend %1$s</string>
     <string name="budgets_carried_over">Includes %1$s carried over</string>

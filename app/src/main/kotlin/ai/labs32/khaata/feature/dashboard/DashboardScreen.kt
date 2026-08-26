@@ -776,6 +776,7 @@ private fun RecentTransactionsCard(
                 categoryName = category?.name,
                 accountName = accountsById[transaction.accountId]?.account?.name,
                 categoryColorSeed = category?.colorSeed ?: 0,
+                categoryIconKey = category?.iconKey,
                 onClick = { onOpenTransaction(transaction.id) },
             )
         }
@@ -795,6 +796,14 @@ private fun GoalsCard(state: DashboardUiState, onSeeAll: () -> Unit) {
         Spacer(Modifier.height(KhaataTheme.spacing.medium))
 
         state.goals.forEach { progress ->
+            // A completed goal is shown in the income colour regardless of its own seed -- seed 2
+            // is Rose70, the same colour as money.expense, so a finished goal could otherwise draw
+            // a rose bar and read as a warning. Matches the same fix on the Goals screen itself.
+            val swatch = if (progress.isAchieved) {
+                KhaataTheme.money.income
+            } else {
+                KhaataTheme.money.swatch(progress.goal.colorSeed)
+            }
             Row(
                 Modifier.padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -803,6 +812,7 @@ private fun GoalsCard(state: DashboardUiState, onSeeAll: () -> Unit) {
                     icon = Icons.Outlined.Flag,
                     colorSeed = progress.goal.colorSeed,
                     size = 36.dp,
+                    tint = if (progress.isAchieved) swatch else null,
                 )
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
@@ -817,7 +827,7 @@ private fun GoalsCard(state: DashboardUiState, onSeeAll: () -> Unit) {
                     LabelledProgress(
                         progressPercent = progress.percentCompleteClamped,
                         statusLabel = progress.goal.name,
-                        progressColor = KhaataTheme.money.swatch(progress.goal.colorSeed),
+                        progressColor = swatch,
                         height = 6.dp,
                     )
                 }

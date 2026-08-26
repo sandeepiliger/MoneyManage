@@ -254,8 +254,14 @@ private fun AccountCard(balance: AccountBalance, onClick: () -> Unit) {
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
+                // A liability now carries a real minus sign, same as any other negative balance
+                // on this screen -- an overdrawn wallet already showed "-₹3,288" with no caption,
+                // while a credit card showed the positive magnitude "₹72,926" plus an "Outstanding"
+                // label. Two conventions for the same fact ("this is owed") on the same list. The
+                // sign is the more legible one and it is already how every other negative figure
+                // here reads, so liabilities now match it and the caption is dropped as redundant.
                 MoneyText(
-                    money = balance.displayBalance,
+                    money = if (balance.account.isLiability) -balance.displayBalance else balance.displayBalance,
                     style = KhaataTextStyles.amountLarge,
                     color = if (balance.account.isLiability) {
                         KhaataTheme.money.expense
@@ -263,15 +269,6 @@ private fun AccountCard(balance: AccountBalance, onClick: () -> Unit) {
                         MaterialTheme.colorScheme.onSurface
                     },
                 )
-                // Liabilities are labelled rather than just coloured, so "owed" is never
-                // inferred from a hue.
-                if (balance.account.isLiability) {
-                    Text(
-                        text = stringResource(R.string.cards_outstanding),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
         }
     }

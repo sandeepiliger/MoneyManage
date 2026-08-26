@@ -123,6 +123,12 @@ fun GoalsScreen(
         when {
             state.isLoading -> LoadingState(Modifier.padding(padding))
 
+            // No actionLabel/onAction here, and no trailing "Add a goal" row below the list either
+            // (unlike Budgets, which gets one): there is genuinely no goal-creation screen in this
+            // codebase yet -- no GoalEditScreen, no GoalRepository.create(), and Routes.ADD_GOAL
+            // has no registered destination. Wiring either affordance to it would crash on tap.
+            // This is a real, larger gap than a missing entry point; flagged rather than papered
+            // over with a button that does nothing or worse.
             state.goals.isEmpty() -> EmptyState(
                 icon = Icons.Outlined.Flag,
                 title = stringResource(R.string.goals_empty_title),
@@ -147,11 +153,23 @@ fun GoalsScreen(
 
 @Composable
 private fun GoalCard(progress: GoalProgress) {
-    val swatch = KhaataTheme.money.swatch(progress.goal.colorSeed)
+    // A completed goal is always shown in the income colour, regardless of its own seed. Seed 2
+    // happens to be Rose70 -- the same colour as money.expense -- so a goal that just hit 100%
+    // could draw a full rose bar and read as a warning rather than as the good news it is. This is
+    // the one state on this screen worth colouring semantically; every other goal keeps its seed.
+    val swatch = if (progress.isAchieved) {
+        KhaataTheme.money.income
+    } else {
+        KhaataTheme.money.swatch(progress.goal.colorSeed)
+    }
 
     KhaataCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ColorBadge(icon = Icons.Outlined.Flag, colorSeed = progress.goal.colorSeed)
+            ColorBadge(
+                icon = Icons.Outlined.Flag,
+                colorSeed = progress.goal.colorSeed,
+                tint = if (progress.isAchieved) swatch else null,
+            )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(

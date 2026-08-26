@@ -132,6 +132,13 @@ internal val KhaataTypography = Typography(
  */
 object KhaataTextStyles {
 
+    /**
+     * `tnum` gives every digit the same advance width, so a column of amounts lines up on its
+     * decimal point instead of drifting with how many wide digits ("8") versus narrow ones ("1")
+     * a figure happens to contain. Every style below carries it for exactly that reason.
+     */
+    private const val TABULAR_FIGURES = "tnum"
+
     /** The single headline figure on the dashboard. */
     val amountHero = TextStyle(
         fontFamily = FontFamily.Default,
@@ -140,6 +147,7 @@ object KhaataTextStyles {
         lineHeight = 48.sp,
         letterSpacing = (-1).sp,
         textAlign = TextAlign.Start,
+        fontFeatureSettings = TABULAR_FIGURES,
     )
 
     /** Card-level figures — a budget limit, an account balance. */
@@ -149,6 +157,7 @@ object KhaataTextStyles {
         fontSize = 24.sp,
         lineHeight = 30.sp,
         letterSpacing = (-0.3).sp,
+        fontFeatureSettings = TABULAR_FIGURES,
     )
 
     /** Transaction rows. */
@@ -157,6 +166,7 @@ object KhaataTextStyles {
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
         lineHeight = 22.sp,
+        fontFeatureSettings = TABULAR_FIGURES,
     )
 
     /** Secondary figures and chart axes. */
@@ -165,6 +175,7 @@ object KhaataTextStyles {
         fontWeight = FontWeight.Medium,
         fontSize = 13.sp,
         lineHeight = 18.sp,
+        fontFeatureSettings = TABULAR_FIGURES,
     )
 
     /** The number on the amount keypad. */
@@ -174,6 +185,7 @@ object KhaataTextStyles {
         fontSize = 48.sp,
         lineHeight = 56.sp,
         letterSpacing = (-1.5).sp,
+        fontFeatureSettings = TABULAR_FIGURES,
     )
 }
 
@@ -199,6 +211,12 @@ data class KhaataSpacing(
     /** Minimum size of anything tappable. Never reduced, on any screen. */
     val touchTarget: androidx.compose.ui.unit.Dp = 48.dp,
 
-    /** Bottom padding that clears the navigation bar and the floating action button. */
-    val bottomBarClearance: androidx.compose.ui.unit.Dp = 96.dp,
+    /**
+     * Bottom padding that clears the navigation bar and the floating action button.
+     *
+     * The FAB stack is 56dp add button + 12dp gap + 40dp mic button = 108dp tall, sitting above
+     * a roughly 48dp nav bar with its own margin -- 96dp was sized for the single add button this
+     * screen used to have and left the FAB stack overlapping the last card in a list.
+     */
+    val bottomBarClearance: androidx.compose.ui.unit.Dp = 168.dp,
 )

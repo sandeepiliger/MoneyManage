@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -93,6 +95,13 @@ fun TransactionsScreen(
     }
 
     Scaffold(
+        // The outer chrome Scaffold (MainActivity) already reserves the status-bar inset once,
+        // since this screen has no topBar of its own to consume it. Without zeroing this
+        // Scaffold's own contentWindowInsets -- which defaults to the status bar too, independent
+        // of whether there's a topBar -- that inset is reserved a second time here, which is the
+        // unexplained gap above the search field. Same bug, same fix, as the doubled gap on every
+        // screen with its own TopAppBar; this one just has no TopAppBar to zero out instead.
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
@@ -207,6 +216,7 @@ private fun TransactionList(
                     categoryName = category?.name,
                     accountName = accountsById[transaction.accountId]?.name,
                     categoryColorSeed = category?.colorSeed ?: 0,
+                    categoryIconKey = category?.iconKey,
                     onClick = { onOpenTransaction(transaction.id) },
                     showDate = false,
                 )
@@ -320,6 +330,12 @@ private fun QuickTypeFilters(
                 selected = selected == type,
                 onClick = { onSelect(type) },
                 label = { Text(stringResource(labelRes), maxLines = 1) },
+                // primaryContainer for "selected", matching the bottom nav and every other
+                // filter chip in the app -- secondaryContainer (brass) is reserved for warning.
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
             )
         }
     }

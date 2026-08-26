@@ -190,6 +190,7 @@ fun PendingImportsScreen(
                         categoryName = category?.name,
                         accountName = accountsById[transaction.accountId]?.name,
                         categoryColorSeed = category?.colorSeed ?: 0,
+                        categoryIconKey = category?.iconKey,
                     )
                     Row(
                         Modifier
@@ -299,6 +300,7 @@ fun RecentlyDeletedScreen(
                         categoryName = category?.name,
                         accountName = accountsById[transaction.accountId]?.name,
                         categoryColorSeed = category?.colorSeed ?: 0,
+                        categoryIconKey = category?.iconKey,
                     )
                     TextButton(
                         onClick = { viewModel.restore(transaction.id) },

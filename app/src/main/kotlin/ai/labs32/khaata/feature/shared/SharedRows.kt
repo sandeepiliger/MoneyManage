@@ -12,12 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.EventRepeat
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import ai.labs32.khaata.core.model.OccurrenceKind
 import ai.labs32.khaata.core.model.ScheduledOccurrence
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.model.TransactionSource
+import ai.labs32.khaata.core.ui.components.CategoryIcons
 import ai.labs32.khaata.core.ui.components.ColorBadge
 import ai.labs32.khaata.core.ui.components.MoneyText
 import ai.labs32.khaata.core.ui.components.TransactionAmountText
@@ -66,6 +68,7 @@ fun TransactionRow(
     categoryName: String?,
     accountName: String?,
     categoryColorSeed: Int,
+    categoryIconKey: String? = null,
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     showDate: Boolean = true,
@@ -84,7 +87,7 @@ fun TransactionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ColorBadge(
-            icon = Icons.Default.Category,
+            icon = CategoryIcons[categoryIconKey],
             colorSeed = categoryColorSeed,
             size = 40.dp,
         )
@@ -240,6 +243,36 @@ fun relativeDateLabel(date: LocalDate): String {
             val pattern = if (date.year == today.year) "d MMM" else "d MMM yyyy"
             date.format(DateTimeFormatter.ofPattern(pattern))
         }
+    }
+}
+
+/**
+ * A low-emphasis "add another" row for the end of a list that otherwise has no add affordance
+ * once it holds at least one item — Goals and Budgets both only show their add action inside the
+ * empty state, so it becomes unreachable the moment there is something to look at.
+ */
+@Composable
+fun AddRow(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = KhaataTheme.spacing.touchTarget)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.Default.Add,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 

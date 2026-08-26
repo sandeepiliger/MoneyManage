@@ -1,7 +1,9 @@
 package ai.labs32.khaata.feature.reports
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -356,20 +360,49 @@ fun ReportsScreen(
 
 @Composable
 private fun PeriodFilter(selected: ReportPeriod, onSelect: (ReportPeriod) -> Unit) {
-    LazyRow(
-        contentPadding = PaddingValues(
-            horizontal = KhaataTheme.spacing.screenHorizontal,
-            vertical = KhaataTheme.spacing.small,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small),
-    ) {
-        items(ReportPeriod.entries, key = { it.name }) { period ->
-            FilterChip(
-                selected = selected == period,
-                onClick = { onSelect(period) },
-                label = { Text(periodLabel(period)) },
-            )
+    val background = MaterialTheme.colorScheme.background
+    Box {
+        LazyRow(
+            contentPadding = PaddingValues(
+                horizontal = KhaataTheme.spacing.screenHorizontal,
+                vertical = KhaataTheme.spacing.small,
+            ),
+            horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small),
+        ) {
+            items(ReportPeriod.entries, key = { it.name }) { period ->
+                FilterChip(
+                    selected = selected == period,
+                    onClick = { onSelect(period) },
+                    label = { Text(periodLabel(period)) },
+                    // Selected now reads the same way everywhere in the app: primaryContainer,
+                    // not secondaryContainer -- brass is reserved for a warning state, and a
+                    // selected period chip is not one.
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                )
+            }
         }
+        // A chip cut off mid-word at the edge reads as a broken layout rather than a scrollable
+        // row. The fade says "there is more here" without needing to fully reveal it.
+        //
+        // matchParentSize() rather than an explicit width: this box's own height would otherwise
+        // have nothing to resolve against, since the Box it sits in is sized by the LazyRow, not
+        // by a fixed height passed down from its parent. The gradient's colour stops do the actual
+        // narrowing instead -- transparent for the first 88% of the width, fading only over the
+        // last 12%, so the effect is confined to the trailing edge without constraining the box.
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.horizontalGradient(
+                        0f to background.copy(alpha = 0f),
+                        0.88f to background.copy(alpha = 0f),
+                        1f to background,
+                    ),
+                ),
+        )
     }
 }
 
@@ -452,9 +485,12 @@ private fun SummaryCard(summary: CashflowSummary, previous: CashflowSummary?) {
         StatPair(
             leadingLabel = stringResource(R.string.dashboard_saved),
             leadingValue = {
+                // amountHero is sized for a screen-width figure, not half a card -- at that width
+                // a real month's saving ("+₹20,900") truncates. amountLarge is what the dashboard's
+                // own half-width income/expense tiles use for the same reason.
                 MoneyText(
                     money = summary.net,
-                    style = KhaataTextStyles.amountHero,
+                    style = KhaataTextStyles.amountLarge,
                     signStyle = SignStyle.ALWAYS,
                     color = if (summary.isSurplus) money.income else money.expense,
                 )

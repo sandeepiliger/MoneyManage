@@ -200,8 +200,11 @@ fun ColorBadge(
     modifier: Modifier = Modifier,
     size: androidx.compose.ui.unit.Dp = 40.dp,
     contentDescription: String? = null,
+    // Overrides the seed-derived swatch, for the one caller (a completed goal) that needs a
+    // specific semantic colour rather than its category's stable seed colour.
+    tint: Color? = null,
 ) {
-    val swatch = KhaataTheme.money.swatch(colorSeed)
+    val swatch = tint ?: KhaataTheme.money.swatch(colorSeed)
     Box(
         modifier = modifier
             .size(size)

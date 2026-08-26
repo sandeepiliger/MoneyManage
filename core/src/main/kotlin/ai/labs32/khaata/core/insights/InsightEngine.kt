@@ -13,6 +13,7 @@ import ai.labs32.khaata.core.model.Subscription
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
+import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.money.sumOfMoney
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -194,7 +195,7 @@ class InsightEngine(
         relevance = progress.projectedSpend.amount.toDouble(),
         title = "${budget.name} is on track to go over",
         detail = "At this rate you will finish the period above your ${budget.name} budget. " +
-            progress.safeDailySpend?.let { "Staying under about ${it.toPlainString()} a day keeps it on track" }
+            progress.safeDailySpend?.let { "Staying under about ${MoneyFormatter.plain(it)} a day keeps it on track" }
                 .orEmpty(),
         evidence = listOf(
             Evidence("Spent so far", progress.spent),
@@ -224,7 +225,7 @@ class InsightEngine(
                 relevance = monthly.amount.toDouble(),
                 title = "Your subscriptions",
                 detail = "${active.size} active subscription(s) cost about " +
-                    "${monthly.toPlainString()} a month",
+                    "${MoneyFormatter.plain(monthly)} a month",
                 evidence = listOf(
                     Evidence("Per month", monthly),
                     Evidence("Per year", yearly),
@@ -294,7 +295,7 @@ class InsightEngine(
                     severity = InsightSeverity.INFORMATIONAL,
                     relevance = change.abs().amount.toDouble(),
                     title = if (change.isPositive) "Spending is up on last month" else "Spending is down on last month",
-                    detail = "You have spent ${change.abs().toPlainString()} " +
+                    detail = "You have spent ${MoneyFormatter.plain(change.abs())} " +
                         (if (change.isPositive) "more" else "less") + " than last month",
                     evidence = listOf(
                         Evidence("This month", current.expense),

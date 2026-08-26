@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ import ai.labs32.khaata.core.ui.components.MoneyText
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.BudgetRepository
+import ai.labs32.khaata.feature.shared.AddRow
 import ai.labs32.khaata.feature.shared.budgetStatusColor
 import ai.labs32.khaata.feature.shared.budgetStatusLabel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -146,6 +148,9 @@ fun BudgetsScreen(
             items(state.progress, key = { it.budget.id }) { progress ->
                 BudgetCard(progress = progress, onClick = { onOpenBudget(progress.budget.id) })
             }
+            item(key = "add-budget") {
+                AddRow(label = stringResource(R.string.budgets_add), onClick = onAddBudget)
+            }
         }
     }
 }
@@ -229,22 +234,34 @@ private fun BudgetCard(progress: BudgetProgress, onClick: () -> Unit) {
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = stringResource(R.string.budgets_days_left, progress.daysRemaining),
+                text = pluralStringResource(
+                    R.plurals.budgets_days_left,
+                    progress.daysRemaining,
+                    progress.daysRemaining,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
         // The pacing line is the actionable part, so it gets its own row rather than being
-        // squeezed in beside the totals.
-        progress.safeDailySpend?.takeIf { !progress.isOverspent }?.let { daily ->
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.budgets_safe_daily, MoneyFormatter.plain(daily)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
+        // squeezed in beside the totals. Shown only when the budget is actually off track
+        // (PROJECTED_OVER or NEARING_LIMIT) -- an on-track budget doesn't need to be told what
+        // pace to keep since it's already keeping it, and the old `!isOverspent` condition also
+        // showed this line for EXHAUSTED budgets, where safeDailySpend is a real but useless ₹0.
+        progress.safeDailySpend
+            ?.takeIf {
+                progress.status == BudgetStatus.PROJECTED_OVER ||
+                    progress.status == BudgetStatus.NEARING_LIMIT
+            }
+            ?.let { daily ->
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.budgets_safe_daily, MoneyFormatter.plain(daily)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
 
         if (progress.carriedOver.isPositive) {
             Spacer(Modifier.height(4.dp))

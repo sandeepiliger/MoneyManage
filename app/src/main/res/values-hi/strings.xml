@@ -245,6 +245,10 @@
     <string name="budgets_spent_of">%2$s में से %1$s</string>
     <string name="budgets_remaining">%1$s बचा है</string>
     <string name="budgets_overspent_by">%1$s ज़्यादा</string>
+    <plurals name="budgets_days_left">
+        <item quantity="one">%1$d दिन बचा</item>
+        <item quantity="other">%1$d दिन बचे</item>
+    </plurals>
     <string name="budgets_safe_daily">रोज़ लगभग %1$s रखें तो बजट में रहेंगे</string>
     <string name="budgets_empty_title">अभी कोई बजट नहीं</string>
     <string name="budgets_empty_body">बजट "पैसा कहाँ गया?" को "कितना बचा है?" में बदल देता है।</string>

@@ -243,6 +243,7 @@ fun AccountDetailScreen(
                         categoryName = category?.name,
                         accountName = null,
                         categoryColorSeed = category?.colorSeed ?: 0,
+                        categoryIconKey = category?.iconKey,
                         onClick = { onOpenTransaction(transaction.id) },
                     )
                 }

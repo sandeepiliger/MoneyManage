@@ -2,10 +2,12 @@ package ai.labs32.khaata.feature.insights
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,7 +26,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -174,53 +175,98 @@ fun InsightsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onOpenAssistant,
-                icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = null) },
-                text = { Text(stringResource(R.string.ai_title)) },
-            )
-        },
-    ) { padding ->
-        when {
-            state.isLoading -> LoadingState(Modifier.padding(padding))
+    // No FAB of its own: this screen used to layer an ExtendedFloatingActionButton on top of the
+    // global add/voice button at the same bottom-right anchor, which pushed the assistant pill off
+    // the edge of the screen. The assistant entry point moves into the header instead, next to the
+    // title, where it has room and does not compete with the button every screen already has.
+    // contentWindowInsets zeroed for the same reason as TransactionsScreen: no topBar here to
+    // consume the status-bar inset, so this Scaffold's own default reserves it a second time on
+    // top of what the outer chrome Scaffold already applied.
+    Scaffold(contentWindowInsets = WindowInsets(0)) { padding ->
+        Column(
+            Modifier
+                .padding(padding)
+                .fillMaxSize(),
+        ) {
+            InsightsHeader(onOpenAssistant = onOpenAssistant)
 
-            state.error != null -> ErrorState(
-                message = state.error!!,
-                modifier = Modifier.padding(padding),
-                onRetry = viewModel::refresh,
-            )
+            when {
+                state.isLoading -> LoadingState()
 
-            state.insights.isEmpty() -> EmptyState(
-                icon = Icons.Outlined.Lightbulb,
-                title = stringResource(R.string.insights_empty_title),
-                description = stringResource(R.string.insights_empty_body),
-                modifier = Modifier.padding(padding),
-                actionLabel = stringResource(R.string.reports_title),
-                onAction = onOpenReports,
-            )
+                state.error != null -> ErrorState(
+                    message = state.error!!,
+                    onRetry = viewModel::refresh,
+                )
 
-            else -> LazyColumn(
-                Modifier
-                    .padding(padding)
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = KhaataTheme.spacing.screenHorizontal,
-                    end = KhaataTheme.spacing.screenHorizontal,
-                    top = KhaataTheme.spacing.default,
-                    bottom = KhaataTheme.spacing.bottomBarClearance,
-                ),
-                verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
-            ) {
-                items(state.insights, key = { it.id }) { insight ->
-                    InsightCard(
-                        insight = insight,
-                        onDismiss = { viewModel.dismiss(insight.id) },
-                        onOpenBudget = onOpenBudget,
-                    )
+                state.insights.isEmpty() -> EmptyState(
+                    icon = Icons.Outlined.Lightbulb,
+                    title = stringResource(R.string.insights_empty_title),
+                    description = stringResource(R.string.insights_empty_body),
+                    actionLabel = stringResource(R.string.reports_title),
+                    onAction = onOpenReports,
+                )
+
+                else -> LazyColumn(
+                    Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = KhaataTheme.spacing.screenHorizontal,
+                        end = KhaataTheme.spacing.screenHorizontal,
+                        bottom = KhaataTheme.spacing.bottomBarClearance,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
+                ) {
+                    items(state.insights, key = { it.id }) { insight ->
+                        InsightCard(
+                            insight = insight,
+                            onDismiss = { viewModel.dismiss(insight.id) },
+                            onOpenBudget = onOpenBudget,
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun InsightsHeader(onOpenAssistant: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = KhaataTheme.spacing.screenHorizontal,
+                vertical = KhaataTheme.spacing.default,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.insights_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(KhaataTheme.spacing.small))
+        Row(
+            modifier = Modifier
+                .clip(KhaataShapeTokens.chip)
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .clickable(onClick = onOpenAssistant)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Outlined.AutoAwesome,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.ai_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                maxLines = 1,
+            )
         }
     }
 }

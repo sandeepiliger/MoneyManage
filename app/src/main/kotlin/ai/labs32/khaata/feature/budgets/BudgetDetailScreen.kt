@@ -216,6 +216,7 @@ fun BudgetDetailScreen(
                             categoryName = category?.name,
                             accountName = accountsById[transaction.accountId]?.name,
                             categoryColorSeed = category?.colorSeed ?: 0,
+                            categoryIconKey = category?.iconKey,
                             onClick = { onOpenTransaction(transaction.id) },
                         )
                     }
