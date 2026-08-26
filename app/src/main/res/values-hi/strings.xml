@@ -207,7 +207,7 @@
     <string name="validation_balance_invalid">यह सही राशि नहीं है</string>
     <string name="validation_limit_required">बजट की राशि डालें</string>
     <string name="validation_limit_zero">बजट शून्य से ज़्यादा होना चाहिए</string>
-    <string name="validation_alert_out_of_range">चेतावनी 1% से 100% के बीच होनी चाहिए</string>
+    <string name="validation_alert_out_of_range" formatted="false">चेतावनी 1% से 100% के बीच होनी चाहिए</string>
     <string name="validation_target_required">लक्ष्य राशि डालें</string>
     <string name="validation_target_zero">लक्ष्य शून्य से ज़्यादा होना चाहिए</string>
     <string name="validation_current_exceeds_target">बचाई गई राशि लक्ष्य से ज़्यादा है</string>

@@ -206,7 +206,8 @@
     <string name="validation_balance_invalid">That is not a valid amount</string>
     <string name="validation_limit_required">Enter a budget amount</string>
     <string name="validation_limit_zero">Budget must be more than zero</string>
-    <string name="validation_alert_out_of_range">Alert must be between 1% and 100%</string>
+    <!-- formatted="false": the two literal % signs are percentages, not format specifiers. -->
+    <string name="validation_alert_out_of_range" formatted="false">Alert must be between 1% and 100%</string>
     <string name="validation_target_required">Enter a target amount</string>
     <string name="validation_target_zero">Target must be more than zero</string>
     <string name="validation_current_exceeds_target">Saved amount is more than the target</string>
