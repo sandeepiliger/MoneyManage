@@ -71,6 +71,7 @@ class SmsTransactionReceiver : BroadcastReceiver() {
                             parsed = outcome.parsed,
                             categoryName = outcome.categoryName,
                             accountName = outcome.accountName,
+                            isNewAccount = outcome.isNewAccount,
                         )
                     }
 

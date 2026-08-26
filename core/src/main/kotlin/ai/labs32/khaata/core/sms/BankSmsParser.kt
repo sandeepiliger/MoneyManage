@@ -59,9 +59,15 @@ object BankSmsParser {
 
     // ---- Structure ---------------------------------------------------------------------------
 
-    /** Masked account or card suffix: `A/c XX1234`, `card ending 4321`. */
-    private val ACCOUNT_SUFFIX = Regex(
-        """(?:a/?c|acct|account|card)\s*(?:no\.?)?\s*(?:x+|\*+|ending|ending\s+with)?\s*(\d{3,4})\b""",
+    /** Masked suffix from a bank-account reference: `A/c XX1234`. */
+    private val ACCOUNT_SUFFIX_BANK = Regex(
+        """(?:a/?c|acct|account)\s*(?:no\.?)?\s*(?:x+|\*+|ending|ending\s+with)?\s*(\d{3,4})\b""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /** Masked suffix from a card reference: `card ending 4321`. */
+    private val ACCOUNT_SUFFIX_CARD = Regex(
+        """card\s*(?:no\.?)?\s*(?:x+|\*+|ending|ending\s+with)?\s*(\d{3,4})\b""",
         RegexOption.IGNORE_CASE,
     )
 
@@ -152,6 +158,7 @@ object BankSmsParser {
         val rail = RAIL_MARKERS.entries.firstOrNull { it.key.containsMatchIn(body) }?.value
         val merchantRaw = extractMerchant(body, direction)
         val merchantKey = MerchantNormaliser.normalise(merchantRaw)
+        val suffixMatch = accountSuffixMatch(body)
 
         return ParsedSms(
             type = direction,
@@ -160,7 +167,8 @@ object BankSmsParser {
             merchantKey = merchantKey,
             merchantDisplayName = MerchantNormaliser.displayName(merchantRaw),
             occurredOn = extractDate(body) ?: receivedOn,
-            accountSuffix = ACCOUNT_SUFFIX.find(body)?.groupValues?.get(1),
+            accountSuffix = suffixMatch?.suffix,
+            accountSuffixKind = suffixMatch?.kind,
             referenceNumber = REFERENCE.find(body)?.groupValues?.get(1),
             rail = rail,
             availableBalance = balance?.let {
@@ -170,6 +178,31 @@ object BankSmsParser {
             confidence = scoreConfidence(merchantKey, rail, body),
         )
     }
+
+    /**
+     * Finds the masked suffix, distinguishing a bank-account reference from a card reference.
+     *
+     * The distinction matters downstream: auto-creating an account from an unmatched "a/c" suffix
+     * is safe (a bank account is exactly what this app models), but a "card" suffix could equally
+     * be a credit card — a different domain with its own statement cycle and due date this app
+     * tracks separately — so guessing which one it is would risk filing the transaction against
+     * the wrong kind of record. See [AccountSuffixKind].
+     */
+    private fun accountSuffixMatch(body: String): AccountSuffixMatch? {
+        val bank = ACCOUNT_SUFFIX_BANK.find(body)
+        val card = ACCOUNT_SUFFIX_CARD.find(body)
+        return when {
+            bank == null && card == null -> null
+            card == null -> AccountSuffixMatch(bank!!.groupValues[1], AccountSuffixKind.BANK)
+            bank == null -> AccountSuffixMatch(card.groupValues[1], AccountSuffixKind.CARD)
+            // Both mentioned (e.g. "debited from A/c XX1234 ... card ending 4321"): the earlier
+            // one is what the SMS is actually about.
+            bank.range.first <= card.range.first -> AccountSuffixMatch(bank.groupValues[1], AccountSuffixKind.BANK)
+            else -> AccountSuffixMatch(card.groupValues[1], AccountSuffixKind.CARD)
+        }
+    }
+
+    private data class AccountSuffixMatch(val suffix: String, val kind: AccountSuffixKind)
 
     /**
      * Why [parse] would reject [body], for diagnostic logging only.
@@ -271,7 +304,7 @@ object BankSmsParser {
         var score = 40
         if (merchantKey != null) score += 25
         if (rail != null) score += 15
-        if (ACCOUNT_SUFFIX.containsMatchIn(body)) score += 10
+        if (ACCOUNT_SUFFIX_BANK.containsMatchIn(body) || ACCOUNT_SUFFIX_CARD.containsMatchIn(body)) score += 10
         if (REFERENCE.containsMatchIn(body)) score += 10
         return score.coerceIn(0, 100)
     }
@@ -289,6 +322,8 @@ data class ParsedSms(
     val occurredOn: LocalDate,
     /** Last 3-4 digits of the account or card, used to match an existing account. */
     val accountSuffix: String?,
+    /** Whether [accountSuffix] came from a bank-account or a card reference. Null with no suffix. */
+    val accountSuffixKind: AccountSuffixKind?,
     val referenceNumber: String?,
     val rail: PaymentRail?,
     /** Balance quoted by the bank. Shown for reconciliation, never used as a balance of record. */
@@ -302,6 +337,17 @@ data class ParsedSms(
         const val REVIEW_THRESHOLD = 65
     }
 }
+
+/**
+ * Which kind of masked suffix a message quoted.
+ *
+ * [BANK] is safe to auto-create an [ai.labs32.khaata.core.model.Account] from when nothing
+ * matches it: a bank account is exactly what this app already models. [CARD] is deliberately left
+ * alone — it could be a credit card, a separate domain with its own statement cycle and due date,
+ * or a debit card that belongs to an existing bank account under a different masked number, and
+ * guessing wrong files the transaction against the wrong kind of record.
+ */
+enum class AccountSuffixKind { BANK, CARD }
 
 /** The rail a payment travelled over, where the message says. */
 enum class PaymentRail {

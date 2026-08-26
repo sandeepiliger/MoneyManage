@@ -249,4 +249,36 @@ class BankSmsParserTest {
         val parsed = parse("Rs.100 debited from A/c XX4321 at SHOP", sender = "AD-HDFCBK")!!
         assertThat(parsed.sender).isEqualTo("AD-HDFCBK")
     }
+
+    // ---- Account suffix kind -------------------------------------------------------------------
+
+    @Test
+    fun `a bank-account suffix is distinguished from a card suffix`() {
+        val parsed = parse("Rs.850.00 debited from A/c XX4321 at SHOP")!!
+        assertThat(parsed.accountSuffix).isEqualTo("4321")
+        assertThat(parsed.accountSuffixKind).isEqualTo(AccountSuffixKind.BANK)
+    }
+
+    @Test
+    fun `a card suffix is flagged distinctly from a bank account`() {
+        val parsed = parse("Rs 1,249.00 spent on your Credit Card ending 4321 at AMAZON")!!
+        assertThat(parsed.accountSuffix).isEqualTo("4321")
+        assertThat(parsed.accountSuffixKind).isEqualTo(AccountSuffixKind.CARD)
+    }
+
+    @Test
+    fun `no suffix at all leaves the kind null too`() {
+        val parsed = parse("You sent Rs.500 to John Doe using UPI. UPI transaction ID 412345678999.")!!
+        assertThat(parsed.accountSuffix).isNull()
+        assertThat(parsed.accountSuffixKind).isNull()
+    }
+
+    @Test
+    fun `when both a bank account and a card are mentioned, the earlier one wins`() {
+        val parsed = parse(
+            "Rs.500 debited from A/c XX1234 and sent to card ending 9999 as bill payment",
+        )!!
+        assertThat(parsed.accountSuffix).isEqualTo("1234")
+        assertThat(parsed.accountSuffixKind).isEqualTo(AccountSuffixKind.BANK)
+    }
 }

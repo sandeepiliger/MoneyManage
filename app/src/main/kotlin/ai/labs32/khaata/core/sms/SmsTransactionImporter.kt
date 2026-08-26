@@ -3,7 +3,13 @@ package ai.labs32.khaata.core.sms
 import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.Account
+import ai.labs32.khaata.core.model.AccountType
 import ai.labs32.khaata.core.model.TransactionSource
+import ai.labs32.khaata.core.model.TransactionType
+import ai.labs32.khaata.core.money.CurrencyCode
+import ai.labs32.khaata.core.money.Money
+import ai.labs32.khaata.core.sms.AccountSuffixKind
+import ai.labs32.khaata.core.sms.BankSenderRegistry
 import ai.labs32.khaata.core.sms.BankSmsParser
 import ai.labs32.khaata.core.sms.ParsedSms
 import ai.labs32.khaata.data.repository.AccountRepository
@@ -28,6 +34,8 @@ sealed interface SmsImportOutcome {
         val parsed: ParsedSms,
         val categoryName: String?,
         val accountName: String,
+        /** True when [accountName] did not exist before this message — see [SmsTransactionImporter.createAccountFromSms]. */
+        val isNewAccount: Boolean,
     ) : SmsImportOutcome
 
     /** The message was not a transaction — an OTP, a promotion, a balance alert. */
@@ -46,7 +54,7 @@ sealed interface SmsImportOutcome {
 /**
  * Turns a bank SMS into a pending transaction.
  *
- * Three rules govern everything here.
+ * Four rules govern everything here.
  *
  * The message is parsed on the device and never leaves it. [BankSmsParser] is pure Kotlin with no
  * network access, and nothing in this class writes a message body to a log, to analytics, or to
@@ -60,6 +68,11 @@ sealed interface SmsImportOutcome {
  * A message with no matching account is refused rather than filed against a guess. Putting a
  * transaction on the wrong account silently corrupts two balances and the user has no way to see
  * that it happened.
+ *
+ * A new bank account is created automatically the first time its masked digits show up, so the
+ * only thing standing between "install and grant SMS access" and a working ledger is that grant.
+ * This is deliberately narrower than "auto-create for anything unmatched" — see
+ * [createAccountFromSms] for exactly which messages qualify and why the rest still refuse.
  */
 @Singleton
 class SmsTransactionImporter @Inject constructor(
@@ -89,7 +102,11 @@ class SmsTransactionImporter @Inject constructor(
         }
 
         val accounts = accountRepository.getAll().filterNot { it.isArchived }
-        val account = matchAccount(parsed, accounts) ?: return SmsImportOutcome.NoMatchingAccount
+        val (account, isNewAccount) = when (val match = matchAccount(parsed, accounts)) {
+            is AccountMatch.Found -> match.account to false
+            is AccountMatch.SafeToCreate -> createAccountFromSms(parsed, sender, currency, match.suffix) to true
+            AccountMatch.Refuse -> return SmsImportOutcome.NoMatchingAccount
+        }
 
         if (
             transactionRepository.isLikelyDuplicate(
@@ -123,14 +140,30 @@ class SmsTransactionImporter @Inject constructor(
         )
 
         // Logged by outcome and confidence only — never the body, the merchant or the amount.
-        KhaataLog.d(TAG, "Staged an SMS import, confidence=${parsed.confidence}")
+        KhaataLog.d(TAG, "Staged an SMS import, confidence=${parsed.confidence}, newAccount=$isNewAccount")
 
         return SmsImportOutcome.Staged(
             transactionId = id,
             parsed = parsed,
             categoryName = suggestion?.categoryId?.let { categoryRepository.findById(it)?.name },
             accountName = account.name,
+            isNewAccount = isNewAccount,
         )
+    }
+
+    /** What [matchAccount] decided about which account a message refers to. */
+    private sealed interface AccountMatch {
+        data class Found(val account: Account) : AccountMatch
+
+        /**
+         * No existing account matched, but it is safe to create one — a genuine bank-account
+         * suffix that names a new account, or (when [suffix] is null) a completely fresh install
+         * with nothing on file yet at all.
+         */
+        data class SafeToCreate(val suffix: String?) : AccountMatch
+
+        /** No existing account matched, and creating one blind would risk a wrong guess. */
+        data object Refuse : AccountMatch
     }
 
     /**
@@ -139,27 +172,121 @@ class SmsTransactionImporter @Inject constructor(
      * Matched on the masked digits the bank quotes ("a/c XX4821") when that is possible, and
      * otherwise on there being exactly one account it could be.
      *
-     * The third case below is the one that matters in practice. Almost every Indian bank SMS
-     * quotes some digits, and onboarding never asks for an account's last four -- so requiring a
-     * digit match meant the common setup (one account, no masked digits recorded) matched nothing
-     * and every message was refused. The feature looked dead for the default configuration.
+     * The single-account fallback is the case that matters in practice. Almost every Indian bank
+     * SMS quotes some digits, and onboarding never asks for an account's last four -- so requiring
+     * a digit match meant the common setup (one account, no masked digits recorded) matched
+     * nothing and every message was refused. The feature looked dead for the default
+     * configuration.
      *
      * The safety property is kept where it actually applies: if any account *does* declare masked
      * digits, the user has told us how to tell them apart, so a message quoting digits that match
-     * none of them is a real mismatch and is still refused rather than guessed at. Only when there
-     * is nothing to discriminate on do we fall back to "there is only one account this can be".
+     * none of them is a real mismatch, not a candidate for the fallback. Only when there is
+     * nothing to discriminate on do we fall back to "there is only one account this can be".
      */
-    private fun matchAccount(parsed: ParsedSms, accounts: List<Account>): Account? {
+    private fun matchAccount(parsed: ParsedSms, accounts: List<Account>): AccountMatch {
         val suffix = parsed.accountSuffix
-        if (suffix.isNullOrBlank()) return accounts.singleOrNull()
+        if (suffix.isNullOrBlank()) {
+            // No digits to match on at all -- a UPI app's own "you sent" confirmation typically
+            // reads this way, since it knows the funding source but doesn't say it. With exactly
+            // one account this is still an unambiguous match; with none yet, it is the very first
+            // message on a fresh install, and there is exactly one sensible account for it to be.
+            // Two or more accounts and no digits is the one genuinely ambiguous shape here, so
+            // that alone still refuses -- see the matching case below.
+            return when {
+                accounts.size == 1 -> AccountMatch.Found(accounts.single())
+                accounts.isEmpty() -> AccountMatch.SafeToCreate(suffix = null)
+                else -> AccountMatch.Refuse
+            }
+        }
 
         val matches = accounts.filter { account ->
             account.maskedIdentifier?.takeLast(suffix.length)?.equals(suffix, ignoreCase = true) == true
         }
-        if (matches.isNotEmpty()) return matches.singleOrNull()
+        if (matches.isNotEmpty()) {
+            return matches.singleOrNull()?.let { AccountMatch.Found(it) } ?: AccountMatch.Refuse
+        }
 
-        val noneDeclareDigits = accounts.none { !it.maskedIdentifier.isNullOrBlank() }
-        return if (noneDeclareDigits) accounts.singleOrNull() else null
+        val someAccountDeclaresDigits = accounts.any { !it.maskedIdentifier.isNullOrBlank() }
+        if (accounts.isEmpty() || someAccountDeclaresDigits) {
+            // Either a fresh install with nothing to match against yet, or the user has shown
+            // they distinguish accounts by digits -- either way, a suffix matching none of them
+            // confidently names an account that does not exist yet, not an ambiguous guess.
+            //
+            // Restricted to a bank-account suffix. A card could be a credit card, a domain this
+            // app tracks separately with its own statement cycle, or a debit card belonging to an
+            // account already on file under a different masked number -- guessing wrong there
+            // files the transaction against the wrong kind of record, which is worse than asking.
+            //
+            // Restricted to exactly 4 digits too: accountRepository.create only ever persists a
+            // 4-digit masked identifier (see its own guard), so a 3-digit suffix would create an
+            // account with none recorded -- unmatchable by any later message with the same
+            // suffix, which would auto-create a fresh duplicate account every single time.
+            return if (parsed.accountSuffixKind == AccountSuffixKind.BANK && suffix.length == 4) {
+                AccountMatch.SafeToCreate(suffix)
+            } else {
+                AccountMatch.Refuse
+            }
+        }
+
+        // Multiple accounts exist and none of them declare digits: an unmatched suffix could
+        // belong to any of them. Guessing risks silently duplicating a real account, so this is
+        // the one case that still asks the user to add digits to their existing accounts instead.
+        return AccountMatch.Refuse
+    }
+
+    /**
+     * Creates the account [AccountMatch.SafeToCreate] decided this message is for.
+     *
+     * The name is inferred from the SMS sender when [BankSenderRegistry] recognises it ("HDFC
+     * Bank ••4321"); an unrecognised sender falls back to a plain masked-digits label ("Account
+     * ••4321") rather than guess at a bank name and risk telling someone their money sits
+     * somewhere it does not. [suffix] is null for a message that named no digits at all -- see
+     * [AccountMatch.SafeToCreate] -- in which case the name is the bank alone, or "Account" when
+     * even that is unknown.
+     *
+     * The opening balance is backed out from the bank's own quoted "Avl Bal", when the message
+     * carries one, so the account is seeded from the bank's own arithmetic rather than a blank
+     * zero the user has to notice and correct. `Avl Bal` describes the balance *after* this
+     * transaction, so the opening balance is that figure with this transaction's own effect
+     * reversed out -- once the transaction is confirmed, the two cancel back out to what the bank
+     * reported. Absent an `Avl Bal`, this is honestly zero, the same starting point manual account
+     * creation already defaults to.
+     */
+    private suspend fun createAccountFromSms(
+        parsed: ParsedSms,
+        sender: String?,
+        currency: CurrencyCode,
+        suffix: String?,
+    ): Account {
+        val bankName = BankSenderRegistry.nameFor(sender)
+        val displayName = when {
+            bankName != null && suffix != null -> "$bankName ••$suffix"
+            bankName != null -> bankName
+            suffix != null -> "Account ••$suffix"
+            else -> "Account"
+        }
+
+        val openingBalance = parsed.availableBalance?.let { avlBal ->
+            when (parsed.type) {
+                TransactionType.EXPENSE -> avlBal + parsed.amount
+                TransactionType.INCOME -> avlBal - parsed.amount
+                TransactionType.TRANSFER -> avlBal
+            }
+        } ?: Money.zero(currency)
+
+        val id = accountRepository.create(
+            name = displayName,
+            type = AccountType.BANK,
+            openingBalance = openingBalance,
+            currency = currency,
+            institution = bankName,
+            maskedIdentifier = suffix,
+        )
+
+        KhaataLog.d(TAG, "Auto-created an account from SMS, bank recognised=${bankName != null}")
+
+        return accountRepository.findById(id)
+            ?: error("Account $id was created and immediately unreadable")
     }
 
     private companion object {

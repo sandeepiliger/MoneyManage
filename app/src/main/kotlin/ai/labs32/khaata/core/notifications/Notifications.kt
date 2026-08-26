@@ -233,6 +233,7 @@ class KhaataNotifier @Inject constructor(
         parsed: ParsedSms,
         categoryName: String?,
         accountName: String,
+        isNewAccount: Boolean,
     ): Boolean {
         if (!hasPermission()) return false
         // The reference number identifies the payment, so re-parsing the same message — a carrier
@@ -257,12 +258,18 @@ class KhaataNotifier @Inject constructor(
         // Category is omitted rather than guessed at when nothing was suggested — "Uncategorised"
         // in a notification invites a correction the user cannot make from here.
         val detail = listOfNotNull(categoryName, accountName).joinToString(" · ")
-        val body = context.getString(R.string.notification_import_confirm_hint)
-            .let { hint -> if (detail.isBlank()) hint else "$detail\n$hint" }
+        val hint = if (isNewAccount) {
+            // A user who never added this account should not have to work out why it appeared --
+            // said once, in the expanded body, not repeated every time this account is used again.
+            context.getString(R.string.notification_import_new_account, accountName)
+        } else {
+            context.getString(R.string.notification_import_confirm_hint)
+        }
+        val body = if (detail.isBlank()) hint else "$detail\n$hint"
 
         val notification = baseBuilder(NotificationChannels.IMPORTS)
             .setContentTitle(headline)
-            .setContentText(detail.ifBlank { context.getString(R.string.notification_import_confirm_hint) })
+            .setContentText(detail.ifBlank { hint })
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             // The lock screen keeps the generic title and no amount, merchant or account. The
