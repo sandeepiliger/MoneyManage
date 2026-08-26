@@ -37,7 +37,20 @@ object Routes {
 
     // Transaction flows
     const val ADD_TRANSACTION = "transaction/add"
-    const val NATURAL_LANGUAGE_ENTRY = "transaction/describe"
+    private const val NATURAL_LANGUAGE_ENTRY_BASE = "transaction/describe"
+
+    /**
+     * Describe-a-spend entry.
+     *
+     * `listen` decides whether the screen opens the speech recogniser itself. The microphone
+     * button means "start talking now", so it arrives with listen=true and the user speaks
+     * without a second tap; "describe instead" on the manual entry screen arrives with false,
+     * because that user has already chosen to type.
+     */
+    const val NATURAL_LANGUAGE_ENTRY = "$NATURAL_LANGUAGE_ENTRY_BASE?listen={listen}"
+
+    fun naturalLanguageEntry(listen: Boolean = false) =
+        "$NATURAL_LANGUAGE_ENTRY_BASE?listen=$listen"
     const val PENDING_IMPORTS = "transaction/pending"
     const val RECENTLY_DELETED = "transaction/deleted"
 
@@ -130,6 +143,7 @@ object Routes {
         const val CARD_ID = "cardId"
         const val LOAN_ID = "loanId"
         const val GOAL_ID = "goalId"
+        const val LISTEN = "listen"
     }
 }
 

@@ -203,7 +203,12 @@ private fun KhaataApp(
                 ) {
                     KhaataFloatingAddButton(
                         onClick = { navController.navigate(Routes.ADD_TRANSACTION) },
-                        onVoiceClick = { navController.navigate(Routes.NATURAL_LANGUAGE_ENTRY) },
+                        // Straight into listening -- tapping a microphone means "start talking
+                        // now", so the screen opens the recogniser itself rather than landing on
+                        // a form with a second microphone to press.
+                        onVoiceClick = {
+                            navController.navigate(Routes.naturalLanguageEntry(listen = true))
+                        },
                     )
                 }
             },

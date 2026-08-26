@@ -39,8 +39,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -70,6 +73,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun NaturalLanguageEntryScreen(
     onDone: () -> Unit,
+    startListening: Boolean = false,
     viewModel: NaturalLanguageEntryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -93,6 +97,41 @@ fun NaturalLanguageEntryScreen(
         if (spoken != null) {
             val combined = if (state.input.isBlank()) spoken else state.input.trimEnd() + " " + spoken
             viewModel.onInputChange(combined)
+        }
+    }
+
+    // Explicitly typed: the catch branch evaluates to a Job, so without this the lambda infers
+    // () -> Any and no longer satisfies IconButton's onClick.
+    val launchVoiceInput: () -> Unit = {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
+            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, voicePrompt)
+        }
+        try {
+            voiceLauncher.launch(intent)
+        } catch (_: ActivityNotFoundException) {
+            // No recogniser installed. The typed field behind this dialog still works, so say so
+            // and leave the user on it rather than bouncing them back.
+            coroutineScope.launch { snackbarHostState.showSnackbar(voiceUnavailable) }
+        }
+    }
+
+    // Opened from the microphone button, so start listening without a second tap.
+    //
+    // Guarded by a saveable flag rather than the parameter alone: this must fire once per visit,
+    // not again on every recomposition, and not again after a rotation or a process death that
+    // restores this screen -- either would reopen the recogniser over whatever the user had
+    // already dictated. Cancelling the recogniser leaves them here with the text field, which is
+    // the same screen the manual path reaches.
+    var hasAutoListened by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(startListening) {
+        if (startListening && !hasAutoListened) {
+            hasAutoListened = true
+            launchVoiceInput()
         }
     }
 
@@ -128,25 +167,8 @@ fun NaturalLanguageEntryScreen(
                 label = { Text(stringResource(R.string.quick_add_nl_title)) },
                 placeholder = { Text(stringResource(R.string.quick_add_nl_hint)) },
                 trailingIcon = {
-                    IconButton(
-                        onClick = {
-                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                putExtra(
-                                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
-                                )
-                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault())
-                                putExtra(RecognizerIntent.EXTRA_PROMPT, voicePrompt)
-                            }
-                            try {
-                                voiceLauncher.launch(intent)
-                            } catch (_: ActivityNotFoundException) {
-                                coroutineScope.launch {
-                                    snackbarHostState.showSnackbar(voiceUnavailable)
-                                }
-                            }
-                        },
-                    ) {
+                    // Still here for a second sentence, or for when the user arrived by typing.
+                    IconButton(onClick = launchVoiceInput) {
                         Icon(
                             Icons.Default.Mic,
                             contentDescription = stringResource(R.string.voice_input),

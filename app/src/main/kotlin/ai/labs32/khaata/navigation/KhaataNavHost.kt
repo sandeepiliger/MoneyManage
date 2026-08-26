@@ -108,7 +108,8 @@ fun KhaataNavHost(
             TransactionEditScreen(
                 transactionId = null,
                 onDone = { navController.popBackStack() },
-                onDescribeInstead = { navController.navigate(Routes.NATURAL_LANGUAGE_ENTRY) },
+                // Not listening: this user opened manual entry and chose to type instead.
+                onDescribeInstead = { navController.navigate(Routes.naturalLanguageEntry()) },
             )
         }
 
@@ -135,8 +136,19 @@ fun KhaataNavHost(
             )
         }
 
-        composable(Routes.NATURAL_LANGUAGE_ENTRY) {
-            NaturalLanguageEntryScreen(onDone = { navController.popBackStack() })
+        composable(
+            route = Routes.NATURAL_LANGUAGE_ENTRY,
+            arguments = listOf(
+                navArgument(Routes.Args.LISTEN) {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+            ),
+        ) { entry ->
+            NaturalLanguageEntryScreen(
+                startListening = entry.arguments?.getBoolean(Routes.Args.LISTEN) == true,
+                onDone = { navController.popBackStack() },
+            )
         }
 
         composable(Routes.PENDING_IMPORTS) {
