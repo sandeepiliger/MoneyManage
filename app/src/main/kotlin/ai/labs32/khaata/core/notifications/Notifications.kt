@@ -18,6 +18,7 @@ import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.database.dao.NotificationLogDao
 import ai.labs32.khaata.core.database.entity.NotificationLogEntity
 import ai.labs32.khaata.core.logging.KhaataLog
+import ai.labs32.khaata.core.model.TransactionType
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.sms.ParsedSms
@@ -228,26 +229,48 @@ class KhaataNotifier @Inject constructor(
      * queue the user clears when convenient, and an interrupting sound for every card swipe would
      * have the feature turned off within a day.
      */
-    suspend fun notifyPendingImport(parsed: ParsedSms): Boolean {
+    suspend fun notifyPendingImport(
+        parsed: ParsedSms,
+        categoryName: String?,
+        accountName: String,
+    ): Boolean {
         if (!hasPermission()) return false
         // The reference number identifies the payment, so re-parsing the same message — a carrier
         // redelivery, say — replaces the notification rather than stacking a second one.
         val dedupeKey = "import:${parsed.referenceNumber ?: parsed.hashCode()}"
         if (notificationLogDao.exists(dedupeKey)) return false
 
-        val title = context.getString(R.string.notification_import_title)
+        val amount = MoneyFormatter.plain(parsed.amount)
+        val merchant = parsed.merchantDisplayName
+            ?: context.getString(R.string.notification_import_unknown_merchant)
+
+        // "₹450 spent at Swiggy" reads as what happened; the old "New transaction to confirm" made
+        // the user open the app to find out whether it was even worth opening.
+        val headline = when (parsed.type) {
+            TransactionType.INCOME ->
+                context.getString(R.string.notification_import_income, amount, merchant)
+            TransactionType.TRANSFER ->
+                context.getString(R.string.notification_import_transfer, amount)
+            else -> context.getString(R.string.notification_import_expense, amount, merchant)
+        }
+
+        // Category is omitted rather than guessed at when nothing was suggested — "Uncategorised"
+        // in a notification invites a correction the user cannot make from here.
+        val detail = listOfNotNull(categoryName, accountName).joinToString(" · ")
+        val body = context.getString(R.string.notification_import_confirm_hint)
+            .let { hint -> if (detail.isBlank()) hint else "$detail\n$hint" }
+
         val notification = baseBuilder(NotificationChannels.IMPORTS)
-            .setContentTitle(title)
-            .setContentText(
-                context.getString(
-                    R.string.notification_import_body,
-                    parsed.merchantDisplayName ?: context.getString(R.string.notification_import_unknown_merchant),
-                    MoneyFormatter.plain(parsed.amount),
-                ),
-            )
+            .setContentTitle(headline)
+            .setContentText(detail.ifBlank { context.getString(R.string.notification_import_confirm_hint) })
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            // The lock screen keeps the generic title and no amount, merchant or account. The
+            // headline above is only shown once the device is unlocked.
             .setPublicVersion(
-                baseBuilder(NotificationChannels.IMPORTS).setContentTitle(title).build(),
+                baseBuilder(NotificationChannels.IMPORTS)
+                    .setContentTitle(context.getString(R.string.notification_import_title))
+                    .build(),
             )
             .setContentIntent(pendingImportsIntent())
             .build()

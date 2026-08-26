@@ -67,7 +67,11 @@ class SmsTransactionReceiver : BroadcastReceiver() {
                 when (val outcome = importer.import(body = body, sender = sender)) {
                     is SmsImportOutcome.Staged -> {
                         KhaataLog.d(TAG, "Staged, confidence=${outcome.parsed.confidence}")
-                        notifier.notifyPendingImport(outcome.parsed)
+                        notifier.notifyPendingImport(
+                            parsed = outcome.parsed,
+                            categoryName = outcome.categoryName,
+                            accountName = outcome.accountName,
+                        )
                     }
 
                     // Everything else is a normal, quiet outcome for the user. A promotional SMS

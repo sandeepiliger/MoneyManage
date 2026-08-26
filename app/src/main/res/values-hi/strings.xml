@@ -748,8 +748,11 @@
     <string name="notification_budget_nearing">आपने इसका %1$d%% इस्तेमाल कर लिया है</string>
     <string name="notification_budget_over">आप %1$s ज़्यादा खर्च कर चुके हैं</string>
     <string name="notification_import_title">नया लेन-देन, पुष्टि बाकी है</string>
-    <string name="notification_import_body">%1$s · %2$s</string>
     <string name="notification_import_unknown_merchant">अनजान दुकान</string>
+    <string name="notification_import_expense">%2$s पर %1$s ख़र्च</string>
+    <string name="notification_import_income">%2$s से %1$s मिले</string>
+    <string name="notification_import_transfer">%1$s ट्रांसफ़र हुए</string>
+    <string name="notification_import_confirm_hint">पुष्टि या बदलाव के लिए टैप करें</string>
     <string name="notification_import_no_account_title">एक भुगतान दर्ज नहीं हो सका</string>
     <string name="notification_import_no_account_body">बैंक का संदेश पढ़ा गया, लेकिन यह पता नहीं चला कि वह आपके किस खाते का है। अपने खाते में आख़िरी चार अंक जोड़ें ताकि ये अपने आप मिल जाएँ।</string>
     <string name="notification_daily_title">आज कुछ दर्ज करना है?</string>

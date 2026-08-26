@@ -16,8 +16,19 @@ import javax.inject.Singleton
 
 /** What happened to one message. Every path is named, so nothing is silently dropped. */
 sealed interface SmsImportOutcome {
-    /** A pending transaction was created and is waiting for the user to confirm it. */
-    data class Staged(val transactionId: String, val parsed: ParsedSms) : SmsImportOutcome
+    /**
+     * A pending transaction was created and is waiting for the user to confirm it.
+     *
+     * [categoryName] and [accountName] are resolved here rather than left for the notification to
+     * look up: the receiver has no repositories, and the notifier deliberately has no database
+     * access beyond its own log. Null category means nothing was confidently suggested.
+     */
+    data class Staged(
+        val transactionId: String,
+        val parsed: ParsedSms,
+        val categoryName: String?,
+        val accountName: String,
+    ) : SmsImportOutcome
 
     /** The message was not a transaction — an OTP, a promotion, a balance alert. */
     data object NotATransaction : SmsImportOutcome
@@ -108,7 +119,12 @@ class SmsTransactionImporter @Inject constructor(
         // Logged by outcome and confidence only — never the body, the merchant or the amount.
         KhaataLog.d(TAG, "Staged an SMS import, confidence=${parsed.confidence}")
 
-        return SmsImportOutcome.Staged(transactionId = id, parsed = parsed)
+        return SmsImportOutcome.Staged(
+            transactionId = id,
+            parsed = parsed,
+            categoryName = suggestion?.categoryId?.let { categoryRepository.findById(it)?.name },
+            accountName = account.name,
+        )
     }
 
     /**
