@@ -108,15 +108,21 @@ internal object KhaataPalette {
      * Ordered so adjacent entries differ in both hue and lightness, which keeps a pie chart
      * readable in greyscale and for a colour-blind viewer. Charts additionally label slices
      * directly rather than relying on a colour key.
+     *
+     * The two lists are **index-paired**: entry *n* here and entry *n* in [CategorySwatchesDark]
+     * are the light and dark renderings of the same hue, because a category's swatch is chosen by
+     * index (`colorSeed`) and must not change identity when the user switches theme. Reordering
+     * one list without applying the identical reorder to the other makes a category indigo in
+     * light mode and pink in dark mode. Change both, or neither.
      */
     val CategorySwatchesLight = listOf(
-        Color(0xFF4C4CAE), // indigo
+        Color(0xFF9C4F96), // plum
         Color(0xFF00877A), // teal
         Color(0xFFBC3B5E), // rose
         Color(0xFFA17800), // brass
         Color(0xFF5B6ABF), // periwinkle
         Color(0xFF2F7D5D), // moss
-        Color(0xFF9C4F96), // plum
+        Color(0xFF4C4CAE), // indigo
         Color(0xFFB5651D), // terracotta
         Color(0xFF3C7A96), // steel
         Color(0xFF7A5C3E), // walnut
@@ -124,19 +130,20 @@ internal object KhaataPalette {
         Color(0xFF8C4A4A), // brick
     )
 
+    /** Index-paired with [CategorySwatchesLight] — see the note there before reordering either. */
     val CategorySwatchesDark = listOf(
-        Color(0xFFD79BD1),
-        Color(0xFF4EC7B6),
-        Color(0xFFEC8AA2),
-        Color(0xFFE0AF1F),
-        Color(0xFF9AA6E8),
-        Color(0xFF6FC79E),
-        Color(0xFF9494DA),
-        Color(0xFFE9A268),
-        Color(0xFF86BCD6),
-        Color(0xFFC4A183),
-        Color(0xFFB6C46F),
-        Color(0xFFD79191),
+        Color(0xFFD79BD1), // plum
+        Color(0xFF4EC7B6), // teal
+        Color(0xFFEC8AA2), // rose
+        Color(0xFFE0AF1F), // brass
+        Color(0xFF9AA6E8), // periwinkle
+        Color(0xFF6FC79E), // moss
+        Color(0xFF9494DA), // indigo
+        Color(0xFFE9A268), // terracotta
+        Color(0xFF86BCD6), // steel
+        Color(0xFFC4A183), // walnut
+        Color(0xFFB6C46F), // olive
+        Color(0xFFD79191), // brick
     )
 }
 
