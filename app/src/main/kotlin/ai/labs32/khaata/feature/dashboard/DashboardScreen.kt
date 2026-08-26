@@ -1,6 +1,7 @@
 package ai.labs32.khaata.feature.dashboard
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,11 +30,14 @@ import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.material.icons.outlined.TrendingUp
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -50,11 +54,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ai.labs32.khaata.R
+import ai.labs32.khaata.core.model.BudgetStatus
 import ai.labs32.khaata.core.model.DashboardCard
 import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.money.MoneyStyle
 import ai.labs32.khaata.core.money.SignStyle
 import ai.labs32.khaata.core.ui.components.CardHeader
+import ai.labs32.khaata.core.ui.components.CategoryIcons
 import ai.labs32.khaata.core.ui.components.ChartLegend
 import ai.labs32.khaata.core.ui.components.ChartSlice
 import ai.labs32.khaata.core.ui.components.ChartPoint
@@ -126,6 +132,7 @@ fun DashboardScreen(
             onToggleVisibility = viewModel::toggleAmountVisibility,
             onNavigate = onNavigate,
             onOpenTransaction = onOpenTransaction,
+            onSnoozeInsight = viewModel::snoozeInsight,
         )
     }
 }
@@ -136,6 +143,7 @@ private fun DashboardContent(
     onToggleVisibility: () -> Unit,
     onNavigate: (String) -> Unit,
     onOpenTransaction: (String) -> Unit,
+    onSnoozeInsight: (String) -> Unit,
 ) {
     val spacing = KhaataTheme.spacing
 
@@ -177,6 +185,8 @@ private fun DashboardContent(
                 DashboardCard.AI_INSIGHT -> InsightCard(
                     state = state,
                     onSeeAll = { onNavigate(Routes.INSIGHTS) },
+                    onAdjustBudget = { budgetId -> onNavigate(Routes.editBudget(budgetId)) },
+                    onSnooze = onSnoozeInsight,
                 )
                 DashboardCard.BUDGET_PROGRESS -> BudgetProgressCard(
                     state = state,
@@ -259,8 +269,30 @@ private fun DashboardHeader(
 
         HeroAmount(money = state.availableToSpend, hidden = state.amountsHidden, color = Color.White)
 
+        // The one line that turns "here is a number" into "here is what to do today" -- the
+        // aggregate of every budget's own safe-daily-spend, so it answers "can I afford this"
+        // without a trip to the Budgets tab.
+        if (!state.amountsHidden) {
+            state.dailySafeSpend?.let { daily ->
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.dashboard_daily_pace, MoneyFormatter.plain(daily)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.80f),
+                )
+            }
+        }
+
         state.netWorth?.let { netWorth ->
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(12.dp))
+            // Separates the hero amount and its daily-pace line from net worth, the delta and the
+            // sparkline below -- without it the card is four competing figures with nothing
+            // marking which one is the headline.
+            HorizontalDivider(
+                color = Color.White.copy(alpha = 0.16f),
+                thickness = 1.dp,
+            )
+            Spacer(Modifier.height(10.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -487,41 +519,47 @@ private fun ShortcutTile(
 
 @Composable
 private fun DemoBanner(onManage: () -> Unit) {
-    // A call to action, not a passive summary, so it takes the Emphasized tier and the brass
-    // secondaryContainer tone rather than the tier's own default container -- the banner needs to
-    // read as "act on this" against the rest of the dashboard, which a neutral card tone wouldn't do.
-    KhaataCard(
-        onClick = onManage,
-        tier = KhaataCardTier.Emphasized,
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
+    // Demoted from an Emphasized brass card to a plain row. It is context about the data on
+    // screen, not something to act on the way an over-budget warning or a pending import is --
+    // SpendingOverviewCard is the one card on this screen that earns Emphasized now, and every
+    // other "important" card competing for the same weight is what made none of them read as
+    // important.
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onManage)
+            .padding(horizontal = KhaataTheme.spacing.small, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_demo_banner),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = stringResource(R.string.dashboard_demo_exit),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-        }
+        Icon(
+            imageVector = Icons.Outlined.Science,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = stringResource(R.string.dashboard_demo_banner),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = stringResource(R.string.dashboard_demo_exit),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
     }
 }
 
 @Composable
 private fun PendingImportsBanner(count: Int, onOpen: () -> Unit) {
-    // Same reasoning as DemoBanner: this is the prompt to go reconcile pending imports, so it
-    // gets the Emphasized tier and the primaryContainer tone that marks it as actionable.
+    // Raised rather than Emphasized: Emphasized is reserved for SpendingOverviewCard alone now,
+    // so the one card that actually needs the eye to land somewhere first still stands out. This
+    // banner is still primaryContainer-toned and still its own onClick, so it reads as actionable
+    // without competing with the card that matters most on the screen.
     KhaataCard(
         onClick = onOpen,
-        tier = KhaataCardTier.Emphasized,
         containerColor = MaterialTheme.colorScheme.primaryContainer,
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
     ) {
@@ -606,9 +644,16 @@ private fun SpendingOverviewCard(state: DashboardUiState) {
 }
 
 @Composable
-private fun InsightCard(state: DashboardUiState, onSeeAll: () -> Unit) {
+private fun InsightCard(
+    state: DashboardUiState,
+    onSeeAll: () -> Unit,
+    onAdjustBudget: (String) -> Unit,
+    onSnooze: (String) -> Unit,
+) {
     val insight = state.topInsight ?: return
 
+    // The card itself still opens the full list -- the buttons below are the common action taken
+    // straight from Home, not a replacement for the tap.
     KhaataCard(onClick = onSeeAll) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -636,12 +681,28 @@ private fun InsightCard(state: DashboardUiState, onSeeAll: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        Spacer(Modifier.height(KhaataTheme.spacing.medium))
+        Row(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
+            // Adjust budget only appears when this insight is actually about one -- it opens that
+            // budget to edit rather than silently changing the limit itself, the same "the user
+            // decides the number" rule every other screen in this app already follows.
+            insight.budgetId?.let { budgetId ->
+                OutlinedButton(onClick = { onAdjustBudget(budgetId) }) {
+                    Text(stringResource(R.string.insight_action_adjust_budget))
+                }
+            }
+            OutlinedButton(onClick = { onSnooze(insight.id) }) {
+                Text(stringResource(R.string.insight_action_snooze))
+            }
+        }
     }
 }
 
 @Composable
 private fun BudgetProgressCard(state: DashboardUiState, onSeeAll: () -> Unit) {
     if (state.budgetProgress.isEmpty()) return
+    val categoriesById = remember(state.categories) { state.categories.associateBy { it.id } }
 
     KhaataCard {
         CardHeader(
@@ -652,32 +713,54 @@ private fun BudgetProgressCard(state: DashboardUiState, onSeeAll: () -> Unit) {
         Spacer(Modifier.height(KhaataTheme.spacing.medium))
 
         state.budgetProgress.take(3).forEach { progress ->
-            Column(Modifier.padding(vertical = 6.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = progress.budget.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.budgets_spent_of,
-                            MoneyFormatter.compact(progress.spent),
-                            MoneyFormatter.compact(progress.limit),
-                        ),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // The first covered category stands in for the budget's icon and colour. A budget can
+            // cover several categories, or none at all for an overall limit -- CategoryIcons
+            // already falls back to a neutral glyph for a null key, and a budget with no category
+            // to borrow a seed from gets a stable one derived from its own id instead.
+            val linkedCategory = progress.budget.categoryIds.firstOrNull()?.let { categoriesById[it] }
+            val isOffTrack = progress.status != BudgetStatus.ON_TRACK
+            val statusColor = budgetStatusColor(progress.status)
+
+            Row(
+                Modifier.padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ColorBadge(
+                    icon = CategoryIcons[linkedCategory?.iconKey],
+                    colorSeed = linkedCategory?.colorSeed ?: progress.budget.id.hashCode(),
+                    size = 32.dp,
+                )
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = progress.budget.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.budgets_spent_of,
+                                MoneyFormatter.compact(progress.spent),
+                                MoneyFormatter.compact(progress.limit),
+                            ),
+                            style = MaterialTheme.typography.labelMedium,
+                            // Off track colours the figure itself rather than only the status
+                            // label below it, so the number that actually needs attention is
+                            // where the colour lands.
+                            color = if (isOffTrack) statusColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    LabelledProgress(
+                        progressPercent = progress.percentUsedClamped,
+                        statusLabel = budgetStatusLabel(progress.status),
+                        progressColor = statusColor,
                     )
                 }
-                Spacer(Modifier.height(6.dp))
-                LabelledProgress(
-                    progressPercent = progress.percentUsedClamped,
-                    statusLabel = budgetStatusLabel(progress.status),
-                    progressColor = budgetStatusColor(progress.status),
-                )
             }
         }
     }
@@ -722,27 +805,34 @@ private fun CategoryBreakdownCard(state: DashboardUiState, onSeeAll: () -> Unit)
         )
         Spacer(Modifier.height(KhaataTheme.spacing.default))
 
-        Box(Modifier.fillMaxWidth().height(180.dp)) {
-            DonutChart(
+        // Donut beside its legend rather than above it -- the two were never competing for the
+        // same horizontal space, only stacked because nobody had shrunk the donut enough to sit
+        // next to six rows of text. 132dp is small enough to leave the legend room without
+        // clipping it on a compact phone width.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(132.dp)) {
+                DonutChart(
+                    slices = slices,
+                    centerLabel = stringResource(R.string.dashboard_expenses),
+                    centerValue = total?.let { MoneyFormatter.compact(it) },
+                )
+            }
+
+            Spacer(Modifier.width(KhaataTheme.spacing.default))
+
+            ChartLegend(
+                modifier = Modifier.weight(1f),
                 slices = slices,
-                centerLabel = stringResource(R.string.dashboard_expenses),
-                centerValue = total?.let { MoneyFormatter.compact(it) },
+                valueFormatter = { value ->
+                    MoneyFormatter.compact(
+                        ai.labs32.khaata.core.money.Money.of(
+                            java.math.BigDecimal(value.toDouble()),
+                            state.currency,
+                        ),
+                    )
+                },
             )
         }
-
-        Spacer(Modifier.height(KhaataTheme.spacing.default))
-
-        ChartLegend(
-            slices = slices,
-            valueFormatter = { value ->
-                MoneyFormatter.compact(
-                    ai.labs32.khaata.core.money.Money.of(
-                        java.math.BigDecimal(value.toDouble()),
-                        state.currency,
-                    ),
-                )
-            },
-        )
     }
 }
 

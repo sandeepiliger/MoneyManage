@@ -10,6 +10,8 @@ import ai.labs32.khaata.core.calc.GoalProgress
 import ai.labs32.khaata.core.calc.NetWorthSummary
 import ai.labs32.khaata.core.common.DateRange
 import ai.labs32.khaata.core.common.KhaataClock
+import ai.labs32.khaata.core.database.dao.InsightStateDao
+import ai.labs32.khaata.core.database.entity.InsightStateEntity
 import ai.labs32.khaata.core.insights.Insight
 import ai.labs32.khaata.core.insights.InsightEngine
 import ai.labs32.khaata.core.logging.KhaataLog
@@ -69,6 +71,12 @@ data class DashboardUiState(
 
     val categoryBreakdown: List<CategorySpend> = emptyList(),
     val budgetProgress: List<BudgetProgress> = emptyList(),
+    /**
+     * Sum of [BudgetProgress.safeDailySpend] across every budget on screen -- what can be spent
+     * per day, in total, and still land inside every one of them. Null when there is nothing to
+     * sum, either because there are no budgets yet or none has any period left to spend safely in.
+     */
+    val dailySafeSpend: Money? = null,
     val upcoming: List<ScheduledOccurrence> = emptyList(),
     val recentTransactions: List<Transaction> = emptyList(),
     val goals: List<GoalProgress> = emptyList(),
@@ -110,6 +118,7 @@ class DashboardViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
     private val insightEngine: InsightEngine,
+    private val insightStateDao: InsightStateDao,
     private val clock: KhaataClock,
 ) : ViewModel() {
 
@@ -193,6 +202,9 @@ class DashboardViewModel @Inject constructor(
                     .categoryBreakdown(monthTransactions, categories, thisMonth, currency)
                     .take(BREAKDOWN_LIMIT),
                 budgetProgress = budgets,
+                dailySafeSpend = budgets.mapNotNull { it.safeDailySpend }
+                    .takeIf { it.isNotEmpty() }
+                    ?.reduce { total, next -> total + next },
                 goals = goals.filter { !it.goal.isArchived }.take(GOAL_LIMIT),
                 recentTransactions = recent,
                 categories = categories,
@@ -211,6 +223,7 @@ class DashboardViewModel @Inject constructor(
                     it.copy(
                         categoryBreakdown = data.categoryBreakdown,
                         budgetProgress = data.budgetProgress,
+                        dailySafeSpend = data.dailySafeSpend,
                         goals = data.goals,
                         recentTransactions = data.recentTransactions,
                         categories = data.categories,
@@ -258,6 +271,10 @@ class DashboardViewModel @Inject constructor(
      *
      * One only. A dashboard that lists eight observations is one nobody reads; the most urgent
      * one, with the full list a tap away, is what actually gets acted on.
+     *
+     * Fetches a small candidate pool rather than just the top one, because the top-ranked insight
+     * can be the one just snoozed -- without also reading the dismissed set, snoozing would look
+     * like it did nothing, since regenerating would hand back the exact same insight.
      */
     private fun refreshInsight() {
         viewModelScope.launch {
@@ -275,14 +292,37 @@ class DashboardViewModel @Inject constructor(
                     budgets = budgets,
                     subscriptions = subscriptions,
                     asOf = today,
-                    limit = 1,
+                    limit = INSIGHT_CANDIDATE_LIMIT,
                 )
-                _uiState.update { it.copy(topInsight = insights.firstOrNull()) }
+                val dismissed = insightStateDao.dismissedIdsForPeriod(periodKey()).toSet()
+                val topInsight = insights.firstOrNull { it.id !in dismissed }
+                _uiState.update { it.copy(topInsight = topInsight) }
             } catch (error: Exception) {
                 KhaataLog.e(TAG, "Insight generation failed", error)
             }
         }
     }
+
+    /**
+     * Snoozes the current top insight for the rest of this period, the same dismissal
+     * [InsightsViewModel][ai.labs32.khaata.feature.insights.InsightsViewModel] already offers on
+     * the full list -- scoped to the period rather than forever, so next month's version of the
+     * same observation is not silenced by a tap made weeks earlier.
+     */
+    fun snoozeInsight(insightId: String) {
+        viewModelScope.launch {
+            insightStateDao.upsert(
+                InsightStateEntity(
+                    insightId = insightId,
+                    dismissedAt = clock.now(),
+                    periodKey = periodKey(),
+                ),
+            )
+            refreshInsight()
+        }
+    }
+
+    private fun periodKey(): String = clock.today().let { "${it.year}-${it.monthValue}" }
 
     private fun refreshNetWorthTrend() {
         viewModelScope.launch {
@@ -340,6 +380,7 @@ class DashboardViewModel @Inject constructor(
     private data class SecondaryData(
         val categoryBreakdown: List<CategorySpend>,
         val budgetProgress: List<BudgetProgress>,
+        val dailySafeSpend: Money?,
         val goals: List<GoalProgress>,
         val recentTransactions: List<Transaction>,
         val categories: List<Category>,
@@ -361,6 +402,7 @@ class DashboardViewModel @Inject constructor(
         const val UPCOMING_DAYS = 30
         const val UPCOMING_LIMIT = 5
         const val TREND_MONTHS = 6
+        const val INSIGHT_CANDIDATE_LIMIT = 5
     }
 }
 

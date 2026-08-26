@@ -128,6 +128,9 @@
     <string name="dashboard_empty_action">खर्च जोड़ें</string>
     <string name="dashboard_demo_banner">आप सैंपल डेटा देख रहे हैं</string>
     <string name="dashboard_demo_exit">सैंपल डेटा हटाएँ</string>
+    <string name="dashboard_daily_pace">इस महीने बजट में रहने के लिए रोज़ लगभग %1$s रखें</string>
+    <string name="insight_action_adjust_budget">बजट समायोजित करें</string>
+    <string name="insight_action_snooze">स्नूज़ करें</string>
 
     <!-- Dashboard shortcuts -->
     <string name="dashboard_shortcuts">शॉर्टकट</string>

@@ -129,6 +129,9 @@
     <string name="dashboard_empty_action">Add an expense</string>
     <string name="dashboard_demo_banner">You are exploring sample data</string>
     <string name="dashboard_demo_exit">Clear sample data</string>
+    <string name="dashboard_daily_pace">About %1$s a day keeps this month on track</string>
+    <string name="insight_action_adjust_budget">Adjust budget</string>
+    <string name="insight_action_snooze">Snooze</string>
     <string name="dashboard_pending_imports">%1$d transaction(s) waiting for you to confirm</string>
 
     <!-- ==================== Dashboard shortcuts ==================== -->

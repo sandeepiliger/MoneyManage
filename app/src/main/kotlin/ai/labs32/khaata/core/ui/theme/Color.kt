@@ -125,13 +125,13 @@ internal object KhaataPalette {
     )
 
     val CategorySwatchesDark = listOf(
-        Color(0xFF9494DA),
+        Color(0xFFD79BD1),
         Color(0xFF4EC7B6),
         Color(0xFFEC8AA2),
         Color(0xFFE0AF1F),
         Color(0xFF9AA6E8),
         Color(0xFF6FC79E),
-        Color(0xFFD79BD1),
+        Color(0xFF9494DA),
         Color(0xFFE9A268),
         Color(0xFF86BCD6),
         Color(0xFFC4A183),
