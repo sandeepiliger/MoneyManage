@@ -26,14 +26,19 @@ fun secret(key: String, default: String = ""): String =
 
 android {
     namespace = "ai.labs32.khaata"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ai.labs32.khaata"
         // 24 covers the overwhelming majority of active Indian Android devices while still
         // allowing modern APIs; java.time is available below 26 via core library desugaring.
         minSdk = 24
-        targetSdk = 35
+        // 36 (Android 16), not 35: Play requires new app submissions to target API 36 from
+        // 2026-08-31, and that applies to a first release exactly as it does to an update.
+        // Targeting 36 also opts the app into Android 16's enforced edge-to-edge layout --
+        // MainActivity already calls enableEdgeToEdge() and the scaffolds already consume
+        // window insets, so this is a requirement the UI was written for rather than against.
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 

@@ -28,7 +28,7 @@ jobs:
 
       - name: Install required SDK packages
         run: |
-          sdkmanager --install "platforms;android-35" "build-tools;35.0.0" > /dev/null
+          sdkmanager --install "platforms;android-36" "build-tools;36.0.0" > /dev/null
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew

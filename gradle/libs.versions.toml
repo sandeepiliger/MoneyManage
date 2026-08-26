@@ -2,7 +2,13 @@
 # Khaata — version catalog
 #
 # Versions are pinned to a mutually-compatible stable set:
-#   Gradle 8.14.x  <-  AGP 8.7.3  <-  Kotlin 2.0.21  <-  KSP 2.0.21-1.0.28
+#   Gradle 8.14.x  <-  AGP 8.10.0  <-  Kotlin 2.0.21  <-  KSP 2.0.21-1.0.28
+#
+#   AGP is 8.10.0 rather than something newer because 8.10 is the *lowest* release
+#   whose maximum supported compileSdk is 36, which Play requires for new app
+#   submissions from 2026-08-31. Staying at the floor keeps the jump from 8.7.3 as
+#   small as it can be while still clearing the requirement. AGP 8.10 needs Gradle
+#   8.11.1+ and JDK 17; the wrapper is already on 8.14.3 and the toolchain on 17.
 #   Compose BOM 2024.12.01 is the matching Compose release train for Kotlin 2.0.21
 #   (the Compose compiler ships inside the Kotlin plugin from 2.0.0 onward, so the
 #   `compose-compiler` Gradle plugin alias below is versioned by `kotlin`).
@@ -11,7 +17,7 @@
 ####################################################################################
 
 [versions]
-agp = "8.7.3"
+agp = "8.10.0"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.28"
 
