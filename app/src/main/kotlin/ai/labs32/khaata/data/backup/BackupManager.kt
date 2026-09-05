@@ -180,11 +180,9 @@ class BackupManager @Inject constructor(
         runCatching {
             val text = context.contentResolver.openInputStream(uri)?.use { stream ->
                 // Bounded read: a malformed pick should fail fast rather than fill memory.
-                val bytes = stream.readNBytes(MAX_BACKUP_BYTES + 1)
-                if (bytes.size > MAX_BACKUP_BYTES) return@withContext BackupReadResult.Invalid(
+                readBounded(stream) ?: return@withContext BackupReadResult.Invalid(
                     "That file is too large to be a Khaata backup.",
                 )
-                bytes.toString(Charsets.UTF_8)
             } ?: return@withContext BackupReadResult.Invalid("That file could not be opened.")
 
             BackupSerializer.read(text)
@@ -197,9 +195,7 @@ class BackupManager @Inject constructor(
     /** Parses a CSV the user picked, without applying it. */
     suspend fun readCsv(uri: Uri): Result<CsvImportResult> = runCatchingIo {
         val text = context.contentResolver.openInputStream(uri)?.use { stream ->
-            val bytes = stream.readNBytes(MAX_BACKUP_BYTES + 1)
-            require(bytes.size <= MAX_BACKUP_BYTES) { "That file is too large to import." }
-            bytes.toString(Charsets.UTF_8)
+            readBounded(stream) ?: error("That file is too large to import.")
         } ?: error("That file could not be opened.")
 
         CsvImporter(defaultCurrency = profileRepository.currency()).parse(text)
@@ -391,6 +387,28 @@ class BackupManager @Inject constructor(
 
     // ---- Internals ---------------------------------------------------------------------------
 
+    /**
+     * Reads at most [MAX_BACKUP_BYTES] from [stream] as UTF-8, or null if the file is longer.
+     *
+     * Written as a plain read loop rather than `InputStream.readNBytes`, which Android only
+     * added in API 33 and core library desugaring does not backport -- on the API 24-32 devices
+     * that are most of this app's audience, calling it throws NoSuchMethodError and takes down
+     * every backup and CSV import with it.
+     *
+     * One byte past the limit is enough to know the file is too long, so nothing larger is ever
+     * held in memory.
+     */
+    private fun readBounded(stream: java.io.InputStream): String? {
+        val buffer = ByteArray(READ_CHUNK_BYTES)
+        val collected = java.io.ByteArrayOutputStream()
+        while (collected.size() <= MAX_BACKUP_BYTES) {
+            val read = stream.read(buffer)
+            if (read < 0) return collected.toString(Charsets.UTF_8.name())
+            collected.write(buffer, 0, read)
+        }
+        return null
+    }
+
     private fun exportsDir(): File = File(context.filesDir, "exports").apply { mkdirs() }
 
     private fun uriFor(file: File): Uri =
@@ -442,5 +460,8 @@ class BackupManager @Inject constructor(
 
         /** 64MB. Far above any plausible ledger, far below what would exhaust memory. */
         const val MAX_BACKUP_BYTES = 64 * 1024 * 1024
+
+        /** Read granularity for [readBounded]. Large enough that a big backup is not a syscall storm. */
+        const val READ_CHUNK_BYTES = 64 * 1024
     }
 }

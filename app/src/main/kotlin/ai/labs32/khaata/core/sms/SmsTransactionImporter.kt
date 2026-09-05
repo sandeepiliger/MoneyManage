@@ -218,6 +218,17 @@ class SmsTransactionImporter @Inject constructor(
         }
 
         val someAccountDeclaresDigits = accounts.any { !it.maskedIdentifier.isNullOrBlank() }
+
+        // Exactly one account, and nothing on file to tell accounts apart by: the message quotes
+        // digits, but there is only one account they could possibly belong to. This is the
+        // default setup -- onboarding creates one account and never asks for its last four --
+        // and nearly every Indian bank SMS quotes "a/c XX4821", so without this the common case
+        // matches nothing and every message is refused. Auto-creating instead would be worse: it
+        // would silently duplicate the account the user already has.
+        if (accounts.size == 1 && !someAccountDeclaresDigits) {
+            return AccountMatch.Found(accounts.single())
+        }
+
         if (accounts.isEmpty() || someAccountDeclaresDigits) {
             // Either a fresh install with nothing to match against yet, or the user has shown
             // they distinguish accounts by digits -- either way, a suffix matching none of them

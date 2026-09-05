@@ -51,6 +51,7 @@ import ai.labs32.khaata.feature.shared.AddRow
 import ai.labs32.khaata.feature.shared.budgetStatusColor
 import ai.labs32.khaata.feature.shared.budgetStatusLabel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,12 +74,16 @@ class BudgetsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(BudgetsUiState())
     val uiState: StateFlow<BudgetsUiState> = _uiState.asStateFlow()
 
+    /** The current collector, cancelled before [retry] starts another so they cannot stack up. */
+    private var stream: Job? = null
+
     init {
         observe()
     }
 
     private fun observe() {
-        budgetRepository.observeProgress()
+        stream?.cancel()
+        stream = budgetRepository.observeProgress()
             .catch { _uiState.value = BudgetsUiState(isLoading = false, error = LOAD_ERROR) }
             .onEach { progress ->
                 // Ordered by how much attention each needs, so an overspent budget is never

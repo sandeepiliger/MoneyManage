@@ -57,6 +57,26 @@ object BankSmsParser {
         "credited", "credit", "received", "deposited", "refunded", "refund", "cashback",
     )
 
+    /**
+     * A card being used, which is a spend however the message words it.
+     *
+     * Card purchase messages routinely carry no direction word at all — "Thank you for using your
+     * HDFC Bank Credit Card ending 1234 for Rs.500 at AMAZON" is one of the most common shapes in
+     * an Indian inbox, and the only word in it resembling a direction is the "Credit" of "Credit
+     * Card", which names the instrument. Read literally that message is income, which is exactly
+     * how it used to be filed: a spend recorded as money arriving, inflating income and hiding
+     * the expense. [directionIndex] therefore refuses "credit"/"debit" immediately before "card",
+     * and this picks the genuine direction back up.
+     *
+     * Consulted only when no direction word survived, so a message that does say "credited" or
+     * "refund" is still read from that word rather than from the card being mentioned.
+     */
+    private val CARD_USAGE = Regex(
+        """\b(?:used|using|utilised|utilized)\b[^.]{0,60}?\bcard\b""" +
+            """|\bcard\b[^.]{0,60}?\b(?:used|utilised|utilized)\b""",
+        RegexOption.IGNORE_CASE,
+    )
+
     // ---- Structure ---------------------------------------------------------------------------
 
     /** Masked suffix from a bank-account reference: `A/c XX1234`. */
@@ -224,10 +244,14 @@ object BankSmsParser {
     }
 
     private fun detectDirection(lower: String): TransactionType? {
-        val debitAt = DEBIT_WORDS.mapNotNull { indexOrNull(lower, it) }.minOrNull()
-        val creditAt = CREDIT_WORDS.mapNotNull { indexOrNull(lower, it) }.minOrNull()
+        val debitAt = DEBIT_WORDS.mapNotNull { directionIndex(lower, it) }.minOrNull()
+        val creditAt = CREDIT_WORDS.mapNotNull { directionIndex(lower, it) }.minOrNull()
         return when {
-            debitAt == null && creditAt == null -> null
+            // Nothing said which way the money went. A card being used still does — see
+            // [CARD_USAGE] — and that is the only fallback, so a message with neither is left
+            // alone rather than guessed at.
+            debitAt == null && creditAt == null ->
+                if (CARD_USAGE.containsMatchIn(lower)) TransactionType.EXPENSE else null
             creditAt == null -> TransactionType.EXPENSE
             debitAt == null -> TransactionType.INCOME
             // Both appear ("debited ... credited to beneficiary"): the earlier word describes
@@ -237,8 +261,28 @@ object BankSmsParser {
         }
     }
 
-    private fun indexOrNull(haystack: String, needle: String): Int? =
-        haystack.indexOf(needle).takeIf { it >= 0 }
+    /**
+     * Where [needle] first appears as a statement about direction, or null if it never does.
+     *
+     * "credit" and "debit" are skipped where they sit directly in front of "card": there they
+     * name the instrument the payment was made with, not which way the money moved. Every other
+     * occurrence, "credited" included, counts as normal.
+     */
+    private fun directionIndex(haystack: String, needle: String): Int? {
+        var from = 0
+        while (from <= haystack.length - needle.length) {
+            val at = haystack.indexOf(needle, from)
+            if (at < 0) return null
+            if (!namesACard(haystack, at, needle)) return at
+            from = at + needle.length
+        }
+        return null
+    }
+
+    private fun namesACard(haystack: String, at: Int, needle: String): Boolean {
+        if (needle != "credit" && needle != "debit") return false
+        return haystack.substring(at + needle.length).trimStart().startsWith("card")
+    }
 
     /**
      * Finds the transaction amount, skipping the available-balance figure.

@@ -37,6 +37,7 @@ import ai.labs32.khaata.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -136,7 +137,22 @@ class DashboardViewModel @Inject constructor(
      */
     private val amountsHidden = MutableStateFlow(false)
 
+    /**
+     * The collectors currently feeding this screen.
+     *
+     * Held so [retry] can cancel them before starting again. Without this, every retry left the
+     * previous collectors running: two streams writing the same state, twice the database work,
+     * and the count growing with each tap.
+     */
+    private val streams = mutableListOf<Job>()
+
     init {
+        start()
+    }
+
+    private fun start() {
+        streams.forEach { it.cancel() }
+        streams.clear()
         observeCore()
         observeSecondary()
     }
@@ -159,10 +175,7 @@ class DashboardViewModel @Inject constructor(
             amountsHidden,
         ) { balances, transactions, profile, settings, hidden ->
             val currency = profile?.currency ?: CurrencyCode.DEFAULT
-            val summary = CashflowAnalyzer.summarise(transactions, thisMonth, currency)
-
-            _uiState.value.copy(
-                isLoading = false,
+            CoreData(
                 greetingKey = greetingFor(clock.nowLocal().hour),
                 displayName = profile?.displayName,
                 currency = currency,
@@ -171,22 +184,44 @@ class DashboardViewModel @Inject constructor(
                 availableToSpend = ai.labs32.khaata.core.calc.BalanceCalculator
                     .availableToSpend(balances, currency),
                 netWorth = ai.labs32.khaata.core.calc.BalanceCalculator.netWorth(balances, currency),
-                monthSummary = summary,
+                monthSummary = CashflowAnalyzer.summarise(transactions, thisMonth, currency),
                 accounts = balances.filter { !it.account.isArchived },
                 cardOrder = settings.dashboardCardOrder,
                 hiddenCards = settings.hiddenDashboardCards,
-                error = null,
             )
         }
-            .catch { error ->
-                KhaataLog.e(TAG, "Dashboard core stream failed", error)
-                emit(_uiState.value.copy(isLoading = false, error = DATA_ERROR))
-            }
             // BalanceCalculator and CashflowAnalyzer both fold the whole month's ledger; without
             // this they do it on the collector's dispatcher, which viewModelScope makes Main.
             .flowOn(Dispatchers.Default)
-            .onEach { _uiState.value = it }
+            .onEach { data ->
+                // Applied field by field through update, never by assigning a whole state built
+                // from a snapshot of _uiState.value: this stream runs on a background dispatcher
+                // alongside the secondary one below, and a whole-state assignment would silently
+                // discard whatever that stream had written since the snapshot was taken.
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        greetingKey = data.greetingKey,
+                        displayName = data.displayName,
+                        currency = data.currency,
+                        amountsHidden = data.amountsHidden,
+                        isDemoMode = data.isDemoMode,
+                        availableToSpend = data.availableToSpend,
+                        netWorth = data.netWorth,
+                        monthSummary = data.monthSummary,
+                        accounts = data.accounts,
+                        cardOrder = data.cardOrder,
+                        hiddenCards = data.hiddenCards,
+                        error = null,
+                    )
+                }
+            }
+            .catch { error ->
+                KhaataLog.e(TAG, "Dashboard core stream failed", error)
+                _uiState.update { it.copy(isLoading = false, error = DATA_ERROR) }
+            }
             .launchIn(viewModelScope)
+            .also { streams += it }
     }
 
     /** Cards below the fold, which can arrive a beat later without the screen looking broken. */
@@ -220,10 +255,10 @@ class DashboardViewModel @Inject constructor(
                     },
             )
         }
+            .flowOn(Dispatchers.Default)
             .catch { error ->
                 KhaataLog.e(TAG, "Dashboard secondary stream failed", error)
             }
-            .flowOn(Dispatchers.Default)
             .onEach { data ->
                 _uiState.update {
                     it.copy(
@@ -238,6 +273,7 @@ class DashboardViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+            .also { streams += it }
 
         // Upcoming payments pull from four sources; merged and sorted so the user sees one list
         // rather than having to check bills, subscriptions, EMIs and cards separately.
@@ -267,9 +303,10 @@ class DashboardViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+            .also { streams += it }
 
-        refreshInsight()
-        refreshNetWorthTrend()
+        streams += refreshInsight()
+        streams += refreshNetWorthTrend()
     }
 
     /**
@@ -282,10 +319,10 @@ class DashboardViewModel @Inject constructor(
      * can be the one just snoozed -- without also reading the dismissed set, snoozing would look
      * like it did nothing, since regenerating would hand back the exact same insight.
      */
-    private fun refreshInsight() {
+    private fun refreshInsight(): Job {
         // InsightEngine.generate walks three months of transactions against every budget,
         // category and subscription. viewModelScope is Main, so it needs moving off it.
-        viewModelScope.launch(Dispatchers.Default) {
+        return viewModelScope.launch(Dispatchers.Default) {
             try {
                 val today = clock.today()
                 val window = DateRange(today.minusMonths(2).withDayOfMonth(1), today)
@@ -332,10 +369,10 @@ class DashboardViewModel @Inject constructor(
 
     private fun periodKey(): String = clock.today().let { "${it.year}-${it.monthValue}" }
 
-    private fun refreshNetWorthTrend() {
+    private fun refreshNetWorthTrend(): Job {
         // Six months of balances recomputed from the full transaction history -- same reasoning
         // as refreshInsight above.
-        viewModelScope.launch(Dispatchers.Default) {
+        return viewModelScope.launch(Dispatchers.Default) {
             try {
                 val today = clock.today()
                 val months = DateRange.trailingMonths(today, TREND_MONTHS)
@@ -377,8 +414,7 @@ class DashboardViewModel @Inject constructor(
 
     fun retry() {
         _uiState.update { it.copy(isLoading = true, error = null) }
-        observeCore()
-        observeSecondary()
+        start()
     }
 
     private fun greetingFor(hour: Int): GreetingKey = when (hour) {
@@ -386,6 +422,20 @@ class DashboardViewModel @Inject constructor(
         in 12..16 -> GreetingKey.AFTERNOON
         else -> GreetingKey.EVENING
     }
+
+    private data class CoreData(
+        val greetingKey: GreetingKey,
+        val displayName: String?,
+        val currency: CurrencyCode,
+        val amountsHidden: Boolean,
+        val isDemoMode: Boolean,
+        val availableToSpend: Money,
+        val netWorth: NetWorthSummary,
+        val monthSummary: CashflowSummary,
+        val accounts: List<AccountBalance>,
+        val cardOrder: List<DashboardCard>,
+        val hiddenCards: Set<DashboardCard>,
+    )
 
     private data class SecondaryData(
         val categoryBreakdown: List<CategorySpend>,

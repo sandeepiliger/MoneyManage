@@ -3,6 +3,7 @@ package ai.labs32.khaata.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.filter
 import androidx.paging.map
 import ai.labs32.khaata.core.categorize.MerchantCategorizer
 import ai.labs32.khaata.core.categorize.MerchantNormaliser
@@ -103,7 +104,13 @@ class TransactionRepository @Inject constructor(
                 sortByAmount = filter.sort == TransactionSort.AMOUNT_DESC,
             )
         },
-    ).flow.map { paging -> paging.map { it.toDomainOrNull() ?: PLACEHOLDER } }
+    ).flow.map { paging ->
+        // A row that cannot satisfy the domain's invariants is dropped, exactly as every other
+        // read path does (see List<TransactionEntity>.toDomain). Paging cannot hold a null, and
+        // the stand-in that used to fill the gap was a ₹1 pending expense that nothing filtered
+        // out -- so a corrupt row showed up in the ledger as a real, if tiny, transaction.
+        paging.filter { it.toDomainOrNull() != null }.map { it.toDomainOrNull()!! }
+    }
 
     /** Non-paged filtered list, for export and for totalling a filtered view. */
     suspend fun listFiltered(filter: TransactionFilter): List<Transaction> =
@@ -333,22 +340,6 @@ class TransactionRepository @Inject constructor(
     private companion object {
         const val PAGE_SIZE = 40
         const val TRASH_RETENTION_DAYS = 30L
-
-        /**
-         * Stand-in for a row that failed domain validation.
-         *
-         * Paging needs a non-null value for every position, so an unusable row becomes a clearly
-         * marked zero-amount placeholder the UI filters out rather than crashing the list.
-         */
-        val PLACEHOLDER = Transaction(
-            id = "invalid",
-            type = TransactionType.EXPENSE,
-            amount = Money.of(1),
-            accountId = "",
-            categoryId = null,
-            occurredOn = LocalDate.EPOCH,
-            isPending = true,
-        )
     }
 }
 

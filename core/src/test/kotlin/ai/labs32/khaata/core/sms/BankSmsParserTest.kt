@@ -97,6 +97,48 @@ class BankSmsParserTest {
     }
 
     @Test
+    fun `a credit card purchase with no direction word is a spend, not income`() {
+        // The single most common card message in an Indian inbox, and it carries no direction
+        // word: the only candidate is the "Credit" of "Credit Card", which names the card. Read
+        // literally it used to file a ₹500 purchase as ₹500 of income.
+        val parsed = parse(
+            "Thank you for using your HDFC Bank Credit Card ending 1234 for Rs.500.00 " +
+                "at AMAZON on 05-09-26.",
+        )!!
+
+        assertThat(parsed.type).isEqualTo(TransactionType.EXPENSE)
+        assertThat(parsed.amount).isEqualTo(Money.of("500"))
+        assertThat(parsed.merchantKey).isEqualTo("amazon")
+    }
+
+    @Test
+    fun `a debit card purchase with no direction word is still a spend`() {
+        val parsed = parse(
+            "Your Debit Card XX4321 has been used for Rs.500.00 at BIGBAZAAR on 05-09-26.",
+        )!!
+
+        assertThat(parsed.type).isEqualTo(TransactionType.EXPENSE)
+        assertThat(parsed.amount).isEqualTo(Money.of("500"))
+    }
+
+    @Test
+    fun `a refund to a card is still income, despite the card being mentioned`() {
+        // The card-usage fallback must not outrank a real direction word.
+        val parsed = parse(
+            "Rs.500.00 refunded to your HDFC Bank Credit Card XX1234 by AMAZON on 05-09-26.",
+        )!!
+
+        assertThat(parsed.type).isEqualTo(TransactionType.INCOME)
+    }
+
+    @Test
+    fun `money credited to an account is unaffected by the card wording rule`() {
+        val parsed = parse("INR 2,500.00 credited to A/c XX8899 on 15-03-2026.")!!
+
+        assertThat(parsed.type).isEqualTo(TransactionType.INCOME)
+    }
+
+    @Test
     fun `parses an ATM withdrawal`() {
         val parsed = parse("Rs.5000 withdrawn from A/c XX1234 at ATM on 10-03-2026. Avl Bal Rs.20,000")!!
 

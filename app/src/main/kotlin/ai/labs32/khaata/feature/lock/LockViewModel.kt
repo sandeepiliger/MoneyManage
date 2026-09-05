@@ -12,11 +12,13 @@ import ai.labs32.khaata.core.security.BiometricResult
 import ai.labs32.khaata.core.security.PinVerification
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class LockUiState(
@@ -33,6 +35,15 @@ data class LockUiState(
      * Null when no PIN is set, or when one predates the length being recorded.
      */
     val pinLength: Int? = null,
+    /**
+     * True while a PIN is being checked.
+     *
+     * Verification is deliberately slow (PBKDF2), so it runs off the main thread and the keypad
+     * has to stop accepting digits while it is in flight -- otherwise a stray tap lands on the
+     * next entry, or a second complete entry is submitted against the same PIN and charged as a
+     * failed attempt.
+     */
+    val isVerifying: Boolean = false,
 )
 
 @HiltViewModel
@@ -45,15 +56,23 @@ class LockViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LockUiState())
     val uiState: StateFlow<LockUiState> = _uiState.asStateFlow()
 
-    fun initialise(mode: AppLockMode) {
-        val pinConfigured = appLockManager.isPinSet
+    /**
+     * Suspends because the first read of the PIN store builds a hardware-backed master key and
+     * opens `EncryptedSharedPreferences`, which is Keystore work measured in tens to hundreds of
+     * milliseconds on a low-end phone. The lock screen is the first thing a protected app shows,
+     * so doing that on the main thread stalls the very first frame the user sees.
+     */
+    suspend fun initialise(mode: AppLockMode) {
+        val (pinConfigured, storedPinLength) = withContext(Dispatchers.IO) {
+            appLockManager.isPinSet to appLockManager.configuredPinLength
+        }
         val biometricAvailable = biometricAuthenticator.availability().canUse
 
         _uiState.update {
             it.copy(
                 mode = mode,
                 isPinConfigured = pinConfigured,
-                pinLength = appLockManager.configuredPinLength,
+                pinLength = storedPinLength,
                 canUseBiometric = biometricAvailable,
                 // Fall back to PIN entry when biometrics are unavailable, so a device with a
                 // broken sensor is not simply stuck on a lock screen.
@@ -91,7 +110,7 @@ class LockViewModel @Inject constructor(
 
     fun onPinDigit(digit: Int) {
         val state = _uiState.value
-        if (state.isLockedOut || state.pin.length >= MAX_PIN_LENGTH) return
+        if (state.isLockedOut || state.isVerifying || state.pin.length >= MAX_PIN_LENGTH) return
 
         val updated = state.pin + digit
         _uiState.update { it.copy(pin = updated, message = null) }
@@ -113,8 +132,20 @@ class LockViewModel @Inject constructor(
 
     fun onPinBackspace() = _uiState.update { it.copy(pin = it.pin.dropLast(1), message = null) }
 
-    private fun verify(pin: String) {
-        when (val result = appLockManager.verifyPin(pin)) {
+    /**
+     * Checks [pin] off the main thread.
+     *
+     * `AppLockManager.verifyPin` runs 120,000 rounds of PBKDF2 by design -- that cost is what
+     * makes a four-digit PIN impractical to walk. Paying it on the main thread froze the keypad
+     * for the whole of it on every single unlock, which on a low-end device is long enough to
+     * drop frames and read as the app hanging.
+     */
+    private fun verify(pin: String) = viewModelScope.launch {
+        _uiState.update { it.copy(isVerifying = true) }
+        val result = withContext(Dispatchers.Default) { appLockManager.verifyPin(pin) }
+        _uiState.update { it.copy(isVerifying = false) }
+
+        when (result) {
             is PinVerification.Success -> _uiState.update {
                 it.copy(isUnlocked = true, pin = "", message = null)
             }

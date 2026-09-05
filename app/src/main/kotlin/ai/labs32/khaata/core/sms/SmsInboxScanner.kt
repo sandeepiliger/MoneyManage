@@ -83,6 +83,7 @@ class SmsInboxScanner @Inject constructor(
         var messagesRead = 0
         var staged = 0
         var accountsCreated = 0
+        var completed = false
 
         try {
             context.contentResolver.query(
@@ -131,6 +132,7 @@ class SmsInboxScanner @Inject constructor(
                     }
                 }
             }
+            completed = true
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
@@ -139,7 +141,12 @@ class SmsInboxScanner @Inject constructor(
             KhaataLog.e(TAG, "Inbox scan stopped early", error)
         }
 
-        settingsRepository.setSmsInboxScanned(true)
+        // Only a scan that actually reached the end of the inbox counts as done. Flagging a run
+        // that died partway -- a revoked permission, a provider failure -- would mean the rest of
+        // the messages were never looked at and never would be, since scanIfNeeded skips on the
+        // flag alone. A completed scan that found nothing still flags, so an inbox with no bank
+        // messages in it is not re-walked on every launch.
+        if (completed) settingsRepository.setSmsInboxScanned(true)
         KhaataLog.d(TAG, "Inbox scan: read=$messagesRead staged=$staged accounts=$accountsCreated")
 
         SmsScanResult(
