@@ -5,12 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -24,6 +20,7 @@ import ai.labs32.khaata.R
 import ai.labs32.khaata.core.ads.AdPlacement
 import ai.labs32.khaata.core.ads.AdProvider
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -47,7 +44,17 @@ class AdSlotViewModel @Inject constructor(
         viewModelScope.launch {
             // Both gates are checked: the global switch covers entitlement and remote config, and
             // canShow covers this placement's own rules. Neither is inferred from the other.
-            _canShow.value = adProvider.adsEnabled.first() && adProvider.canShow(placement)
+            val allowed = adProvider.adsEnabled.first() && adProvider.canShow(placement)
+
+            // Starting the ad SDK is this app's last step before an ad is wanted, not its first
+            // at process start -- which is the whole point of the OPTIMIZE_INITIALIZATION and
+            // DELAY_APP_MEASUREMENT_INIT flags in the manifest, and of AdProvider.initialize
+            // checking entitlement itself. Nothing called it, so MobileAds.initialize never ran
+            // and the one banner in the app asked an uninitialised SDK for an ad. It is
+            // idempotent, and it returns immediately for a user who is entitled to no ads.
+            if (allowed) adProvider.initialize()
+
+            _canShow.value = allowed
         }
     }
 
@@ -84,11 +91,6 @@ fun AdSlot(
     if (!canShow) return
 
     val widthDp = LocalConfiguration.current.screenWidthDp
-    var adView by remember { mutableStateOf<AdView?>(null) }
-
-    DisposableEffect(placement) {
-        onDispose { adView?.destroy() }
-    }
 
     Column(
         modifier
@@ -113,12 +115,21 @@ fun AdSlot(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT,
                     )
+                    adListener = object : AdListener() {
+                        // Counted when an ad actually arrives, not when this composable enters
+                        // composition. Counting at composition recorded an impression for every
+                        // no-fill as well, which both overstates what the user was shown and
+                        // spends the frequency cap on ads that never rendered.
+                        override fun onAdLoaded() = viewModel.recordImpression(placement)
+                    }
                     loadAd(AdRequest.Builder().build())
-                    adView = this
                 }
             },
+            // Destroying the view is AndroidView's job, not a DisposableEffect's. The view used
+            // to be written back into composition state from inside `factory` purely so a
+            // separate effect could reach it to destroy it -- a write during composition, and one
+            // that left the AdView leaked whenever that state had not been applied yet.
+            onRelease = { it.destroy() },
         )
     }
-
-    LaunchedEffect(placement) { viewModel.recordImpression(placement) }
 }

@@ -64,11 +64,20 @@ enum class AdPlacement(
     /** Minimum seconds between impressions in this placement. */
     val minimumIntervalSeconds: Long,
 ) {
-    /** A banner at the bottom of the reports screen, below the charts. */
-    REPORTS_FOOTER(AdFormat.BANNER, minimumIntervalSeconds = 0),
+    /**
+     * A banner at the bottom of the reports screen, below the charts.
+     *
+     * The minute is not cosmetic. This slot is the last item of a `LazyColumn`, so it is disposed
+     * the moment it scrolls out of view and built again when it scrolls back -- and each rebuild
+     * asked AdMob for a fresh ad. At zero seconds a user flicking the reports list up and down
+     * generated an ad request per pass, which wastes their data, never gets long enough on screen
+     * to count as seen, and is the shape of traffic ad networks treat as invalid. A minute is
+     * roughly what a banner would refresh at anyway.
+     */
+    REPORTS_FOOTER(AdFormat.BANNER, minimumIntervalSeconds = 60),
 
-    /** A banner at the bottom of the "More" menu. */
-    MORE_MENU_FOOTER(AdFormat.BANNER, minimumIntervalSeconds = 0),
+    /** A banner at the bottom of the "More" menu. Capped for the same reason as above. */
+    MORE_MENU_FOOTER(AdFormat.BANNER, minimumIntervalSeconds = 60),
 
     /**
      * An interstitial when returning to the dashboard from a completed flow.
