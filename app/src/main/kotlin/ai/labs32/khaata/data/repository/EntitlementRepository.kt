@@ -70,15 +70,21 @@ class EntitlementRepository @Inject constructor(
      *
      * The highest owned tier wins, so someone who upgraded mid-term is never downgraded by an
      * older purchase still showing as active.
+     *
+     * A settled purchase outranks a pending one outright, not merely as a tiebreak within a tier.
+     * Ranking by tier first meant a Pro subscriber starting an AI Pro upgrade was represented by
+     * the higher, *pending* purchase -- and `EntitlementManager.effectiveTier` reads a pending
+     * entitlement as FREE, so the moment they tried to upgrade they lost the tier they had
+     * already paid for. UPI mandates can take a day or more to clear, which is a long time to
+     * have bought more and received less.
      */
     private fun List<BillingPurchase>.toEntitlement(): Entitlement {
         if (isEmpty()) return Entitlement.FREE
 
         val best = filter { it.tier != null }
             .maxByOrNull { purchase ->
-                // Settled purchases outrank pending ones at the same tier.
                 val settled = if (purchase.state == PurchaseState.PURCHASED) 1 else 0
-                (purchase.tier?.level ?: 0) * 10 + settled
+                settled * SETTLED_RANK + (purchase.tier?.level ?: 0)
             } ?: return Entitlement.FREE
 
         return Entitlement(
@@ -92,5 +98,10 @@ class EntitlementRepository @Inject constructor(
             isInGracePeriod = false,
             purchaseToken = best.purchaseToken,
         )
+    }
+
+    private companion object {
+        /** Larger than any [Tier.level], so settledness dominates the ranking above. */
+        const val SETTLED_RANK = 100
     }
 }

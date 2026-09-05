@@ -39,6 +39,21 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
+      # The :app unit tests were written and then never run: nothing in this workflow executed
+      # them, so they proved nothing and could rot without anyone noticing. They cover the restore
+      # state machine -- the one action in this app that can destroy months of records -- which is
+      # exactly the kind of thing a decorative test suite is worst at protecting.
+      - name: Run :app unit tests
+        run: ./gradlew :app:testDebugUnitTest --stacktrace
+
+      - name: Upload :app test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: khaata-app-test-report
+          path: app/build/reports/tests/testDebugUnitTest
+          retention-days: 14
+
       # The debug APK runs unminified and debuggable, which makes Compose scrolling markedly
       # slower than what a user would actually get. This is the same code built the way it ships
       # -- R8, resource shrinking, no debug flag -- signed with the debug key purely so it can be

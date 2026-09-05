@@ -20,13 +20,15 @@ What that leaves:
   is configured, but no baseline is committed; CI passes `-Dlint.baselines.continue=true`, which
   generates one and continues instead of failing. Someone must commit a real baseline, or run lint
   and fix what it finds, before the first release.
-- The app-module unit tests and the instrumentation tests are written but have **never executed** —
-  CI runs neither `testDebugUnitTest` nor `connectedAndroidTest`.
+- The **instrumentation** tests are written but have **never executed** — CI has no emulator, so
+  `connectedAndroidTest` has never run. The app-module *unit* tests now do run on every push
+  (`:app:testDebugUnitTest`); they were in the same never-executed state until then.
 - Play Billing has never connected and AdMob has never rendered; both need an internal-testing
   track run.
 
 What *is* verified: `:core` compiles and its tests pass on every CI run, covering money
-arithmetic, budgets, loans, cards, recurrence, parsing, insights, backup and entitlements. That is
+arithmetic, budgets, loans, cards, recurrence, parsing, insights, backup and entitlements, and
+the `:app` unit tests covering the restore state machine run alongside them. That is
 the half where a bug is most expensive — see [TESTING.md](TESTING.md).
 
 ---
@@ -55,8 +57,8 @@ do not exist is not a limitation, it is a refund.
 - **CSV import** matches accounts and categories by name and rejects rows whose account does not
   exist. There is no mapping UI to resolve them instead — a rejected row is reported, not fixable
   in-app.
-- **Hindi is complete** — all 764 string resources are translated (verified by name-diff against
-  `values/strings.xml`). It has not been reviewed by a native speaker in the running app, so
+- **Hindi is complete** — all 791 string resources are translated, with matching format
+  specifiers (verified by name-diff against `values/strings.xml`). It has not been reviewed by a native speaker in the running app, so
   register and truncation on real screens are unverified.
 
 ## Not verified
@@ -102,7 +104,8 @@ In order:
 2. Commit a real lint baseline (or run lint and fix what it finds) so `abortOnError` actually
    gates something.
 3. Run the instrumentation tests — particularly `TransactionAggregateParityTest`, which checks the
-   thing most expensive to get wrong.
+   thing most expensive to get wrong. These still need an emulator; the unit tests already run in
+   CI.
 4. Add Compose UI tests for the transaction-entry flow first; it is the one people use daily.
 5. Before any Play upload: real values in `secrets.properties` (the build now refuses to produce a
    release artifact carrying placeholders), an upload keystore, the SMS Permissions Declaration,

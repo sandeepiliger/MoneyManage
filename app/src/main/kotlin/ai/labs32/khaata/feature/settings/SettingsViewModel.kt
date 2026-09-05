@@ -15,6 +15,8 @@ import ai.labs32.khaata.core.notifications.KhaataNotifier
 import ai.labs32.khaata.core.security.AppLockManager
 import ai.labs32.khaata.core.security.BiometricAvailability
 import ai.labs32.khaata.core.security.BiometricAuthenticator
+import ai.labs32.khaata.core.work.WorkScheduler
+import ai.labs32.khaata.data.backup.BackupManager
 import ai.labs32.khaata.data.demo.DemoDataManager
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.BudgetRepository
@@ -92,6 +94,8 @@ class SettingsViewModel @Inject constructor(
     private val appLockManager: AppLockManager,
     private val biometricAuthenticator: BiometricAuthenticator,
     private val notifier: KhaataNotifier,
+    private val backupManager: BackupManager,
+    private val workScheduler: WorkScheduler,
     private val analytics: AnalyticsProvider,
 ) : ViewModel() {
 
@@ -297,6 +301,13 @@ class SettingsViewModel @Inject constructor(
      * none, because a user who asked for their data to be gone and finds half of it still there
      * has been misled. Settings themselves are reset too, so nothing survives that could identify
      * how the app was used. Order follows the foreign keys — children before parents.
+     *
+     * The three things outside the database matter as much as the tables. Exported backups and
+     * CSVs are complete copies of the ledger sitting in app storage, and leaving them behind
+     * meant "delete everything" left the whole ledger on disk. Posted notifications name a
+     * merchant and an amount and stay in the shade until dismissed. Scheduled work would go on
+     * running against tables that no longer hold anything, and the daily nudge would keep
+     * arriving for a user who has just asked the app to forget them.
      */
     fun confirmDeleteAll() {
         viewModelScope.launch {
@@ -313,6 +324,12 @@ class SettingsViewModel @Inject constructor(
                 categoryRepository.deleteAll()
                 profileRepository.deleteAll()
                 appLockManager.clearPin()
+
+                // Outside the database, and every bit as much the user's data.
+                backupManager.clearExports()
+                notifier.clearHistory()
+                workScheduler.cancelAll()
+
                 settingsRepository.resetAll()
                 // Categories are re-seeded immediately: an app with no categories at all cannot
                 // record a transaction, and the user asked to delete their data, not to brick it.
