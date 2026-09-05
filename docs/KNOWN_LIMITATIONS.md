@@ -54,6 +54,11 @@ do not exist is not a limitation, it is a refund.
 
 - **Migration testing** — no migration exists yet, so there is nothing to test. The pattern is in
   [SCHEMA.md](SCHEMA.md) and `MigrationExample` is kept in the source as a worked reference.
+  One thing to do before v2, though: `app/schemas/` is **not committed**. Room exports the schema
+  JSON at build time and the only builds that have ever run are in CI, which does not commit its
+  output — so there is no v1 schema on record to diff a v2 against or to hand
+  `MigrationTestHelper`. Commit the generated `app/schemas/` from a local build before changing
+  any entity, or the first migration has to be written and verified blind.
 - **CSV import** matches accounts and categories by name and rejects rows whose account does not
   exist. There is no mapping UI to resolve them instead — a rejected row is reported, not fixable
   in-app.
