@@ -40,15 +40,19 @@ the half where a bug is most expensive — see [TESTING.md](TESTING.md).
 | **No Compose UI tests** | Semantics are written for them; nothing asserts a screen renders or that a tap works. |
 | **No UMP consent flow** | Blocks an EEA/UK release with ads. Not required for India. |
 | **Receipt attachments** | `receipts` table and `RECEIPT_ATTACHMENTS` entitlement exist; there is no camera or file-picker UI behind them. |
-| **Scheduled backups** | The `SCHEDULED_BACKUP` entitlement exists; no worker performs one. Backup is manual only. |
 | **Family sharing** | The FAMILY tier's three features are named in `Feature` but **nothing implements them.** They are listed in `Feature.UNSHIPPED`, so `isUnlocked` refuses them and `PaywallViewModel` drops any tier whose every feature is unshipped — the tier does not appear on the paywall and cannot be bought. Sharing a household ledger needs a server this app deliberately does not have, so this is not close. |
-| **Notification-based import** | `notificationImportEnabled` exists in settings; no `NotificationListenerService` is implemented. |
-| **Dashboard reordering** | Card order is stored and read; there is no drag-to-reorder UI. |
+| **Notification-based import** | `notificationImportEnabled` exists in settings and nothing reads it; no `NotificationListenerService` is implemented. Needs a Play policy declaration as well as code. |
+| **AI insights and categorisation** | `AI_ENHANCED_INSIGHTS` and `AI_SMART_CATEGORISATION` are AI Pro features with no implementation. `LocalFinancialAiService` answers the assistant on-device; the cloud path needs `CLOUD_AI_ENDPOINT` configured before anything can be built against it. |
 | **Multi-currency** | `Money` is currency-typed and mixed arithmetic throws, but there are no exchange rates, so an account in a second currency cannot be summed into net worth. Single-currency in practice. |
-| **Custom date ranges in reports** | `CUSTOM_DATE_RANGES` is a Pro feature; the UI offers seven fixed periods and no picker. |
+
+Goals creation, scheduled backups, dashboard customisation and custom report ranges were all in
+this table and are now built; their entitlement flags have left `Feature.UNSHIPPED` accordingly.
+What remains is either a testing gap or needs something this repository cannot supply on its own —
+a server, a configured cloud endpoint, or a Play policy declaration.
 
 The FAMILY tier is the one to act on before shipping: a paywall that takes money for features that
-do not exist is not a limitation, it is a refund.
+do not exist is not a limitation, it is a refund. It is withheld today by `Feature.UNSHIPPED`,
+which is the right holding position and not a substitute for deciding whether to build or drop it.
 
 ## Partially done
 
