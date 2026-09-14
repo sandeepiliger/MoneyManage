@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.DashboardCustomize
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Shield
@@ -169,6 +170,14 @@ fun SettingsScreen(
                     optionLabel = { themeLabel(it) },
                     onSelect = viewModel::setTheme,
                 )
+                if (state.canCustomiseDashboard) {
+                    SettingsRow(
+                        title = stringResource(R.string.dashboard_customise),
+                        subtitle = stringResource(R.string.dashboard_customise_help),
+                        icon = Icons.Default.DashboardCustomize,
+                        onClick = { onNavigate(Routes.DASHBOARD_CUSTOMISE) },
+                    )
+                }
             }
 
             SectionCard(title = stringResource(R.string.settings_security)) {

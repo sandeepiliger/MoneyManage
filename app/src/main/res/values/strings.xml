@@ -149,6 +149,20 @@
     <string name="shortcut_investments">Investments</string>
     <string name="shortcut_investments_sub">Portfolio</string>
     <string name="dashboard_vs_last_month">%1$s vs last month</string>
+    <string name="dashboard_customise_help">Choose which cards appear, and in what order.</string>
+    <string name="dashboard_customise_reset">Reset</string>
+    <string name="dashboard_customise_move_up">Move up</string>
+    <string name="dashboard_customise_move_down">Move down</string>
+    <string name="dashboard_card_spending_overview">This month</string>
+    <string name="dashboard_card_budget_progress">Budgets</string>
+    <string name="dashboard_card_upcoming_payments">Upcoming payments</string>
+    <string name="dashboard_card_category_breakdown">Where it went</string>
+    <string name="dashboard_card_recent_transactions">Recent transactions</string>
+    <string name="dashboard_card_insight">Insight</string>
+    <string name="dashboard_card_goals">Goals</string>
+    <string name="dashboard_card_accounts">Accounts</string>
+    <string name="dashboard_card_subscriptions">Subscriptions</string>
+    <string name="dashboard_card_net_worth">Net worth trend</string>
 
     <!-- ==================== Transactions ==================== -->
     <string name="transaction_expense">Expense</string>

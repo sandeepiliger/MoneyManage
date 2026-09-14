@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.R
 import ai.labs32.khaata.core.analytics.AnalyticsEvent
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
+import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.entitlement.Tier
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.AppLockMode
@@ -63,6 +64,8 @@ data class SettingsUiState(
     val dailyReminderEnabled: Boolean = false,
     val dailyReminderMinuteOfDay: Int = 21 * 60,
     val tier: Tier = Tier.FREE,
+    /** Whether this tier can reorder and hide dashboard cards. */
+    val canCustomiseDashboard: Boolean = false,
     val demoMode: Boolean = false,
     /** True when the user has records of their own, which blocks loading sample data over them. */
     val hasRealData: Boolean = false,
@@ -122,6 +125,10 @@ class SettingsViewModel @Inject constructor(
                 dailyReminderEnabled = settings.dailyReminderEnabled,
                 dailyReminderMinuteOfDay = settings.dailyReminderMinuteOfDay,
                 tier = tier,
+                // Read from the tier the same stream already carries rather than a second
+                // suspending entitlement lookup, so the row cannot flicker in a frame late.
+                canCustomiseDashboard = Feature.DASHBOARD_CUSTOMISATION.isShipped &&
+                    tier.includes(Feature.DASHBOARD_CUSTOMISATION.minimumTier),
                 demoMode = profile?.isDemoMode == true,
                 // Biometric is offered only when the device can actually do it, rather than
                 // offered and then failing at the prompt.

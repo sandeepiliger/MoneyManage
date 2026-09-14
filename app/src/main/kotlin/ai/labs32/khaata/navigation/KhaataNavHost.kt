@@ -34,6 +34,7 @@ import ai.labs32.khaata.feature.recurring.RecurringScreen
 import ai.labs32.khaata.feature.reports.ReportsScreen
 import ai.labs32.khaata.feature.settings.AboutScreen
 import ai.labs32.khaata.feature.settings.BackupScreen
+import ai.labs32.khaata.feature.settings.DashboardCustomiseScreen
 import ai.labs32.khaata.feature.settings.MerchantRulesScreen
 import ai.labs32.khaata.feature.settings.PrivacyDashboardScreen
 import ai.labs32.khaata.feature.settings.SettingsScreen
@@ -276,6 +277,10 @@ fun KhaataNavHost(
                 onAddGoal = { navController.navigate(Routes.ADD_GOAL) },
                 onEditGoal = { navController.navigate(Routes.goalDetail(it)) },
             )
+        }
+
+        composable(Routes.DASHBOARD_CUSTOMISE) {
+            DashboardCustomiseScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Routes.ADD_GOAL) {

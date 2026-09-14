@@ -116,6 +116,9 @@ object Routes {
     const val GOALS = "goals"
     const val ADD_GOAL = "goals/add"
 
+    /** Reordering and hiding dashboard cards. */
+    const val DASHBOARD_CUSTOMISE = "settings/dashboard"
+
     private const val GOAL_DETAIL_BASE = "goals/detail"
     const val GOAL_DETAIL = "$GOAL_DETAIL_BASE/{goalId}"
     fun goalDetail(goalId: String) = "$GOAL_DETAIL_BASE/$goalId"

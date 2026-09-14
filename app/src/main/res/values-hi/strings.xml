@@ -151,6 +151,20 @@
     <string name="shortcut_investments">निवेश</string>
     <string name="shortcut_investments_sub">पोर्टफोलियो</string>
     <string name="dashboard_vs_last_month">पिछले महीने से %1$s</string>
+    <string name="dashboard_customise_help">चुनें कि कौन-से कार्ड दिखें, और किस क्रम में।</string>
+    <string name="dashboard_customise_reset">रीसेट</string>
+    <string name="dashboard_customise_move_up">ऊपर ले जाएँ</string>
+    <string name="dashboard_customise_move_down">नीचे ले जाएँ</string>
+    <string name="dashboard_card_spending_overview">इस महीने</string>
+    <string name="dashboard_card_budget_progress">बजट</string>
+    <string name="dashboard_card_upcoming_payments">आगामी भुगतान</string>
+    <string name="dashboard_card_category_breakdown">कहाँ ख़र्च हुआ</string>
+    <string name="dashboard_card_recent_transactions">हाल के लेन-देन</string>
+    <string name="dashboard_card_insight">अंतर्दृष्टि</string>
+    <string name="dashboard_card_goals">लक्ष्य</string>
+    <string name="dashboard_card_accounts">खाते</string>
+    <string name="dashboard_card_subscriptions">सदस्यताएँ</string>
+    <string name="dashboard_card_net_worth">कुल संपत्ति का रुझान</string>
 
     <!-- Transactions -->
     <string name="transaction_expense">खर्च</string>

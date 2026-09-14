@@ -95,7 +95,6 @@ enum class Feature(val minimumTier: Tier) {
             SHARED_GOALS,
             RECEIPT_ATTACHMENTS,
             CUSTOM_DATE_RANGES,
-            DASHBOARD_CUSTOMISATION,
             AI_ENHANCED_INSIGHTS,
             AI_SMART_CATEGORISATION,
         )
