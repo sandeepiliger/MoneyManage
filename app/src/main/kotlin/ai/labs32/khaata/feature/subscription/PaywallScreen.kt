@@ -264,7 +264,6 @@ private fun featureLabel(feature: Feature): String = stringResource(
         Feature.AD_FREE -> R.string.paywall_feature_ad_free
         Feature.UNLIMITED_ACCOUNTS -> R.string.paywall_feature_unlimited_accounts
         Feature.ADVANCED_REPORTS -> R.string.paywall_feature_advanced_reports
-        Feature.CUSTOM_DATE_RANGES -> R.string.paywall_feature_custom_ranges
         Feature.RECEIPT_ATTACHMENTS -> R.string.paywall_feature_receipts
         Feature.SCHEDULED_BACKUP -> R.string.paywall_feature_scheduled_backup
         Feature.BUDGET_ROLLOVER -> R.string.paywall_feature_rollover
@@ -286,6 +285,7 @@ private fun featureLabel(feature: Feature): String = stringResource(
         Feature.JSON_BACKUP,
         Feature.NATURAL_LANGUAGE_ENTRY,
         Feature.BIOMETRIC_LOCK,
+        Feature.CUSTOM_DATE_RANGES,
         -> R.string.paywall_feature_included
     },
 )

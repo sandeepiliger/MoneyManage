@@ -47,11 +47,29 @@ enum class Feature(val minimumTier: Tier) {
     NATURAL_LANGUAGE_ENTRY(Tier.FREE),
     BIOMETRIC_LOCK(Tier.FREE),
 
+    /**
+     * Free deliberately, despite being cheap to gate.
+     *
+     * Nobody upgrades for a date picker, and everybody resents hitting one. It is a weak paywall
+     * with a real irritation cost, which is the worst combination a gate can have.
+     */
+    CUSTOM_DATE_RANGES(Tier.FREE),
+
     // ---- Pro -------------------------------------------------------------------------------
     AD_FREE(Tier.PRO),
     UNLIMITED_ACCOUNTS(Tier.PRO),
+    /**
+     * The breakdowns that answer "where exactly", plus the statement PDF.
+     *
+     * Concretely: the merchant and account breakdowns on the reports screen, and the
+     * bank-statement-style PDF export. Free keeps the summary, the category breakdown and both
+     * trend charts, which is a real report rather than a teaser.
+     *
+     * Defined here rather than left vague because this flag used to gate nothing at all: it was
+     * named on the paywall and enforced nowhere, so a paying user got the identical reports
+     * screen a free user did.
+     */
     ADVANCED_REPORTS(Tier.PRO),
-    CUSTOM_DATE_RANGES(Tier.PRO),
     RECEIPT_ATTACHMENTS(Tier.PRO),
     SCHEDULED_BACKUP(Tier.PRO),
     BUDGET_ROLLOVER(Tier.PRO),

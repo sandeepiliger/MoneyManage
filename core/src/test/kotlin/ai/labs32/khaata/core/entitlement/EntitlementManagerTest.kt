@@ -24,6 +24,31 @@ class EntitlementManagerTest {
         // Data portability is never held hostage either.
         assertThat(manager.isUnlocked(Feature.CSV_EXPORT, free, now)).isTrue()
         assertThat(manager.isUnlocked(Feature.JSON_BACKUP, free, now)).isTrue()
+        // A date picker is a weak paywall with a real irritation cost.
+        assertThat(manager.isUnlocked(Feature.CUSTOM_DATE_RANGES, free, now)).isTrue()
+    }
+
+    @Test
+    fun `the advanced reports flag actually withholds something from free`() {
+        // This flag used to be named on the paywall and enforced nowhere, so a paying user got
+        // the identical reports screen a free user did. It now means the merchant and account
+        // breakdowns and the statement PDF, and this is what stops it drifting back.
+        assertThat(manager.isUnlocked(Feature.ADVANCED_REPORTS, Entitlement.FREE, now)).isFalse()
+        assertThat(Feature.ADVANCED_REPORTS.isShipped).isTrue()
+
+        val pro = Entitlement(tier = Tier.PRO, expiresAt = nextYear)
+        assertThat(manager.isUnlocked(Feature.ADVANCED_REPORTS, pro, now)).isTrue()
+    }
+
+    @Test
+    fun `every shipped paid feature is withheld from free`() {
+        // A paid flag that free already satisfies is a refund waiting to happen: it is advertised
+        // on the paywall as a reason to upgrade and changes nothing when someone does.
+        val soldToFree = Feature.SHIPPED
+            .filter { it.minimumTier != Tier.FREE }
+            .filter { manager.isUnlocked(it, Entitlement.FREE, now) }
+
+        assertThat(soldToFree).isEmpty()
     }
 
     @Test

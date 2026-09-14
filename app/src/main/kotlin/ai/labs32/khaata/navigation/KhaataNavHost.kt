@@ -302,7 +302,10 @@ fun KhaataNavHost(
         // ---- Reports and assistant -----------------------------------------------------------
 
         composable(Routes.REPORTS) {
-            ReportsScreen(onBack = { navController.popBackStack() })
+            ReportsScreen(
+                onBack = { navController.popBackStack() },
+                onOpenPaywall = { navController.navigate(Routes.PAYWALL) },
+            )
         }
 
         composable(Routes.AI_ASSISTANT) {

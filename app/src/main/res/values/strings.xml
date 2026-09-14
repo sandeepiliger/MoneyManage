@@ -573,6 +573,8 @@
     <string name="reports_export_pdf">Export PDF</string>
     <string name="reports_export_failed">Could not create the statement.</string>
     <string name="reports_custom_range">Custom dates</string>
+    <string name="reports_advanced_locked_title">Where exactly it went</string>
+    <string name="reports_advanced_locked_body">Merchant and account breakdowns, plus the statement PDF, are part of Pro.</string>
 
     <!-- ==================== Statement PDF ==================== -->
     <string name="statement_share_title">Share statement</string>

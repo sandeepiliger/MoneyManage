@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -121,8 +122,8 @@ data class ReportsUiState(
     val range: DateRange? = null,
     /** Set when the user has chosen their own dates; it overrides [period]. */
     val customRange: DateRange? = null,
-    /** Whether this tier may choose its own dates. */
-    val canUseCustomRange: Boolean = false,
+    /** Whether this tier gets the merchant and account breakdowns and the statement PDF. */
+    val canUseAdvancedReports: Boolean = false,
     val summary: CashflowSummary? = null,
     val previousSummary: CashflowSummary? = null,
     val categories: List<CategorySpend> = emptyList(),
@@ -168,8 +169,8 @@ class ReportsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val allowed = entitlementRepository.isUnlocked(Feature.CUSTOM_DATE_RANGES)
-            _uiState.update { it.copy(canUseCustomRange = allowed) }
+            val advanced = entitlementRepository.isUnlocked(Feature.ADVANCED_REPORTS)
+            _uiState.update { it.copy(canUseAdvancedReports = advanced) }
         }
 
         selection
@@ -241,8 +242,8 @@ class ReportsViewModel @Inject constructor(
                         exportError = current.exportError,
                         // Resolved once, asynchronously, and not part of the ledger snapshot this
                         // flow rebuilds -- without carrying it over, the first database write
-                        // after launch would switch the custom-range chip back off.
-                        canUseCustomRange = current.canUseCustomRange,
+                        // after launch would lock the advanced cards again.
+                        canUseAdvancedReports = current.canUseAdvancedReports,
                     )
                 }
             }
@@ -258,7 +259,6 @@ class ReportsViewModel @Inject constructor(
 
     /** Applies dates the user picked themselves. The named period stays as the trend window. */
     fun selectCustomRange(start: LocalDate, endInclusive: LocalDate) {
-        if (!_uiState.value.canUseCustomRange) return
         if (endInclusive.isBefore(start)) return
         _uiState.update { it.copy(isLoading = true) }
         selection.update { it.copy(customRange = DateRange(start, endInclusive)) }
@@ -271,6 +271,10 @@ class ReportsViewModel @Inject constructor(
      * ViewModel has no Compose context to make one from.
      */
     fun exportStatement(periodLabel: String) {
+        // Guarded here as well as at the button, so the entitlement cannot be bypassed by a
+        // caller that forgets to check -- the button's job is to route to the paywall instead,
+        // not to be the only thing standing in the way.
+        if (!_uiState.value.canUseAdvancedReports) return
         val range = _uiState.value.range ?: return
         val summary = _uiState.value.summary ?: return
         if (_uiState.value.isExporting) return
@@ -330,6 +334,7 @@ class ReportsViewModel @Inject constructor(
 @Composable
 fun ReportsScreen(
     onBack: () -> Unit,
+    onOpenPaywall: () -> Unit,
     viewModel: ReportsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -376,7 +381,17 @@ fun ReportsScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = { viewModel.exportStatement(currentPeriodLabel) },
+                        // Kept visible for everyone and routed to the paywall when it is not
+                        // included. Someone tapping Export wants a PDF right now -- usually for a
+                        // landlord, an accountant or a visa -- and that is the moment to offer the
+                        // upgrade, not to hide the button and leave them wondering where it went.
+                        onClick = {
+                            if (state.canUseAdvancedReports) {
+                                viewModel.exportStatement(currentPeriodLabel)
+                            } else {
+                                onOpenPaywall()
+                            }
+                        },
                         enabled = state.hasData && !state.isExporting,
                     ) {
                         if (state.isExporting) {
@@ -404,7 +419,6 @@ fun ReportsScreen(
             PeriodFilter(
                 selected = state.period,
                 customRange = state.customRange,
-                canUseCustomRange = state.canUseCustomRange,
                 onSelect = viewModel::selectPeriod,
                 onPickCustom = { showRangePicker = true },
             )
@@ -418,7 +432,7 @@ fun ReportsScreen(
                     description = stringResource(R.string.reports_empty_body),
                 )
 
-                else -> ReportsContent(state)
+                else -> ReportsContent(state, onOpenPaywall)
             }
         }
     }
@@ -496,7 +510,6 @@ private fun formatRange(range: DateRange): String {
 private fun PeriodFilter(
     selected: ReportPeriod,
     customRange: DateRange?,
-    canUseCustomRange: Boolean,
     onSelect: (ReportPeriod) -> Unit,
     onPickCustom: () -> Unit,
 ) {
@@ -526,30 +539,28 @@ private fun PeriodFilter(
 
             // Last, not first: the named periods answer nearly every question anyone asks, and
             // putting a picker in front of them would cost four taps for "this month".
-            if (canUseCustomRange) {
-                item(key = "custom") {
-                    FilterChip(
-                        selected = customRange != null,
-                        onClick = onPickCustom,
-                        label = {
-                            Text(
-                                customRange?.let { formatRange(it) }
-                                    ?: stringResource(R.string.reports_custom_range),
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Default.DateRange,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        ),
-                    )
-                }
+            item(key = "custom") {
+                FilterChip(
+                    selected = customRange != null,
+                    onClick = onPickCustom,
+                    label = {
+                        Text(
+                            customRange?.let { formatRange(it) }
+                                ?: stringResource(R.string.reports_custom_range),
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                )
             }
         }
         // A chip cut off mid-word at the edge reads as a broken layout rather than a scrollable
@@ -575,7 +586,7 @@ private fun PeriodFilter(
 }
 
 @Composable
-private fun ReportsContent(state: ReportsUiState) {
+private fun ReportsContent(state: ReportsUiState, onOpenPaywall: () -> Unit) {
     val summary = state.summary ?: return
 
     LazyColumn(
@@ -598,12 +609,21 @@ private fun ReportsContent(state: ReportsUiState) {
             item(key = "savings-trend") { SavingsTrendCard(state.monthlySeries) }
         }
 
-        if (state.merchants.isNotEmpty()) {
-            item(key = "merchants") { MerchantCard(state.merchants) }
-        }
+        // Free keeps the summary, the category breakdown and both trend charts above -- a real
+        // report, not a teaser. What is held back is the two "where exactly" breakdowns and the
+        // statement PDF, which is the part people are actually willing to pay for.
+        if (state.canUseAdvancedReports) {
+            if (state.merchants.isNotEmpty()) {
+                item(key = "merchants") { MerchantCard(state.merchants) }
+            }
 
-        if (state.accounts.size >= 2) {
-            item(key = "accounts") { AccountCard(state.accounts, state.accountNames) }
+            if (state.accounts.size >= 2) {
+                item(key = "accounts") { AccountCard(state.accounts, state.accountNames) }
+            }
+        } else if (state.merchants.isNotEmpty() || state.accounts.size >= 2) {
+            // Shown only when there is something behind it. Advertising a locked breakdown to
+            // someone with one account and no merchants is selling them an empty card.
+            item(key = "advanced-locked") { AdvancedReportsUpsell(onOpenPaywall) }
         }
 
         item(key = "transfers-note") {
@@ -618,6 +638,33 @@ private fun ReportsContent(state: ReportsUiState) {
         // The only ad on this screen, below the content rather than between the charts, and
         // nowhere near an amount someone is reading.
         item(key = "ad") { AdSlot(placement = AdPlacement.REPORTS_FOOTER) }
+    }
+}
+
+/** The locked stand-in for the merchant and account breakdowns. */
+@Composable
+private fun AdvancedReportsUpsell(onOpenPaywall: () -> Unit) {
+    KhaataCard(onClick = onOpenPaywall) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(KhaataTheme.spacing.medium))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.reports_advanced_locked_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = stringResource(R.string.reports_advanced_locked_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

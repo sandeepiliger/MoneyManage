@@ -574,6 +574,8 @@
     <string name="reports_export_pdf">पीडीएफ निर्यात करें</string>
     <string name="reports_export_failed">विवरण नहीं बनाया जा सका।</string>
     <string name="reports_custom_range">मनचाही तिथियाँ</string>
+    <string name="reports_advanced_locked_title">कहाँ, ठीक-ठीक</string>
+    <string name="reports_advanced_locked_body">व्यापारी और खाता-वार विवरण, और स्टेटमेंट PDF, Pro का हिस्सा हैं।</string>
 
     <!-- Statement PDF -->
     <string name="statement_share_title">विवरण साझा करें</string>
