@@ -3,6 +3,7 @@ package ai.labs32.khaata.feature.settings
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -75,6 +76,24 @@ fun AboutScreen(onBack: () -> Unit) {
         }
     }
 
+    /**
+     * Opens a link in a Custom Tab.
+     *
+     * A Custom Tab rather than handing the URL to whatever claims ACTION_VIEW: the privacy policy
+     * and the terms are things people read and come straight back from, and a tab that keeps the
+     * app's colours and a single back press is a better read than a full browser switch with a
+     * chooser dialog in front of it.
+     *
+     * The built intent is still an ACTION_VIEW, so a device whose browser does not implement
+     * Custom Tabs simply ignores the extras and opens it normally, and a device with no browser at
+     * all lands in [open]'s existing ActivityNotFoundException path rather than crashing.
+     */
+    fun openUrl(url: String) {
+        val tab = CustomTabsIntent.Builder().setShowTitle(true).build()
+        tab.intent.data = Uri.parse(url)
+        open(tab.intent)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -131,14 +150,14 @@ fun AboutScreen(onBack: () -> Unit) {
                     title = stringResource(R.string.settings_privacy_policy),
                     icon = Icons.Default.Shield,
                     onClick = {
-                        open(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.PRIVACY_POLICY_URL)))
+                        openUrl(BuildConfig.PRIVACY_POLICY_URL)
                     },
                 )
                 SettingsRow(
                     title = stringResource(R.string.settings_terms),
                     icon = Icons.Default.Gavel,
                     onClick = {
-                        open(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.TERMS_URL)))
+                        openUrl(BuildConfig.TERMS_URL)
                     },
                 )
                 SettingsRow(
