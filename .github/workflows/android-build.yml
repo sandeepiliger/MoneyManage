@@ -23,11 +23,29 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # The ubuntu-latest image already ships the Android SDK, with its licences accepted, at
+      # /usr/local/lib/android/sdk. android-actions/setup-android@v3 was only re-exporting those
+      # paths -- and it began failing outright, in six seconds and before a line of Kotlin was
+      # read, once the runners forced actions off Node 20. Since CI is the only thing that
+      # compiles :app in this project, a third-party action in that position is a single point of
+      # failure for the whole repository, so the paths are exported directly instead.
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          if [ ! -d "$SDK" ]; then
+            echo "No Android SDK found at $SDK" >&2
+            exit 1
+          fi
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
 
       - name: Install required SDK packages
         run: |
+          # Licences are pre-accepted in the image, but a package it does not already carry needs
+          # them agreed again; failing that quietly is fine, the install below is what must work.
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
           sdkmanager --install "platforms;android-36" "build-tools;36.0.0" > /dev/null
 
       - name: Grant execute permission for gradlew
