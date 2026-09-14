@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -34,9 +36,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import ai.labs32.khaata.R
+import ai.labs32.khaata.core.ui.components.ColorBadge
 import ai.labs32.khaata.core.ui.theme.KhaataShapeTokens
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import java.time.Instant
@@ -228,5 +234,64 @@ fun ToggleRow(
         }
         Spacer(Modifier.width(KhaataTheme.spacing.small))
         control()
+    }
+}
+
+/**
+ * A row of colour swatches.
+ *
+ * Shared rather than per-screen because the accessibility requirement is the part that is easy to
+ * get wrong twice: colour alone cannot say which swatch is chosen, so the selected one carries a
+ * tick and a spoken label as well. [icon] is passed in rather than looked up from a key, so a
+ * category can preview its own glyph and a goal its flag without this control knowing about
+ * either's icon set.
+ */
+@Composable
+fun ColorPicker(
+    label: String,
+    selected: Int,
+    icon: ImageVector,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val swatchCount = KhaataTheme.money.categorySwatches.size
+    val selectedDescription = stringResource(R.string.categories_colour_selected)
+
+    Column(modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(KhaataTheme.spacing.small))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
+            items(List(swatchCount) { it }) { seed ->
+                val isSelected = seed == selected
+                Box(
+                    Modifier
+                        .size(KhaataTheme.spacing.touchTarget)
+                        .clickable { onSelect(seed) }
+                        .clearAndSetSemantics {
+                            if (isSelected) contentDescription = selectedDescription
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ColorBadge(
+                        icon = icon,
+                        colorSeed = seed,
+                        size = 40.dp,
+                        contentDescription = null,
+                    )
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = KhaataTheme.money.swatch(seed),
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
+        }
     }
 }

@@ -521,6 +521,10 @@
     <string name="goals_projected">At this rate, around %1$s</string>
     <string name="goals_empty_title">No goals yet</string>
     <string name="goals_empty_body">An emergency fund, a trip, a new phone — anything you are putting money aside for.</string>
+    <string name="goals_notes">Notes (optional)</string>
+    <string name="goals_add_money_amount">Amount to add</string>
+    <string name="goals_delete_title">Delete this goal?</string>
+    <string name="goals_delete_body">The goal and the progress recorded against it are removed. Your transactions are not affected.</string>
 
     <!-- ==================== Reports ==================== -->
     <string name="reports_title">Reports</string>

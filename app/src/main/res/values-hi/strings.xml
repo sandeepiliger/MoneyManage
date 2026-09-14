@@ -522,6 +522,10 @@
     <string name="goals_projected">इस रफ़्तार से, लगभग %1$s</string>
     <string name="goals_empty_title">अभी कोई लक्ष्य नहीं</string>
     <string name="goals_empty_body">इमरजेंसी फ़ंड, कोई यात्रा, नया फ़ोन — जिसके लिए भी पैसे रख रहे हों।</string>
+    <string name="goals_notes">नोट्स (वैकल्पिक)</string>
+    <string name="goals_add_money_amount">जोड़ने की राशि</string>
+    <string name="goals_delete_title">यह लक्ष्य हटाएँ?</string>
+    <string name="goals_delete_body">लक्ष्य और उसमें दर्ज की गई प्रगति हटा दी जाएगी। आपके लेन-देन पर कोई असर नहीं पड़ेगा।</string>
 
     <!-- Reports -->
     <string name="reports_title">रिपोर्ट</string>

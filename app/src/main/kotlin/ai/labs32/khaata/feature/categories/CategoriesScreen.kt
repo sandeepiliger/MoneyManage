@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -57,7 +56,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -71,6 +69,7 @@ import ai.labs32.khaata.core.model.Category
 import ai.labs32.khaata.core.model.CategoryGroup
 import ai.labs32.khaata.core.model.CategoryKind
 import ai.labs32.khaata.core.ui.components.CategoryIcons
+import ai.labs32.khaata.feature.shared.ColorPicker
 import ai.labs32.khaata.core.ui.components.ColorBadge
 import ai.labs32.khaata.core.ui.components.EmptyState
 import ai.labs32.khaata.core.ui.components.LoadingState
@@ -777,7 +776,6 @@ private fun CategoryEditorSheet(
     onDelete: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val swatchCount = KhaataTheme.money.categorySwatches.size
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -829,9 +827,9 @@ private fun CategoryEditorSheet(
 
             IconPicker(selected = editor.iconKey, onSelect = onIconChange)
             ColorPicker(
+                label = stringResource(R.string.categories_colour),
                 selected = editor.colorSeed,
-                swatchCount = swatchCount,
-                iconKey = editor.iconKey,
+                icon = CategoryIcons[editor.iconKey],
                 onSelect = onColorChange,
             )
 
@@ -991,58 +989,6 @@ private fun IconPicker(selected: String, onSelect: (String) -> Unit) {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         },
                     )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ColorPicker(
-    selected: Int,
-    swatchCount: Int,
-    iconKey: String,
-    onSelect: (Int) -> Unit,
-) {
-    val label = stringResource(R.string.categories_colour)
-    val selectedDescription = stringResource(R.string.categories_colour_selected)
-
-    Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(KhaataTheme.spacing.small))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
-            itemsIndexed(List(swatchCount) { it }) { _, seed ->
-                val isSelected = seed == selected
-                Box(
-                    Modifier
-                        .size(KhaataTheme.spacing.touchTarget)
-                        .clickable { onSelect(seed) }
-                        // Colour alone cannot convey which swatch is chosen — a user who cannot
-                        // distinguish two of them would have no way to tell. The selected one
-                        // also carries a tick and a spoken label.
-                        .clearAndSetSemantics {
-                            if (isSelected) contentDescription = selectedDescription
-                        },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    ColorBadge(
-                        icon = CategoryIcons[iconKey],
-                        colorSeed = seed,
-                        size = 40.dp,
-                        contentDescription = null,
-                    )
-                    if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = null,
-                            tint = KhaataTheme.money.swatch(seed),
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
                 }
             }
         }

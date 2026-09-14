@@ -23,6 +23,7 @@ import ai.labs32.khaata.feature.budgets.BudgetsScreen
 import ai.labs32.khaata.feature.categories.CategoriesScreen
 import ai.labs32.khaata.feature.creditcards.CreditCardsScreen
 import ai.labs32.khaata.feature.dashboard.DashboardScreen
+import ai.labs32.khaata.feature.goals.GoalEditScreen
 import ai.labs32.khaata.feature.goals.GoalsScreen
 import ai.labs32.khaata.feature.insights.InsightsScreen
 import ai.labs32.khaata.feature.investments.InvestmentsScreen
@@ -270,7 +271,27 @@ fun KhaataNavHost(
         }
 
         composable(Routes.GOALS) {
-            GoalsScreen(onBack = { navController.popBackStack() })
+            GoalsScreen(
+                onBack = { navController.popBackStack() },
+                onAddGoal = { navController.navigate(Routes.ADD_GOAL) },
+                onEditGoal = { navController.navigate(Routes.goalDetail(it)) },
+            )
+        }
+
+        composable(Routes.ADD_GOAL) {
+            GoalEditScreen(goalId = null, onDone = { navController.popBackStack() })
+        }
+
+        // A goal edits in place rather than having a separate read-only detail screen: it is four
+        // fields, and the progress a detail view would show is already on the card that leads here.
+        composable(
+            route = Routes.GOAL_DETAIL,
+            arguments = listOf(navArgument(Routes.Args.GOAL_ID) { type = NavType.StringType }),
+        ) { entry ->
+            GoalEditScreen(
+                goalId = entry.arguments?.getString(Routes.Args.GOAL_ID),
+                onDone = { navController.popBackStack() },
+            )
         }
 
         // ---- Reports and assistant -----------------------------------------------------------

@@ -16,19 +16,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,6 +49,8 @@ import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.R
 import ai.labs32.khaata.core.calc.GoalPace
 import ai.labs32.khaata.core.calc.GoalProgress
+import ai.labs32.khaata.core.money.CurrencyCode
+import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.ui.components.ColorBadge
 import ai.labs32.khaata.core.ui.components.EmptyState
@@ -53,22 +61,28 @@ import ai.labs32.khaata.core.ui.components.MoneyText
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.GoalRepository
+import ai.labs32.khaata.data.repository.ProfileRepository
+import ai.labs32.khaata.core.logging.KhaataLog
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class GoalsUiState(
     val isLoading: Boolean = true,
     val goals: List<GoalProgress> = emptyList(),
+    val currency: CurrencyCode = CurrencyCode.DEFAULT,
 )
 
 @HiltViewModel
 class GoalsViewModel @Inject constructor(
-    goalRepository: GoalRepository,
+    private val goalRepository: GoalRepository,
+    private val profileRepository: ProfileRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GoalsUiState())
@@ -78,15 +92,39 @@ class GoalsViewModel @Inject constructor(
         goalRepository.observeProgress()
             .onEach { progress ->
                 // Achieved goals sink to the bottom; they are a record, not a task.
-                _uiState.value = GoalsUiState(
-                    isLoading = false,
-                    goals = progress.sortedWith(
-                        compareBy<GoalProgress> { it.isAchieved }
-                            .thenBy { it.monthsRemaining ?: Long.MAX_VALUE },
-                    ),
-                )
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        goals = progress.sortedWith(
+                            compareBy<GoalProgress> { p -> p.isAchieved }
+                                .thenBy { p -> p.monthsRemaining ?: Long.MAX_VALUE },
+                        ),
+                    )
+                }
             }
             .launchIn(viewModelScope)
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(currency = profileRepository.currency()) }
+        }
+    }
+
+    /**
+     * Records money put aside towards [goalId].
+     *
+     * Goes through `addProgress` rather than an `update` with a recomputed total so the write is a
+     * single SQL increment: two contributions logged at once cannot lose one of them, and the
+     * repository stamps the achievement date the moment the target is met.
+     */
+    fun addMoney(goalId: String, amount: Money) {
+        viewModelScope.launch {
+            runCatching { goalRepository.addProgress(goalId, amount) }
+                .onFailure { KhaataLog.e(TAG, "Failed to add money to a goal", it) }
+        }
+    }
+
+    private companion object {
+        const val TAG = "GoalsViewModel"
     }
 }
 
@@ -100,11 +138,19 @@ class GoalsViewModel @Inject constructor(
 @Composable
 fun GoalsScreen(
     onBack: () -> Unit,
+    onAddGoal: () -> Unit,
+    onEditGoal: (String) -> Unit,
     viewModel: GoalsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var contributingTo by remember { mutableStateOf<GoalProgress?>(null) }
 
     Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAddGoal) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.goals_add))
+            }
+        },
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0),
@@ -123,16 +169,12 @@ fun GoalsScreen(
         when {
             state.isLoading -> LoadingState(Modifier.padding(padding))
 
-            // No actionLabel/onAction here, and no trailing "Add a goal" row below the list either
-            // (unlike Budgets, which gets one): there is genuinely no goal-creation screen in this
-            // codebase yet -- no GoalEditScreen, no GoalRepository.create(), and Routes.ADD_GOAL
-            // has no registered destination. Wiring either affordance to it would crash on tap.
-            // This is a real, larger gap than a missing entry point; flagged rather than papered
-            // over with a button that does nothing or worse.
             state.goals.isEmpty() -> EmptyState(
                 icon = Icons.Outlined.Flag,
                 title = stringResource(R.string.goals_empty_title),
                 description = stringResource(R.string.goals_empty_body),
+                actionLabel = stringResource(R.string.goals_add),
+                onAction = onAddGoal,
                 modifier = Modifier.padding(padding),
             )
 
@@ -140,19 +182,46 @@ fun GoalsScreen(
                 Modifier
                     .padding(padding)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(KhaataTheme.spacing.screenHorizontal),
+                contentPadding = PaddingValues(
+                    start = KhaataTheme.spacing.screenHorizontal,
+                    end = KhaataTheme.spacing.screenHorizontal,
+                    top = KhaataTheme.spacing.screenHorizontal,
+                    // This screen carries its own FAB, so the last card needs clearing the same
+                    // way every other list with one does.
+                    bottom = KhaataTheme.spacing.bottomBarClearance,
+                ),
                 verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
             ) {
                 items(state.goals, key = { it.goal.id }) { progress ->
-                    GoalCard(progress)
+                    GoalCard(
+                        progress = progress,
+                        onEdit = { onEditGoal(progress.goal.id) },
+                        onAddMoney = { contributingTo = progress },
+                    )
                 }
             }
         }
     }
+
+    contributingTo?.let { target ->
+        AddGoalMoneyDialog(
+            goalName = target.goal.name,
+            currency = state.currency,
+            onConfirm = { amount ->
+                viewModel.addMoney(target.goal.id, amount)
+                contributingTo = null
+            },
+            onDismiss = { contributingTo = null },
+        )
+    }
 }
 
 @Composable
-private fun GoalCard(progress: GoalProgress) {
+private fun GoalCard(
+    progress: GoalProgress,
+    onEdit: () -> Unit,
+    onAddMoney: () -> Unit,
+) {
     // A completed goal is always shown in the income colour, regardless of its own seed. Seed 2
     // happens to be Rose70 -- the same colour as money.expense -- so a goal that just hit 100%
     // could draw a full rose bar and read as a warning rather than as the good news it is. This is
@@ -163,7 +232,7 @@ private fun GoalCard(progress: GoalProgress) {
         KhaataTheme.money.swatch(progress.goal.colorSeed)
     }
 
-    KhaataCard {
+    KhaataCard(onClick = onEdit) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             ColorBadge(
                 icon = Icons.Outlined.Flag,
@@ -242,6 +311,17 @@ private fun GoalCard(progress: GoalProgress) {
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
+
+        // An achieved goal keeps the button: people do carry on saving past a target, and
+        // removing the only way to correct an over- or under-recorded balance would be worse
+        // than showing a button they rarely need.
+        Spacer(Modifier.height(KhaataTheme.spacing.small))
+        TextButton(
+            onClick = onAddMoney,
+            modifier = Modifier.align(Alignment.End),
+        ) {
+            Text(stringResource(R.string.goals_add_money))
+        }
     }
 }
 
