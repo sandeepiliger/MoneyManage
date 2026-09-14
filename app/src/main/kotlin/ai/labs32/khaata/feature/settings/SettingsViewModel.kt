@@ -28,6 +28,7 @@ import ai.labs32.khaata.data.repository.GoalRepository
 import ai.labs32.khaata.data.repository.InvestmentRepository
 import ai.labs32.khaata.data.repository.LoanRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
+import ai.labs32.khaata.data.repository.ReceiptRepository
 import ai.labs32.khaata.data.repository.RecurringRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import ai.labs32.khaata.data.repository.SubscriptionRepository
@@ -97,6 +98,7 @@ class SettingsViewModel @Inject constructor(
     private val appLockManager: AppLockManager,
     private val biometricAuthenticator: BiometricAuthenticator,
     private val notifier: KhaataNotifier,
+    private val receiptRepository: ReceiptRepository,
     private val backupManager: BackupManager,
     private val workScheduler: WorkScheduler,
     private val analytics: AnalyticsProvider,
@@ -333,6 +335,7 @@ class SettingsViewModel @Inject constructor(
                 appLockManager.clearPin()
 
                 // Outside the database, and every bit as much the user's data.
+                receiptRepository.deleteAll()
                 backupManager.clearExports()
                 notifier.clearHistory()
                 workScheduler.cancelAll()

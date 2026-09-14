@@ -39,8 +39,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.R
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.ui.platform.LocalContext
+import ai.labs32.khaata.feature.receipts.ReceiptSourceSheet
+import ai.labs32.khaata.feature.receipts.ReceiptStrip
+import ai.labs32.khaata.feature.receipts.ReceiptViewerDialog
+import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.model.Account
 import ai.labs32.khaata.core.model.Category
+import ai.labs32.khaata.core.model.Receipt
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.model.TransactionType
 import ai.labs32.khaata.core.ui.components.ErrorState
@@ -51,6 +63,9 @@ import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
+import ai.labs32.khaata.data.repository.EntitlementRepository
+import ai.labs32.khaata.data.repository.ReceiptAttachResult
+import ai.labs32.khaata.data.repository.ReceiptRepository
 import ai.labs32.khaata.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +86,12 @@ data class TransactionDetailUiState(
     val category: Category? = null,
     val isDeleted: Boolean = false,
     val error: String? = null,
+    val receipts: List<Receipt> = emptyList(),
+    /** Whether this tier may attach receipts. False still shows the strip, with a lock on it. */
+    val canAttachReceipts: Boolean = false,
+    val isAttachingReceipt: Boolean = false,
+    /** Set when an attach was refused, for the snackbar. Cleared once shown. */
+    val receiptError: ReceiptAttachResult? = null,
 )
 
 @HiltViewModel
@@ -78,12 +99,26 @@ class TransactionDetailViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
+    private val receiptRepository: ReceiptRepository,
+    private val entitlementRepository: EntitlementRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TransactionDetailUiState())
     val uiState: StateFlow<TransactionDetailUiState> = _uiState.asStateFlow()
 
+    /** Held so a cancelled capture can still clean up the file the camera was handed. */
+    private var pendingCapture: ReceiptRepository.CaptureTarget? = null
+
     fun load(transactionId: String) {
+        viewModelScope.launch {
+            val canAttach = entitlementRepository.isUnlocked(Feature.RECEIPT_ATTACHMENTS)
+            _uiState.update { it.copy(canAttachReceipts = canAttach) }
+        }
+        viewModelScope.launch {
+            receiptRepository.observeForTransaction(transactionId).collect { receipts ->
+                _uiState.update { it.copy(receipts = receipts) }
+            }
+        }
         viewModelScope.launch {
             transactionRepository.observeById(transactionId).collect { transaction ->
                 if (transaction == null) {
@@ -117,6 +152,55 @@ class TransactionDetailViewModel @Inject constructor(
         }
     }
 
+    // ---- Receipts ----------------------------------------------------------------------------
+
+    /** Prepares a file for the camera to write into, and remembers it for cleanup. */
+    fun newCaptureTarget(): ReceiptRepository.CaptureTarget =
+        receiptRepository.newCaptureTarget().also { pendingCapture = it }
+
+    /**
+     * Imports whatever the camera or the picker produced.
+     *
+     * [captured] says whether this came from the camera, whose staging file is deleted afterwards
+     * either way -- a cancelled capture leaves a zero-byte file behind otherwise.
+     */
+    fun attachReceipt(uri: android.net.Uri?, captured: Boolean) {
+        val transactionId = _uiState.value.transaction?.id
+        val staging = pendingCapture.takeIf { captured }
+        pendingCapture = null
+
+        if (uri == null || transactionId == null) {
+            viewModelScope.launch { staging?.let { receiptRepository.discardCapture(it) } }
+            return
+        }
+
+        _uiState.update { it.copy(isAttachingReceipt = true) }
+        viewModelScope.launch {
+            val result = receiptRepository.attach(transactionId, uri)
+            staging?.let { receiptRepository.discardCapture(it) }
+            _uiState.update {
+                it.copy(
+                    isAttachingReceipt = false,
+                    // Only a refusal is worth surfacing; a success is visible as a new thumbnail.
+                    receiptError = result.takeIf { r -> r !is ReceiptAttachResult.Attached },
+                )
+            }
+        }
+    }
+
+    fun deleteReceipt(receipt: Receipt) {
+        viewModelScope.launch { receiptRepository.delete(receipt) }
+    }
+
+    /** Copies a receipt into the shared cache and hands back a URI for the share sheet. */
+    fun shareReceipt(receipt: Receipt, onReady: (android.net.Uri) -> Unit) {
+        viewModelScope.launch { receiptRepository.shareableUri(receipt)?.let(onReady) }
+    }
+
+    fun fileFor(receipt: Receipt) = receiptRepository.fileFor(receipt)
+
+    fun consumeReceiptError() = _uiState.update { it.copy(receiptError = null) }
+
     fun duplicate(onDuplicated: () -> Unit) {
         val id = _uiState.value.transaction?.id ?: return
         viewModelScope.launch {
@@ -139,15 +223,42 @@ fun TransactionDetailScreen(
     transactionId: String,
     onBack: () -> Unit,
     onEdit: () -> Unit,
+    onOpenPaywall: () -> Unit,
     viewModel: TransactionDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showReceiptSource by remember { mutableStateOf(false) }
+    var viewingReceipt by remember { mutableStateOf<Receipt?>(null) }
 
     LaunchedEffect(transactionId) { viewModel.load(transactionId) }
     LaunchedEffect(state.isDeleted) { if (state.isDeleted) onBack() }
 
+    // The system photo picker: no storage permission is involved, and the app only ever receives
+    // the one image the user chose.
+    val pickPhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri -> viewModel.attachReceipt(uri, captured = false) }
+
+    // TakePicture delegates to the camera app and writes into a URI we hand it, so this app needs
+    // no CAMERA permission of its own.
+    var captureUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    val takePhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { saved -> viewModel.attachReceipt(captureUri.takeIf { saved }, captured = true) }
+
+    val receiptMessage = state.receiptError?.let { receiptErrorText(it) }
+    LaunchedEffect(receiptMessage) {
+        if (receiptMessage != null) {
+            snackbarHostState.showSnackbar(receiptMessage)
+            viewModel.consumeReceiptError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0),
@@ -194,8 +305,55 @@ fun TransactionDetailScreen(
             state.transaction != null -> DetailContent(
                 state = state,
                 modifier = Modifier.padding(padding),
+                fileFor = viewModel::fileFor,
+                onAddReceipt = {
+                    if (state.canAttachReceipts) showReceiptSource = true else onOpenPaywall()
+                },
+                onOpenReceipt = { viewingReceipt = it },
             )
         }
+    }
+
+    if (showReceiptSource) {
+        ReceiptSourceSheet(
+            onCamera = {
+                showReceiptSource = false
+                val target = viewModel.newCaptureTarget()
+                captureUri = target.uri
+                takePhoto.launch(target.uri)
+            },
+            onGallery = {
+                showReceiptSource = false
+                pickPhoto.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                )
+            },
+            onDismiss = { showReceiptSource = false },
+        )
+    }
+
+    viewingReceipt?.let { receipt ->
+        ReceiptViewerDialog(
+            receipt = receipt,
+            file = viewModel.fileFor(receipt),
+            onShare = {
+                viewModel.shareReceipt(receipt) { uri ->
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "image/jpeg"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(
+                        Intent.createChooser(intent, context.getString(R.string.receipts_share)),
+                    )
+                }
+            },
+            onDelete = {
+                viewModel.deleteReceipt(receipt)
+                viewingReceipt = null
+            },
+            onDismiss = { viewingReceipt = null },
+        )
     }
 
     if (showDeleteConfirm) {
@@ -226,7 +384,13 @@ fun TransactionDetailScreen(
 }
 
 @Composable
-private fun DetailContent(state: TransactionDetailUiState, modifier: Modifier = Modifier) {
+private fun DetailContent(
+    state: TransactionDetailUiState,
+    modifier: Modifier = Modifier,
+    fileFor: (Receipt) -> java.io.File,
+    onAddReceipt: () -> Unit,
+    onOpenReceipt: (Receipt) -> Unit,
+) {
     val transaction = state.transaction ?: return
     val spacing = KhaataTheme.spacing
     val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy") }
@@ -244,6 +408,21 @@ private fun DetailContent(state: TransactionDetailUiState, modifier: Modifier = 
             amount = transaction.amount,
             type = transaction.type,
             style = KhaataTextStyles.amountHero,
+        )
+
+        Spacer(Modifier.height(spacing.large))
+
+        // Directly under the amount, above the detail rows: a receipt is the evidence for the
+        // figure it sits beneath, and burying it below the audit timestamps would make it feel
+        // like metadata rather than the proof someone came here to check.
+        ReceiptStrip(
+            receipts = state.receipts,
+            canAttach = state.canAttachReceipts,
+            isAttaching = state.isAttachingReceipt,
+            fileFor = fileFor,
+            onAdd = onAddReceipt,
+            onOpen = onOpenReceipt,
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(Modifier.height(spacing.large))
@@ -310,6 +489,17 @@ private fun DetailContent(state: TransactionDetailUiState, modifier: Modifier = 
         Spacer(Modifier.height(spacing.xlarge))
     }
 }
+
+@Composable
+private fun receiptErrorText(error: ReceiptAttachResult): String = stringResource(
+    when (error) {
+        ReceiptAttachResult.Unreadable -> R.string.receipts_error_unreadable
+        ReceiptAttachResult.TooManyForTransaction -> R.string.receipts_error_too_many
+        ReceiptAttachResult.OutOfSpace -> R.string.receipts_error_out_of_space
+        // Never reached: a success is filtered out before it reaches the snackbar.
+        is ReceiptAttachResult.Attached -> R.string.receipts_title
+    },
+)
 
 @Composable
 private fun DetailRow(label: String, value: String) {

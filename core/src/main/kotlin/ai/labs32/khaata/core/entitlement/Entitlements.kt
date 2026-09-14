@@ -111,7 +111,6 @@ enum class Feature(val minimumTier: Tier) {
             SHARED_HOUSEHOLD,
             FAMILY_BUDGETS,
             SHARED_GOALS,
-            RECEIPT_ATTACHMENTS,
             AI_ENHANCED_INSIGHTS,
             AI_SMART_CATEGORISATION,
         )

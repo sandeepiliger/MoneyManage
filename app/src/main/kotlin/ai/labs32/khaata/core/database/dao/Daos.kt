@@ -424,8 +424,15 @@ interface ReceiptDao {
     @Delete
     suspend fun delete(receipt: ReceiptEntity)
 
-    @Query("SELECT * FROM receipts WHERE transactionId = :transactionId")
+    @Query("SELECT * FROM receipts WHERE transactionId = :transactionId ORDER BY capturedOn, id")
     suspend fun findForTransaction(transactionId: String): List<ReceiptEntity>
+
+    /** Ordered so the attachment strip does not reshuffle itself as receipts are added. */
+    @Query("SELECT * FROM receipts WHERE transactionId = :transactionId ORDER BY capturedOn, id")
+    fun observeForTransaction(transactionId: String): Flow<List<ReceiptEntity>>
+
+    @Query("SELECT COUNT(*) FROM receipts WHERE transactionId = :transactionId")
+    suspend fun countForTransaction(transactionId: String): Int
 
     @Query("SELECT * FROM receipts WHERE id = :id")
     suspend fun findById(id: String): ReceiptEntity?

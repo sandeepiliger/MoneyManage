@@ -397,6 +397,19 @@
     <string name="recurring_delete_body">यह नियम बंद हो जाएगा। जो लेन-देन पहले दर्ज हो चुके हैं, वे बने रहेंगे।</string>
     <string name="validation_end_before_start">आख़िरी तारीख़ शुरू की तारीख़ से पहले है</string>
     <string name="transaction_from_account">किस खाते से</string>
+    <string name="receipts_title">रसीदें</string>
+    <string name="receipts_add">रसीद जोड़ें</string>
+    <string name="receipts_locked">रसीदें जोड़ना Pro का हिस्सा है</string>
+    <string name="receipts_open">रसीद खोलें</string>
+    <string name="receipts_take_photo">फ़ोटो लें</string>
+    <string name="receipts_choose_photo">फ़ोटो में से चुनें</string>
+    <string name="receipts_share">रसीद साझा करें</string>
+    <string name="receipts_delete_title">यह रसीद हटाएँ?</string>
+    <string name="receipts_delete_body">फ़ोटो इस डिवाइस से हटा दी जाएगी। लेन-देन पर कोई असर नहीं पड़ेगा।</string>
+    <string name="receipts_error_unreadable">वह छवि पढ़ी नहीं जा सकी। कोई और आज़माएँ।</string>
+    <string name="receipts_error_too_many">एक लेन-देन में अधिकतम 5 रसीदें जोड़ी जा सकती हैं।</string>
+    <string name="receipts_error_out_of_space">रसीदों की जगह भर गई है। कुछ हटाकर जगह बनाएँ।</string>
+    <string name="receipts_storage_used">रसीदें %1$s जगह ले रही हैं</string>
     <string name="date_field_none">तय नहीं</string>
 
     <string name="frequency_daily">रोज़</string>

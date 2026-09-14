@@ -272,6 +272,9 @@ dependencies {
     implementation(libs.androidx.splashscreen)
     implementation(libs.androidx.browser)
     implementation(libs.androidx.documentfile)
+    // Reads the orientation tag phone cameras write instead of rotating pixels; without it a
+    // receipt photographed in portrait is stored and shown on its side.
+    implementation(libs.androidx.exifinterface)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

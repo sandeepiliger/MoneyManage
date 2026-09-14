@@ -134,6 +134,7 @@ fun KhaataNavHost(
             ai.labs32.khaata.feature.transactions.TransactionDetailScreen(
                 transactionId = id,
                 onBack = { navController.popBackStack() },
+                onOpenPaywall = { navController.navigate(Routes.PAYWALL) },
                 onEdit = { navController.navigate(Routes.editTransaction(id)) },
             )
         }

@@ -202,6 +202,19 @@
     <string name="transaction_source_recurring">Recurring</string>
     <string name="transaction_suggestion_hint">Usually %1$s</string>
     <string name="transaction_overdraft_warning">This will take %1$s below zero</string>
+    <string name="receipts_title">Receipts</string>
+    <string name="receipts_add">Attach a receipt</string>
+    <string name="receipts_locked">Attaching receipts is part of Pro</string>
+    <string name="receipts_open">Open receipt</string>
+    <string name="receipts_take_photo">Take a photo</string>
+    <string name="receipts_choose_photo">Choose from photos</string>
+    <string name="receipts_share">Share receipt</string>
+    <string name="receipts_delete_title">Delete this receipt?</string>
+    <string name="receipts_delete_body">The photo is removed from this device. The transaction itself is not affected.</string>
+    <string name="receipts_error_unreadable">That image could not be read. Try another.</string>
+    <string name="receipts_error_too_many">You can attach up to 5 receipts to one transaction.</string>
+    <string name="receipts_error_out_of_space">Receipt storage is full. Delete a few to make room.</string>
+    <string name="receipts_storage_used">Receipts are using %1$s</string>
 
     <!-- Validation -->
     <string name="validation_amount_required">Enter an amount</string>

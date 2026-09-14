@@ -23,6 +23,7 @@ import ai.labs32.khaata.data.repository.BudgetRepository
 import ai.labs32.khaata.data.repository.CreditCardRepository
 import ai.labs32.khaata.data.repository.EntitlementRepository
 import ai.labs32.khaata.data.repository.LoanRepository
+import ai.labs32.khaata.data.repository.ReceiptRepository
 import ai.labs32.khaata.data.repository.RecurringRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import ai.labs32.khaata.data.repository.SubscriptionRepository
@@ -334,11 +335,18 @@ class MaintenanceWorker @AssistedInject constructor(
     private val transactionRepository: TransactionRepository,
     private val notificationLogDao: ai.labs32.khaata.core.database.dao.NotificationLogDao,
     private val insightStateDao: ai.labs32.khaata.core.database.dao.InsightStateDao,
+    private val receiptRepository: ReceiptRepository,
     private val clock: KhaataClock,
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result = try {
         val purged = transactionRepository.purgeOldDeleted()
+
+        // Receipt rows go with their transaction through Room's CASCADE, which knows nothing
+        // about the image files they pointed at. Without this sweep every deleted transaction
+        // would leak its photos for the life of the install.
+        val reclaimed = receiptRepository.purgeOrphans()
+        if (reclaimed > 0) KhaataLog.d(TAG, "Reclaimed $reclaimed orphaned receipt image(s)")
         notificationLogDao.purgeBefore(clock.now().minusSeconds(NOTIFICATION_RETENTION_DAYS * 86_400))
         insightStateDao.purgeOtherPeriods(currentPeriodKey = clock.today().let { "${it.year}-${it.monthValue}" })
         KhaataLog.d(TAG, "Maintenance purged $purged transaction(s)")
