@@ -573,6 +573,7 @@
     <string name="reports_unknown_account">हटाया गया खाता</string>
     <string name="reports_export_pdf">पीडीएफ निर्यात करें</string>
     <string name="reports_export_failed">विवरण नहीं बनाया जा सका।</string>
+    <string name="reports_custom_range">मनचाही तिथियाँ</string>
 
     <!-- Statement PDF -->
     <string name="statement_share_title">विवरण साझा करें</string>

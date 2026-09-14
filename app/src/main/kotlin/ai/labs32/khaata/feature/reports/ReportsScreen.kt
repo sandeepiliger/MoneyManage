@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -34,10 +35,16 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -59,6 +66,7 @@ import ai.labs32.khaata.core.calc.CategorySpend
 import ai.labs32.khaata.core.calc.MerchantSpend
 import ai.labs32.khaata.core.common.DateRange
 import ai.labs32.khaata.core.common.ReportPeriod
+import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
@@ -85,6 +93,7 @@ import ai.labs32.khaata.data.export.StatementData
 import ai.labs32.khaata.data.export.StatementExporter
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
+import ai.labs32.khaata.data.repository.EntitlementRepository
 import ai.labs32.khaata.data.repository.TransactionRepository
 import ai.labs32.khaata.feature.ads.AdSlot
 import ai.labs32.khaata.feature.shared.chartMoneyFormatter
@@ -109,6 +118,10 @@ data class ReportsUiState(
     val isLoading: Boolean = true,
     val period: ReportPeriod = ReportPeriod.THIS_MONTH,
     val range: DateRange? = null,
+    /** Set when the user has chosen their own dates; it overrides [period]. */
+    val customRange: DateRange? = null,
+    /** Whether this tier may choose its own dates. */
+    val canUseCustomRange: Boolean = false,
     val summary: CashflowSummary? = null,
     val previousSummary: CashflowSummary? = null,
     val categories: List<CategorySpend> = emptyList(),
@@ -127,6 +140,7 @@ data class ReportsUiState(
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ReportsViewModel @Inject constructor(
+    private val entitlementRepository: EntitlementRepository,
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
     private val accountRepository: AccountRepository,
@@ -137,13 +151,33 @@ class ReportsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ReportsUiState())
     val uiState: StateFlow<ReportsUiState> = _uiState.asStateFlow()
 
-    private val period = MutableStateFlow(ReportPeriod.THIS_MONTH)
+    /**
+     * What the report covers.
+     *
+     * A custom range and a named period are one choice, not two: holding them in a single value
+     * means the flow below restarts once when either changes, and makes it impossible to end up
+     * showing a period chip selected while a stale custom range is still driving the query.
+     */
+    private data class ReportSelection(
+        val period: ReportPeriod = ReportPeriod.THIS_MONTH,
+        val customRange: DateRange? = null,
+    )
+
+    private val selection = MutableStateFlow(ReportSelection())
 
     init {
-        period
-            .flatMapLatest { selected ->
+        viewModelScope.launch {
+            val allowed = entitlementRepository.isUnlocked(Feature.CUSTOM_DATE_RANGES)
+            _uiState.update { it.copy(canUseCustomRange = allowed) }
+        }
+
+        selection
+            .flatMapLatest { chosen ->
+                val selected = chosen.period
                 val today = clock.today()
-                val range = selected.range(today)
+                val range = chosen.customRange ?: selected.range(today)
+                // The trend window still follows the named period: a custom range has no natural
+                // number of trailing months, and a one-week range would otherwise draw one bar.
                 val trailing = DateRange.trailingMonths(today, selected.trendMonths)
                 // One query covering the period, its comparison period and the trend window, so
                 // switching filters does not fan out into three round trips.
@@ -162,6 +196,7 @@ class ReportsViewModel @Inject constructor(
                         isLoading = false,
                         period = selected,
                         range = range,
+                        customRange = chosen.customRange,
                         summary = CashflowAnalyzer.summarise(transactions, range, currency),
                         previousSummary = CashflowAnalyzer.summarise(
                             transactions,
@@ -203,6 +238,10 @@ class ReportsViewModel @Inject constructor(
                         isExporting = current.isExporting,
                         exportedFile = current.exportedFile,
                         exportError = current.exportError,
+                        // Resolved once, asynchronously, and not part of the ledger snapshot this
+                        // flow rebuilds -- without carrying it over, the first database write
+                        // after launch would switch the custom-range chip back off.
+                        canUseCustomRange = current.canUseCustomRange,
                     )
                 }
             }
@@ -210,8 +249,18 @@ class ReportsViewModel @Inject constructor(
     }
 
     fun selectPeriod(selected: ReportPeriod) {
-        _uiState.update { it.copy(isLoading = true, period = selected) }
-        period.value = selected
+        _uiState.update { it.copy(isLoading = true, period = selected, customRange = null) }
+        // Picking a named period clears any custom range: the chip the user just tapped is what
+        // the report should show.
+        selection.value = ReportSelection(period = selected, customRange = null)
+    }
+
+    /** Applies dates the user picked themselves. The named period stays as the trend window. */
+    fun selectCustomRange(start: LocalDate, endInclusive: LocalDate) {
+        if (!_uiState.value.canUseCustomRange) return
+        if (endInclusive.isBefore(start)) return
+        _uiState.update { it.copy(isLoading = true) }
+        selection.update { it.copy(customRange = DateRange(start, endInclusive)) }
     }
 
     /**
@@ -286,6 +335,7 @@ fun ReportsScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val currentPeriodLabel = periodLabel(state.period)
+    var showRangePicker by rememberSaveable { mutableStateOf(false) }
     val shareTitle = stringResource(R.string.statement_share_title)
     val exportFailedMessage = stringResource(R.string.reports_export_failed)
 
@@ -350,7 +400,13 @@ fun ReportsScreen(
                 .padding(padding)
                 .fillMaxSize(),
         ) {
-            PeriodFilter(selected = state.period, onSelect = viewModel::selectPeriod)
+            PeriodFilter(
+                selected = state.period,
+                customRange = state.customRange,
+                canUseCustomRange = state.canUseCustomRange,
+                onSelect = viewModel::selectPeriod,
+                onPickCustom = { showRangePicker = true },
+            )
 
             when {
                 state.isLoading -> LoadingState()
@@ -365,10 +421,84 @@ fun ReportsScreen(
             }
         }
     }
+
+    if (showRangePicker) {
+        CustomRangeDialog(
+            initial = state.customRange ?: state.range,
+            onConfirm = { start, end ->
+                viewModel.selectCustomRange(start, end)
+                showRangePicker = false
+            },
+            onDismiss = { showRangePicker = false },
+        )
+    }
+}
+
+/**
+ * The custom date-range picker.
+ *
+ * Confirm stays disabled until both ends are chosen: a range with only a start is not a report
+ * anyone asked for, and silently completing it with "today" would quietly show the wrong period.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CustomRangeDialog(
+    initial: DateRange?,
+    onConfirm: (LocalDate, LocalDate) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val zone = java.time.ZoneOffset.UTC
+    val pickerState = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = initial?.start
+            ?.atStartOfDay(zone)?.toInstant()?.toEpochMilli(),
+        initialSelectedEndDateMillis = initial?.endInclusive
+            ?.atStartOfDay(zone)?.toInstant()?.toEpochMilli(),
+    )
+
+    val start = pickerState.selectedStartDateMillis
+    val end = pickerState.selectedEndDateMillis
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                enabled = start != null && end != null,
+                onClick = {
+                    val from = start ?: return@TextButton
+                    val to = end ?: return@TextButton
+                    onConfirm(
+                        java.time.Instant.ofEpochMilli(from).atZone(zone).toLocalDate(),
+                        java.time.Instant.ofEpochMilli(to).atZone(zone).toLocalDate(),
+                    )
+                },
+            ) {
+                Text(stringResource(R.string.action_done))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    ) {
+        DateRangePicker(state = pickerState)
+    }
+}
+
+/** `1 Apr – 30 Jun 2026`, for the custom-range chip. */
+@Composable
+private fun formatRange(range: DateRange): String {
+    val formatter = remember { DateTimeFormatter.ofPattern("d MMM") }
+    val withYear = remember { DateTimeFormatter.ofPattern("d MMM yyyy") }
+    return "${range.start.format(formatter)} – ${range.endInclusive.format(withYear)}"
 }
 
 @Composable
-private fun PeriodFilter(selected: ReportPeriod, onSelect: (ReportPeriod) -> Unit) {
+private fun PeriodFilter(
+    selected: ReportPeriod,
+    customRange: DateRange?,
+    canUseCustomRange: Boolean,
+    onSelect: (ReportPeriod) -> Unit,
+    onPickCustom: () -> Unit,
+) {
     val background = MaterialTheme.colorScheme.background
     Box {
         LazyRow(
@@ -391,6 +521,34 @@ private fun PeriodFilter(selected: ReportPeriod, onSelect: (ReportPeriod) -> Uni
                         selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     ),
                 )
+            }
+
+            // Last, not first: the named periods answer nearly every question anyone asks, and
+            // putting a picker in front of them would cost four taps for "this month".
+            if (canUseCustomRange) {
+                item(key = "custom") {
+                    FilterChip(
+                        selected = customRange != null,
+                        onClick = onPickCustom,
+                        label = {
+                            Text(
+                                customRange?.let { formatRange(it) }
+                                    ?: stringResource(R.string.reports_custom_range),
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.DateRange,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
+                    )
+                }
             }
         }
         // A chip cut off mid-word at the edge reads as a broken layout rather than a scrollable

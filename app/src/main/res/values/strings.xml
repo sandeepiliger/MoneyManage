@@ -572,6 +572,7 @@
     <string name="reports_unknown_account">Deleted account</string>
     <string name="reports_export_pdf">Export PDF</string>
     <string name="reports_export_failed">Could not create the statement.</string>
+    <string name="reports_custom_range">Custom dates</string>
 
     <!-- ==================== Statement PDF ==================== -->
     <string name="statement_share_title">Share statement</string>
