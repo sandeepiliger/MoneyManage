@@ -16,9 +16,12 @@ import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.AppSettings
 import ai.labs32.khaata.core.model.BudgetStatus
 import ai.labs32.khaata.core.money.MoneyFormatter
+import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.notifications.KhaataNotifier
+import ai.labs32.khaata.data.backup.BackupManager
 import ai.labs32.khaata.data.repository.BudgetRepository
 import ai.labs32.khaata.data.repository.CreditCardRepository
+import ai.labs32.khaata.data.repository.EntitlementRepository
 import ai.labs32.khaata.data.repository.LoanRepository
 import ai.labs32.khaata.data.repository.RecurringRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
@@ -261,6 +264,64 @@ class DailyReminderWorker @AssistedInject constructor(
 }
 
 /**
+ * Writes a backup into the folder the user chose.
+ *
+ * Only runs when the feature is switched on, a folder is still granted, and the user is entitled
+ * to it — each is re-checked here rather than trusted from scheduling time, because a
+ * subscription can lapse and a folder grant can be revoked between runs.
+ *
+ * A failure is retried rather than swallowed: the whole point of this worker is that the user is
+ * not watching it, so a run that quietly did nothing is worse than one that tries again.
+ */
+@HiltWorker
+class ScheduledBackupWorker @AssistedInject constructor(
+    @Assisted appContext: Context,
+    @Assisted params: WorkerParameters,
+    private val settingsRepository: SettingsRepository,
+    private val entitlementRepository: EntitlementRepository,
+    private val backupManager: BackupManager,
+) : CoroutineWorker(appContext, params) {
+
+    override suspend fun doWork(): Result = try {
+        val settings = settingsRepository.current()
+        val folder = settings.backupFolderUri
+
+        when {
+            !settings.scheduledBackupEnabled -> Result.success()
+            folder == null -> Result.success()
+            !entitlementRepository.isUnlocked(Feature.SCHEDULED_BACKUP) -> Result.success()
+            else -> backupManager.writeBackupToFolder(android.net.Uri.parse(folder)).fold(
+                onSuccess = {
+                    KhaataLog.d(TAG, "Scheduled backup written")
+                    Result.success()
+                },
+                onFailure = { error ->
+                    // A revoked folder grant is permanent until the user picks again, so the
+                    // setting is stood down rather than retried forever against a dead URI --
+                    // the same reconciliation the SMS toggle does when its permission goes.
+                    KhaataLog.e(TAG, "Scheduled backup failed", error)
+                    if (error is SecurityException) {
+                        settingsRepository.setScheduledBackupEnabled(false)
+                        settingsRepository.setBackupFolderUri(null)
+                        Result.success()
+                    } else {
+                        Result.retry()
+                    }
+                },
+            )
+        }
+    } catch (error: Exception) {
+        KhaataLog.e(TAG, "Scheduled backup worker failed", error)
+        Result.retry()
+    }
+
+    companion object {
+        const val NAME = "khaata_scheduled_backup"
+        private const val TAG = "ScheduledBackupWorker"
+    }
+}
+
+/**
  * Housekeeping: purges long-deleted transactions and stale notification records.
  *
  * Runs weekly. Deleted transactions are kept for 30 days so an accidental swipe is recoverable,
@@ -339,6 +400,25 @@ class WorkScheduler @Inject constructor(
                 .build(),
         )
 
+        // Weekly, on a charger and unmetered where possible: writing the whole ledger to a cloud
+        // folder is exactly the kind of thing that should not land on someone's mobile data.
+        if (settings.scheduledBackupEnabled && settings.backupFolderUri != null) {
+            workManager.enqueueUniquePeriodicWork(
+                ScheduledBackupWorker.NAME,
+                ExistingPeriodicWorkPolicy.KEEP,
+                PeriodicWorkRequestBuilder<ScheduledBackupWorker>(Duration.ofDays(7))
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.UNMETERED)
+                            .setRequiresBatteryNotLow(true)
+                            .build(),
+                    )
+                    .build(),
+            )
+        } else {
+            workManager.cancelUniqueWork(ScheduledBackupWorker.NAME)
+        }
+
         if (settings.dailyReminderEnabled) {
             workManager.enqueueUniquePeriodicWork(
                 DailyReminderWorker.NAME,
@@ -360,6 +440,7 @@ class WorkScheduler @Inject constructor(
         workManager.cancelUniqueWork(RecurringPostingWorker.NAME)
         workManager.cancelUniqueWork(DailyReminderWorker.NAME)
         workManager.cancelUniqueWork(MaintenanceWorker.NAME)
+        workManager.cancelUniqueWork(ScheduledBackupWorker.NAME)
     }
 
     /**

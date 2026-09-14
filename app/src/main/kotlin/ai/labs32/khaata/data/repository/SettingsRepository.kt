@@ -110,6 +110,16 @@ class SettingsRepository @Inject constructor(
     suspend fun setDailyReminderTime(minuteOfDay: Int) =
         edit { it[Keys.DAILY_REMINDER_TIME] = minuteOfDay.coerceIn(0, 1439) }
 
+    // ---- Backup ------------------------------------------------------------------------------
+
+    suspend fun setScheduledBackupEnabled(enabled: Boolean) =
+        edit { it[Keys.SCHEDULED_BACKUP] = enabled }
+
+    /** Records the folder the user picked, or clears it when [uri] is null. */
+    suspend fun setBackupFolderUri(uri: String?) = edit { prefs ->
+        if (uri == null) prefs.remove(Keys.BACKUP_FOLDER) else prefs[Keys.BACKUP_FOLDER] = uri
+    }
+
     /** Clears every preference — part of "delete all my data". */
     suspend fun resetAll() {
         context.settingsDataStore.edit { it.clear() }
@@ -154,6 +164,8 @@ class SettingsRepository @Inject constructor(
             hideAmountsWhenLocked = this[Keys.HIDE_AMOUNTS] ?: true,
             hasSeenPrivacyDashboard = this[Keys.PRIVACY_SEEN] ?: false,
             hasScannedSmsInbox = this[Keys.SMS_INBOX_SCANNED] ?: false,
+            scheduledBackupEnabled = this[Keys.SCHEDULED_BACKUP] ?: false,
+            backupFolderUri = this[Keys.BACKUP_FOLDER],
         )
     }
 
@@ -175,5 +187,7 @@ class SettingsRepository @Inject constructor(
         val DAILY_REMINDER_TIME = intPreferencesKey("daily_reminder_minute")
         val PRIVACY_SEEN = booleanPreferencesKey("privacy_dashboard_seen")
         val SMS_INBOX_SCANNED = booleanPreferencesKey("sms_inbox_scanned")
+        val SCHEDULED_BACKUP = booleanPreferencesKey("scheduled_backup_enabled")
+        val BACKUP_FOLDER = stringPreferencesKey("backup_folder_uri")
     }
 }

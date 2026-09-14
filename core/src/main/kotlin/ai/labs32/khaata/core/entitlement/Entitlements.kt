@@ -94,7 +94,6 @@ enum class Feature(val minimumTier: Tier) {
             FAMILY_BUDGETS,
             SHARED_GOALS,
             RECEIPT_ATTACHMENTS,
-            SCHEDULED_BACKUP,
             CUSTOM_DATE_RANGES,
             DASHBOARD_CUSTOMISATION,
             AI_ENHANCED_INSIGHTS,

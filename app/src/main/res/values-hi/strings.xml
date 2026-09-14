@@ -890,6 +890,12 @@
     <string name="backup_csv_ready">%1$d पंक्तियाँ इम्पोर्ट के लिए तैयार हैं।</string>
     <string name="backup_csv_rejected">%1$d पंक्तियाँ पढ़ी नहीं जा सकीं और छोड़ दी जाएँगी।</string>
     <string name="backup_csv_account_matching">जिन पंक्तियों में ऐसा खाता है जो यहाँ नहीं है, उन्हें ग़लत खाते में डालने के बजाय छोड़ दिया जाता है।</string>
+    <string name="backup_section_scheduled">स्वचालित बैकअप</string>
+    <string name="backup_scheduled">अपने आप बैकअप लें</string>
+    <string name="backup_scheduled_help">एक फ़ोल्डर चुनें और हर हफ़्ते वहाँ एक प्रति लिखी जाएगी।</string>
+    <string name="backup_scheduled_folder">हर हफ़्ते, %1$s में</string>
+    <string name="backup_scheduled_on">स्वचालित बैकअप चालू, %1$s में</string>
+    <string name="backup_folder_unusable">उस फ़ोल्डर में लिखा नहीं जा सकता। कोई और चुनें।</string>
 
     <!-- Paywall -->
     <string name="paywall_title">खाता प्रो</string>

@@ -1,8 +1,10 @@
 package ai.labs32.khaata.data.backup
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import androidx.room.withTransaction
 import ai.labs32.khaata.BuildConfig
 import ai.labs32.khaata.core.backup.BackupFile
@@ -141,6 +143,89 @@ class BackupManager @Inject constructor(
             mimeType = MIME_CSV,
             recordCount = transactions.count { !it.isDeleted },
         )
+    }
+
+    /**
+     * Takes a lasting grant on the folder the user just picked.
+     *
+     * A one-off `ACTION_OPEN_DOCUMENT_TREE` result is only valid for this process; without
+     * `takePersistableUriPermission` the grant is gone by the time a worker runs a week later,
+     * which would make automatic backups fail silently on exactly the schedule they promise.
+     *
+     * @return the folder's display name, or null if it cannot be taken or written to — checked
+     *   now rather than discovered later by a worker nobody is watching.
+     */
+    suspend fun persistBackupFolder(treeUri: Uri): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            context.contentResolver.takePersistableUriPermission(
+                treeUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+            val folder = DocumentFile.fromTreeUri(context, treeUri)
+            if (folder == null || !folder.isDirectory || !folder.canWrite()) return@runCatching null
+            folder.name
+        }.onFailure { KhaataLog.e(TAG, "Could not persist the backup folder grant", it) }
+            .getOrNull()
+    }
+
+    /** The chosen folder's display name, for showing which one is in use. Null if it is gone. */
+    suspend fun folderDisplayName(treeUri: Uri): String? = withContext(Dispatchers.IO) {
+        runCatching { DocumentFile.fromTreeUri(context, treeUri)?.name }.getOrNull()
+    }
+
+    /**
+     * Writes a JSON backup into a folder the user picked, and prunes older ones.
+     *
+     * This is what makes a scheduled backup worth having. [exportBackup] writes into the app's own
+     * `files/exports`, which is fine for "export and share it now" and useless as a safety net:
+     * that directory goes with the app, so it is gone at exactly the moment a backup matters.
+     * A SAF tree the user chose — a Drive folder, an SD card, Downloads — survives the app.
+     *
+     * @param treeUri a persisted `ACTION_OPEN_DOCUMENT_TREE` grant.
+     * @param keep how many backups to leave in place; the oldest beyond that are deleted so this
+     *   cannot grow without bound in someone's Drive.
+     */
+    suspend fun writeBackupToFolder(
+        treeUri: Uri,
+        keep: Int = SCHEDULED_BACKUPS_KEPT,
+    ): Result<String> = runCatchingIo {
+        val folder = DocumentFile.fromTreeUri(context, treeUri)
+            ?: error("That backup folder is no longer available.")
+        if (!folder.isDirectory || !folder.canWrite()) {
+            error("That backup folder is no longer writable.")
+        }
+
+        val json = BackupSerializer.write(buildBackup())
+        val fileName = "khaata-backup-${timestamp()}.json"
+
+        // Replaced rather than duplicated: a second run on the same day should not leave two
+        // files with the same date and different contents.
+        folder.findFile(fileName)?.delete()
+        val file = folder.createFile(MIME_JSON, fileName)
+            ?: error("That backup folder would not accept a new file.")
+
+        context.contentResolver.openOutputStream(file.uri)?.use { out ->
+            out.write(json.toByteArray(Charsets.UTF_8))
+        } ?: error("The backup file could not be opened for writing.")
+
+        pruneOldBackups(folder, keep)
+        fileName
+    }
+
+    /**
+     * Deletes all but the newest [keep] Khaata backups in [folder].
+     *
+     * Matched on this app's own filename prefix so nothing the user put in the folder themselves
+     * is ever touched, and sorted by name rather than by `lastModified`, because the name carries
+     * the date this app wrote and some providers do not report a useful modified time.
+     */
+    private fun pruneOldBackups(folder: DocumentFile, keep: Int) {
+        if (keep <= 0) return
+        folder.listFiles()
+            .filter { it.isFile && it.name?.startsWith(BACKUP_FILE_PREFIX) == true }
+            .sortedByDescending { it.name }
+            .drop(keep)
+            .forEach { runCatching { it.delete() } }
     }
 
     /**
@@ -460,6 +545,17 @@ class BackupManager @Inject constructor(
 
         /** 64MB. Far above any plausible ledger, far below what would exhaust memory. */
         const val MAX_BACKUP_BYTES = 64 * 1024 * 1024
+
+        /** Filename prefix every backup this app writes shares, used to prune only its own. */
+        const val BACKUP_FILE_PREFIX = "khaata-backup-"
+
+        /**
+         * How many scheduled backups to keep.
+         *
+         * Enough to recover from a corruption noticed a few weeks late, few enough that this
+         * never becomes a folder of hundreds of near-identical files.
+         */
+        const val SCHEDULED_BACKUPS_KEPT = 5
 
         /** Read granularity for [readBounded]. Large enough that a big backup is not a syscall storm. */
         const val READ_CHUNK_BYTES = 64 * 1024

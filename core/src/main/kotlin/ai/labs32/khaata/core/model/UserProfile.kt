@@ -94,6 +94,23 @@ data class AppSettings(
      * nothing new.
      */
     val hasScannedSmsInbox: Boolean = false,
+
+    /**
+     * Whether a copy of the ledger is written to [backupFolderUri] on a schedule.
+     *
+     * Off unless the user both turns it on and picks a folder: a backup written somewhere they
+     * did not choose is not a backup they can find, and one written into the app's own storage
+     * disappears with the app — which is exactly when it was needed.
+     */
+    val scheduledBackupEnabled: Boolean = false,
+
+    /**
+     * The document tree the scheduled backup writes into, as a persisted SAF URI.
+     *
+     * Null until the user picks one. Stored as a string because that is what
+     * `takePersistableUriPermission` round-trips.
+     */
+    val backupFolderUri: String? = null,
 ) {
     init {
         require(lockAfterSeconds in 0..3600) {

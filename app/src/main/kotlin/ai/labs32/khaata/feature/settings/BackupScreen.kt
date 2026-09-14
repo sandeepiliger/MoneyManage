@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Upload
@@ -33,6 +34,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -97,6 +99,12 @@ fun BackupScreen(
         ActivityResultContracts.OpenDocument(),
     ) { uri: Uri? -> uri?.let(viewModel::previewCsv) }
 
+    // A folder, not a file: the worker needs somewhere to keep writing, and the grant has to
+    // outlive this process. Still the system picker — the app never asks for storage permission.
+    val pickBackupFolder = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocumentTree(),
+    ) { uri: Uri? -> viewModel.onBackupFolderPicked(uri) }
+
     fun share(file: ExportedFile) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = file.mimeType
@@ -157,6 +165,43 @@ fun BackupScreen(
                     icon = Icons.Default.TableChart,
                     onClick = viewModel::exportCsv,
                 )
+            }
+
+            if (state.scheduledBackupAvailable) {
+                KhaataCard(contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)) {
+                    CardHeader(
+                        title = stringResource(R.string.backup_section_scheduled),
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                    SettingsRow(
+                        title = stringResource(R.string.backup_scheduled),
+                        // The folder is named in the subtitle rather than left implicit: a backup
+                        // the user cannot locate is not one they can restore from.
+                        subtitle = state.backupFolderName
+                            ?.let { stringResource(R.string.backup_scheduled_folder, it) }
+                            ?: stringResource(R.string.backup_scheduled_help),
+                        icon = Icons.Default.Schedule,
+                        onClick = {
+                            if (state.scheduledBackupEnabled) {
+                                viewModel.setScheduledBackupEnabled(false)
+                            } else {
+                                pickBackupFolder.launch(null)
+                            }
+                        },
+                        trailing = {
+                            Switch(
+                                checked = state.scheduledBackupEnabled,
+                                onCheckedChange = { wanted ->
+                                    if (wanted) {
+                                        pickBackupFolder.launch(null)
+                                    } else {
+                                        viewModel.setScheduledBackupEnabled(false)
+                                    }
+                                },
+                            )
+                        },
+                    )
+                }
             }
 
             if (state.exports.isNotEmpty()) {
@@ -370,6 +415,10 @@ private fun backupMessageText(message: BackupMessage): String = when (message) {
     BackupMessage.TooNew -> stringResource(R.string.backup_too_new)
     BackupMessage.Failed -> stringResource(R.string.backup_failed)
     BackupMessage.ExportsCleared -> stringResource(R.string.backup_exports_cleared)
+    is BackupMessage.ScheduledBackupOn ->
+        stringResource(R.string.backup_scheduled_on, message.folderName)
+
+    BackupMessage.BackupFolderUnusable -> stringResource(R.string.backup_folder_unusable)
 }
 
 private fun formatSize(bytes: Long): String = when {

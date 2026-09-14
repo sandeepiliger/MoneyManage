@@ -651,6 +651,12 @@
     <string name="backup_csv_ready">%1$d rows are ready to import.</string>
     <string name="backup_csv_rejected">%1$d rows could not be read and will be skipped.</string>
     <string name="backup_csv_account_matching">Rows naming an account that does not exist here are skipped rather than filed against the wrong one.</string>
+    <string name="backup_section_scheduled">Automatic backups</string>
+    <string name="backup_scheduled">Back up automatically</string>
+    <string name="backup_scheduled_help">Pick a folder and a copy is written there every week.</string>
+    <string name="backup_scheduled_folder">Weekly, into %1$s</string>
+    <string name="backup_scheduled_on">Automatic backups on, into %1$s</string>
+    <string name="backup_folder_unusable">That folder cannot be written to. Pick another.</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Settings</string>

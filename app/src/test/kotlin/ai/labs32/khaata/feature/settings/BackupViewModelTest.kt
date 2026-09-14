@@ -7,13 +7,18 @@ import ai.labs32.khaata.core.backup.BackupReadResult
 import ai.labs32.khaata.core.backup.ImportMode
 import ai.labs32.khaata.core.backup.ImportResult
 import ai.labs32.khaata.core.backup.RejectedRecord
+import ai.labs32.khaata.core.model.AppSettings
+import ai.labs32.khaata.core.work.WorkScheduler
 import ai.labs32.khaata.data.backup.BackupManager
 import ai.labs32.khaata.data.backup.ExportedFile
+import ai.labs32.khaata.data.repository.EntitlementRepository
+import ai.labs32.khaata.data.repository.SettingsRepository
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -40,18 +45,33 @@ class BackupViewModelTest {
     private val analytics = mockk<AnalyticsProvider>(relaxed = true)
     private val uri = mockk<Uri>(relaxed = true)
 
+    // Automatic backups pulled three more collaborators into this view model. They are relaxed
+    // mocks because none of them is what these tests are about: the subject here is still the
+    // order of consent during a restore.
+    private val settingsRepository = mockk<SettingsRepository>(relaxed = true)
+    private val entitlementRepository = mockk<EntitlementRepository>(relaxed = true)
+    private val workScheduler = mockk<WorkScheduler>(relaxed = true)
+
     private val backup = BackupFile(appVersion = "1.0.0", exportedAt = Instant.EPOCH)
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         coEvery { manager.existingExports() } returns emptyList()
+        coEvery { settingsRepository.settings } returns flowOf(AppSettings())
+        coEvery { entitlementRepository.isUnlocked(any()) } returns false
     }
 
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = BackupViewModel(manager, analytics)
+    private fun viewModel() = BackupViewModel(
+        backupManager = manager,
+        settingsRepository = settingsRepository,
+        entitlementRepository = entitlementRepository,
+        workScheduler = workScheduler,
+        analytics = analytics,
+    )
 
     @Test
     fun `previewing a backup writes nothing`() = runTest(dispatcher) {

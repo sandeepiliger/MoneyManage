@@ -10,12 +10,18 @@ import ai.labs32.khaata.core.backup.BackupReadResult
 import ai.labs32.khaata.core.backup.BackupSummary
 import ai.labs32.khaata.core.backup.CsvImportResult
 import ai.labs32.khaata.core.backup.ImportMode
+import ai.labs32.khaata.core.entitlement.Feature
+import ai.labs32.khaata.core.work.WorkScheduler
 import ai.labs32.khaata.data.backup.BackupManager
 import ai.labs32.khaata.data.backup.ExportedFile
+import ai.labs32.khaata.data.repository.EntitlementRepository
+import ai.labs32.khaata.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,6 +46,12 @@ sealed interface BackupMessage {
     data object TooNew : BackupMessage
     data object Failed : BackupMessage
     data object ExportsCleared : BackupMessage
+
+    /** A folder was chosen and automatic backups are now on. */
+    data class ScheduledBackupOn(val folderName: String) : BackupMessage
+
+    /** The folder the user picked could not be written to. */
+    data object BackupFolderUnusable : BackupMessage
 }
 
 data class BackupUiState(
@@ -48,11 +60,19 @@ data class BackupUiState(
     val pendingRestore: PendingRestore? = null,
     val pendingCsv: PendingCsv? = null,
     val message: BackupMessage? = null,
+    /** Whether the user's tier includes automatic backups. */
+    val scheduledBackupAvailable: Boolean = false,
+    val scheduledBackupEnabled: Boolean = false,
+    /** The chosen folder's display name, or null when none has been picked. */
+    val backupFolderName: String? = null,
 )
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(
     private val backupManager: BackupManager,
+    private val settingsRepository: SettingsRepository,
+    private val entitlementRepository: EntitlementRepository,
+    private val workScheduler: WorkScheduler,
     private val analytics: AnalyticsProvider,
 ) : ViewModel() {
 
@@ -61,6 +81,58 @@ class BackupViewModel @Inject constructor(
 
     init {
         refreshExports()
+        observeScheduledBackup()
+    }
+
+    // ---- Automatic backups -------------------------------------------------------------------
+
+    private fun observeScheduledBackup() {
+        viewModelScope.launch {
+            val available = entitlementRepository.isUnlocked(Feature.SCHEDULED_BACKUP)
+            settingsRepository.settings
+                .onEach { settings ->
+                    _uiState.update {
+                        it.copy(
+                            scheduledBackupAvailable = available,
+                            scheduledBackupEnabled = settings.scheduledBackupEnabled,
+                            backupFolderName = settings.backupFolderUri
+                                ?.let { uri -> backupManager.folderDisplayName(Uri.parse(uri)) },
+                        )
+                    }
+                }
+                .launchIn(viewModelScope)
+        }
+    }
+
+    /**
+     * Records the folder the user picked and turns automatic backups on.
+     *
+     * The write permission is taken persistably before anything is stored, and the folder is
+     * checked for writability now rather than discovered to be unusable a week later by a worker
+     * nobody is watching.
+     */
+    fun onBackupFolderPicked(uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            val name = backupManager.persistBackupFolder(uri)
+            if (name == null) {
+                _uiState.update { it.copy(message = BackupMessage.BackupFolderUnusable) }
+                return@launch
+            }
+            settingsRepository.setBackupFolderUri(uri.toString())
+            settingsRepository.setScheduledBackupEnabled(true)
+            workScheduler.scheduleAll(settingsRepository.current())
+            _uiState.update { it.copy(message = BackupMessage.ScheduledBackupOn(name)) }
+        }
+    }
+
+    /** Turns automatic backups off, or back on when a folder is already chosen. */
+    fun setScheduledBackupEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setScheduledBackupEnabled(enabled)
+            if (!enabled) settingsRepository.setBackupFolderUri(null)
+            workScheduler.scheduleAll(settingsRepository.current())
+        }
     }
 
     private fun refreshExports() {
