@@ -20,11 +20,15 @@ import javax.imageio.ImageIO
  * could show: `readBounds` treated the bounds decode's return value as a success signal, and a
  * bounds decode returns null *on success* — the dimensions come back in the options object, not
  * as a bitmap. Every image a user picked was rejected with "that image could not be read", which
- * is indistinguishable from a genuinely corrupt file, so the feature looked like it worked and
- * refused everything.
+ * is indistinguishable from a genuinely corrupt file, so the feature looked like it was working
+ * and inspecting the photo rather than refusing everything sight unseen.
  *
  * The maths around it was covered by `ReceiptImagePlanTest` and was never wrong. What was missing
- * was a test that ran the import end to end, which is what this is.
+ * was a test that ran the import itself, which is what this is.
+ *
+ * Assertions here deliberately stay on strings and booleans rather than on `File` objects: Truth
+ * has no `File` overload, so `assertThat(someFile)` is an overload ambiguity in Kotlin rather
+ * than the readable assertion it looks like.
  */
 @RunWith(RobolectricTestRunner::class)
 // Pinned rather than inherited from targetSdk: this Robolectric cannot run SDK 36.
@@ -44,14 +48,14 @@ class ReceiptImageStoreTest {
     }
 
     @Test
-    fun `a stored image lands inside the private receipts directory`() = runTest {
+    fun `a stored image is recorded relative to the private receipts directory`() = runTest {
         val stored = store.import(imageUri(width = 800, height = 600))
 
         assertThat(stored).isNotNull()
-        // The path is stored relative to filesDir and resolved on read, so an absolute path here
-        // would break the moment the app's data directory moved.
+        // Relative, because an absolute path breaks the moment the app's data directory moves.
         assertThat(stored!!.relativePath).startsWith("receipts/")
-        assertThat(store.fileFor(stored.relativePath).parentFile).isEqualTo(store.directory())
+        assertThat(store.fileFor(stored.relativePath).parentFile?.path)
+            .isEqualTo(store.directory().path)
     }
 
     @Test
@@ -65,22 +69,26 @@ class ReceiptImageStoreTest {
 
     @Test
     fun `deleting a stored image removes its file`() = runTest {
-        val stored = store.import(imageUri(width = 640, height = 480))!!
+        val stored = store.import(imageUri(width = 640, height = 480))
 
-        assertThat(store.delete(stored.relativePath)).isTrue()
+        assertThat(stored).isNotNull()
+        assertThat(store.delete(stored!!.relativePath)).isTrue()
         assertThat(store.fileFor(stored.relativePath).exists()).isFalse()
     }
 
     @Test
     fun `an image no row points at is reclaimed and a referenced one is kept`() = runTest {
-        val kept = store.import(imageUri(width = 400, height = 300))!!
-        val orphan = store.import(imageUri(width = 400, height = 300))!!
+        val kept = store.import(imageUri(width = 400, height = 300))
+        val orphan = store.import(imageUri(width = 400, height = 300))
 
-        val reclaimed = store.purgeOrphans(keep = setOf(kept.relativePath))
+        assertThat(kept).isNotNull()
+        assertThat(orphan).isNotNull()
+
+        val reclaimed = store.purgeOrphans(keep = setOf(kept!!.relativePath))
 
         assertThat(reclaimed).isEqualTo(1)
         assertThat(store.fileFor(kept.relativePath).exists()).isTrue()
-        assertThat(store.fileFor(orphan.relativePath).exists()).isFalse()
+        assertThat(store.fileFor(orphan!!.relativePath).exists()).isFalse()
     }
 
     /** A real PNG on disk, addressed the way the photo picker addresses one. */
