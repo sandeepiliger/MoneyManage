@@ -48,6 +48,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.platform.LocalContext
 import ai.labs32.khaata.feature.receipts.ReceiptSourceSheet
 import ai.labs32.khaata.feature.receipts.ReceiptStrip
+import ai.labs32.khaata.feature.receipts.ReceiptTile
+import ai.labs32.khaata.feature.receipts.receiptErrorText
 import ai.labs32.khaata.feature.receipts.ReceiptViewerDialog
 import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.model.Account
@@ -334,7 +336,6 @@ fun TransactionDetailScreen(
 
     viewingReceipt?.let { receipt ->
         ReceiptViewerDialog(
-            receipt = receipt,
             file = viewModel.fileFor(receipt),
             onShare = {
                 viewModel.shareReceipt(receipt) { uri ->
@@ -416,12 +417,11 @@ private fun DetailContent(
         // figure it sits beneath, and burying it below the audit timestamps would make it feel
         // like metadata rather than the proof someone came here to check.
         ReceiptStrip(
-            receipts = state.receipts,
+            tiles = state.receipts.map { ReceiptTile(key = it.id, file = fileFor(it)) },
             canAttach = state.canAttachReceipts,
             isAttaching = state.isAttachingReceipt,
-            fileFor = fileFor,
             onAdd = onAddReceipt,
-            onOpen = onOpenReceipt,
+            onOpen = { tile -> state.receipts.firstOrNull { it.id == tile.key }?.let(onOpenReceipt) },
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -489,17 +489,6 @@ private fun DetailContent(
         Spacer(Modifier.height(spacing.xlarge))
     }
 }
-
-@Composable
-private fun receiptErrorText(error: ReceiptAttachResult): String = stringResource(
-    when (error) {
-        ReceiptAttachResult.Unreadable -> R.string.receipts_error_unreadable
-        ReceiptAttachResult.TooManyForTransaction -> R.string.receipts_error_too_many
-        ReceiptAttachResult.OutOfSpace -> R.string.receipts_error_out_of_space
-        // Never reached: a success is filtered out before it reaches the snackbar.
-        is ReceiptAttachResult.Attached -> R.string.receipts_title
-    },
-)
 
 @Composable
 private fun DetailRow(label: String, value: String) {

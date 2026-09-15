@@ -1,5 +1,9 @@
 package ai.labs32.khaata.feature.transactions
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,6 +50,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -77,6 +83,11 @@ import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.theme.KhaataShapeTokens
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import ai.labs32.khaata.feature.receipts.ReceiptSourceSheet
+import ai.labs32.khaata.feature.receipts.ReceiptStrip
+import ai.labs32.khaata.feature.receipts.ReceiptTile
+import ai.labs32.khaata.feature.receipts.ReceiptViewerDialog
+import ai.labs32.khaata.feature.receipts.receiptErrorText
 import java.time.format.DateTimeFormatter
 
 /**
@@ -97,9 +108,13 @@ fun TransactionEditScreen(
     transactionId: String?,
     onDone: () -> Unit,
     onDescribeInstead: (() -> Unit)?,
+    onOpenPaywall: () -> Unit,
     viewModel: TransactionEditViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showReceiptSource by remember { mutableStateOf(false) }
+    var viewingReceipt by remember { mutableStateOf<ReceiptTile?>(null) }
 
     LaunchedEffect(transactionId) { viewModel.initialise(transactionId) }
 
@@ -107,7 +122,29 @@ fun TransactionEditScreen(
         if (state.savedTransactionId != null) onDone()
     }
 
+    // The system photo picker: no storage permission, and the app receives only the one image
+    // the user chose.
+    val pickPhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri -> viewModel.attachReceipt(uri, captured = false) }
+
+    // TakePicture writes into a URI we hand the camera app, so this app needs no CAMERA
+    // permission of its own.
+    var captureUri by remember { mutableStateOf<Uri?>(null) }
+    val takePhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { saved -> viewModel.attachReceipt(captureUri.takeIf { saved }, captured = true) }
+
+    val receiptMessage = state.receiptError?.let { receiptErrorText(it) }
+    LaunchedEffect(receiptMessage) {
+        if (receiptMessage != null) {
+            snackbarHostState.showSnackbar(receiptMessage)
+            viewModel.consumeReceiptError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 windowInsets = WindowInsets(0),
@@ -153,8 +190,45 @@ fun TransactionEditScreen(
                 state = state,
                 viewModel = viewModel,
                 modifier = Modifier.padding(padding),
+                onAddReceipt = {
+                    if (state.canAttachReceipts) showReceiptSource = true else onOpenPaywall()
+                },
+                onOpenReceipt = { viewingReceipt = it },
             )
         }
+    }
+
+    if (showReceiptSource) {
+        ReceiptSourceSheet(
+            onCamera = {
+                showReceiptSource = false
+                val target = viewModel.newCaptureTarget()
+                captureUri = target.uri
+                takePhoto.launch(target.uri)
+            },
+            onGallery = {
+                showReceiptSource = false
+                pickPhoto.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                )
+            },
+            onDismiss = { showReceiptSource = false },
+        )
+    }
+
+    viewingReceipt?.let { tile ->
+        ReceiptViewerDialog(
+            file = tile.file,
+            // Nothing to share yet for a staged image, and a saved one is shared from the detail
+            // screen, so this viewer is for checking the photo came out readable and removing it
+            // if it did not.
+            onShare = null,
+            onDelete = {
+                viewModel.removeReceipt(tile.key)
+                viewingReceipt = null
+            },
+            onDismiss = { viewingReceipt = null },
+        )
     }
 }
 
@@ -163,6 +237,8 @@ private fun TransactionEditContent(
     state: TransactionEditUiState,
     viewModel: TransactionEditViewModel,
     modifier: Modifier = Modifier,
+    onAddReceipt: () -> Unit,
+    onOpenReceipt: (ReceiptTile) -> Unit,
 ) {
     var showOptionalFields by remember { mutableStateOf(state.isEditing) }
     val spacing = KhaataTheme.spacing
@@ -227,6 +303,25 @@ private fun TransactionEditContent(
                     error = state.errorFor("category")?.message,
                 )
             }
+
+            Spacer(Modifier.height(spacing.default))
+
+            // Above "more options" rather than inside it: the bill is in the user's hand at the
+            // moment they are typing the amount, and a receipt hidden behind a disclosure is one
+            // they will attach later from the transaction — which is exactly the detour this is
+            // here to remove.
+            ReceiptStrip(
+                tiles = state.savedReceipts.map {
+                    ReceiptTile(key = it.id, file = viewModel.fileFor(it))
+                } + state.stagedReceipts.map {
+                    ReceiptTile(key = it.relativePath, file = viewModel.fileFor(it))
+                },
+                canAttach = state.canAttachReceipts,
+                isAttaching = state.isAttachingReceipt,
+                onAdd = onAddReceipt,
+                onOpen = onOpenReceipt,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             Spacer(Modifier.height(spacing.default))
 

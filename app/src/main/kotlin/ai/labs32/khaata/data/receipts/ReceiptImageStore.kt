@@ -114,9 +114,11 @@ class ReceiptImageStore @Inject constructor(
 
     private fun readBounds(source: Uri): BitmapFactory.Options? {
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        context.contentResolver.openInputStream(source)?.use {
-            BitmapFactory.decodeStream(it, null, options)
-        } ?: return null
+        // The stream's own nullability is checked separately from the decode, because a bounds
+        // decode returns null on success: the dimensions come back in `options` and there is no
+        // bitmap to hand over. Treating that null as failure rejected every image ever picked.
+        val stream = context.contentResolver.openInputStream(source) ?: return null
+        stream.use { BitmapFactory.decodeStream(it, null, options) }
         return options.takeIf { it.outWidth > 0 && it.outHeight > 0 }
     }
 

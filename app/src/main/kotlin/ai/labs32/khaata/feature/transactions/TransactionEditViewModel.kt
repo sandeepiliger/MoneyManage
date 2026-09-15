@@ -21,9 +21,16 @@ import ai.labs32.khaata.core.validation.TransactionInput
 import ai.labs32.khaata.core.validation.TransactionValidator
 import ai.labs32.khaata.core.validation.ValidationError
 import ai.labs32.khaata.core.validation.ValidationResult
+import android.net.Uri
+import ai.labs32.khaata.core.entitlement.Feature
+import ai.labs32.khaata.core.model.Receipt
+import ai.labs32.khaata.data.repository.EntitlementRepository
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
+import ai.labs32.khaata.data.repository.ReceiptAttachResult
+import ai.labs32.khaata.data.repository.ReceiptRepository
+import ai.labs32.khaata.data.repository.StagedReceipt
 import ai.labs32.khaata.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -65,8 +73,18 @@ data class TransactionEditUiState(
     val isSaving: Boolean = false,
     val savedTransactionId: String? = null,
     val loadError: String? = null,
+    /** Receipts already attached, when an existing transaction is being edited. */
+    val savedReceipts: List<Receipt> = emptyList(),
+    /** Receipts imported during this entry, written to the database when it is saved. */
+    val stagedReceipts: List<StagedReceipt> = emptyList(),
+    val canAttachReceipts: Boolean = false,
+    val isAttachingReceipt: Boolean = false,
+    val receiptError: ReceiptAttachResult? = null,
 ) {
     fun errorFor(field: String): ValidationError? = errors.firstOrNull { it.field == field }
+
+    /** Saved and staged together, since the per-transaction cap covers both. */
+    val receiptCount: Int get() = savedReceipts.size + stagedReceipts.size
 
     /** Whether the amount is far enough along for the save button to be meaningful. */
     val canSave: Boolean
@@ -96,6 +114,8 @@ class TransactionEditViewModel @Inject constructor(
     private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
     private val profileRepository: ProfileRepository,
+    private val receiptRepository: ReceiptRepository,
+    private val entitlementRepository: EntitlementRepository,
     private val analytics: AnalyticsProvider,
     private val clock: KhaataClock,
 ) : ViewModel() {
@@ -104,11 +124,19 @@ class TransactionEditViewModel @Inject constructor(
     val uiState: StateFlow<TransactionEditUiState> = _uiState.asStateFlow()
 
     private var editingTransaction: Transaction? = null
+
+    /** Held so a cancelled capture can still clean up the file the camera was handed. */
+    private var pendingCapture: ReceiptRepository.CaptureTarget? = null
     private var hadCategorySuggestion = false
 
     /** Loads accounts and categories, and the existing transaction when editing. */
     fun initialise(transactionId: String?) {
         if (!_uiState.value.isLoading) return
+
+        viewModelScope.launch {
+            val canAttach = entitlementRepository.isUnlocked(Feature.RECEIPT_ATTACHMENTS)
+            _uiState.update { it.copy(canAttachReceipts = canAttach) }
+        }
 
         viewModelScope.launch {
             try {
@@ -138,10 +166,12 @@ class TransactionEditViewModel @Inject constructor(
                         return@launch
                     }
                     editingTransaction = transaction
+                    val attached = receiptRepository.forTransaction(transaction.id)
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             isEditing = true,
+                            savedReceipts = attached,
                             type = transaction.type,
                             amountText = transaction.amount.toPlainString(),
                             currency = transaction.amount.currency,
@@ -303,6 +333,112 @@ class TransactionEditViewModel @Inject constructor(
      * Validation runs against the whole form and surfaces every problem at once, so the user
      * fixes it in one pass rather than one field at a time.
      */
+    // ---- Receipts ------------------------------------------------------------------------------
+
+    /**
+     * Imports a picked or captured image.
+     *
+     * While editing an existing transaction the row is written straight away, because there is a
+     * transaction for it to belong to. During a new entry there is not, so the image is staged and
+     * the row waits for [save] — see [StagedReceipt].
+     */
+    fun attachReceipt(source: Uri?, captured: Boolean) {
+        // Held whether or not the capture succeeded: a cancelled one leaves a zero-byte file the
+        // camera created, and nothing else will ever clean it up.
+        val staging = pendingCapture.takeIf { captured }
+        pendingCapture = null
+
+        if (source == null) {
+            viewModelScope.launch { staging?.let { receiptRepository.discardCapture(it) } }
+            return
+        }
+        if (_uiState.value.isAttachingReceipt) {
+            // Dropping the result still means owning the file the camera wrote.
+            viewModelScope.launch { staging?.let { receiptRepository.discardCapture(it) } }
+            return
+        }
+        _uiState.update { it.copy(isAttachingReceipt = true) }
+
+        viewModelScope.launch {
+            val existing = editingTransaction
+            val result = if (existing != null) {
+                receiptRepository.attach(existing.id, source)
+            } else {
+                receiptRepository.stage(source, alreadyStaged = _uiState.value.stagedReceipts.size)
+            }
+            // After the import, which is the last thing that reads it.
+            staging?.let { receiptRepository.discardCapture(it) }
+
+            _uiState.update { state ->
+                when (result) {
+                    is ReceiptAttachResult.Attached -> state.copy(
+                        isAttachingReceipt = false,
+                        savedReceipts = state.savedReceipts + result.receipt,
+                    )
+
+                    is ReceiptAttachResult.Staged -> state.copy(
+                        isAttachingReceipt = false,
+                        stagedReceipts = state.stagedReceipts + result.staged,
+                    )
+
+                    else -> state.copy(isAttachingReceipt = false, receiptError = result)
+                }
+            }
+        }
+    }
+
+    /** Removes a receipt, whether it is already saved or only staged. Keyed as the strip keys it. */
+    fun removeReceipt(key: String) {
+        viewModelScope.launch {
+            val state = _uiState.value
+            val saved = state.savedReceipts.firstOrNull { it.id == key }
+            val staged = state.stagedReceipts.firstOrNull { it.relativePath == key }
+
+            when {
+                saved != null -> {
+                    receiptRepository.delete(saved)
+                    _uiState.update { it.copy(savedReceipts = it.savedReceipts - saved) }
+                }
+
+                staged != null -> {
+                    receiptRepository.discardStaged(listOf(staged))
+                    _uiState.update { it.copy(stagedReceipts = it.stagedReceipts - staged) }
+                }
+            }
+        }
+    }
+
+    /** A camera needs a file to write into; the repository stages it outside private storage. */
+    fun newCaptureTarget(): ReceiptRepository.CaptureTarget =
+        receiptRepository.newCaptureTarget().also { pendingCapture = it }
+
+    fun fileFor(receipt: Receipt): File = receiptRepository.fileFor(receipt)
+
+    fun fileFor(staged: StagedReceipt): File = receiptRepository.fileFor(staged)
+
+    fun consumeReceiptError() = _uiState.update { it.copy(receiptError = null) }
+
+    /**
+     * Drops images staged for an entry the user walked away from.
+     *
+     * Hooked to [onCleared] rather than to the composable leaving the screen, because those are
+     * not the same event: a rotation disposes the composable and keeps this view model, and
+     * discarding there would delete the receipts of anyone who turned their phone sideways
+     * mid-entry. By the time this runs after a successful save there is nothing staged left —
+     * committing clears the list.
+     *
+     * The orphan sweep would reclaim these eventually, but "eventually" is a week, and a user who
+     * cancelled an entry has no reason to be carrying its photos until then.
+     */
+    override fun onCleared() {
+        super.onCleared()
+        val staged = _uiState.value.stagedReceipts
+        if (staged.isEmpty()) return
+        // Deliberately not viewModelScope: that is already cancelled by the time this runs. The
+        // repository's own scope outlives it.
+        receiptRepository.discardStagedDetached(staged)
+    }
+
     fun save() {
         val state = _uiState.value
         if (state.isSaving) return
@@ -349,6 +485,7 @@ class TransactionEditViewModel @Inject constructor(
                         ),
                     )
                     analytics.track(AnalyticsEvent.TransactionEdited)
+                    commitStagedReceipts(existing.id)
                     _uiState.update { it.copy(isSaving = false, savedTransactionId = existing.id) }
                 } else {
                     val id = transactionRepository.create(
@@ -370,6 +507,7 @@ class TransactionEditViewModel @Inject constructor(
                             hadCategorySuggestion = hadCategorySuggestion,
                         ),
                     )
+                    commitStagedReceipts(id)
                     _uiState.update { it.copy(isSaving = false, savedTransactionId = id) }
                 }
             } catch (error: Exception) {
@@ -385,6 +523,19 @@ class TransactionEditViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Writes the rows for images staged during this entry.
+     *
+     * Cleared from state first so a save that somehow ran twice could not write them twice, and
+     * so leaving the screen afterwards does not discard images that now belong to a transaction.
+     */
+    private suspend fun commitStagedReceipts(transactionId: String) {
+        val staged = _uiState.value.stagedReceipts
+        if (staged.isEmpty()) return
+        _uiState.update { it.copy(stagedReceipts = emptyList()) }
+        receiptRepository.commitStaged(transactionId, staged)
     }
 
     /**

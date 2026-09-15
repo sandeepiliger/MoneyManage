@@ -62,6 +62,7 @@ import ai.labs32.khaata.core.model.Receipt
 import ai.labs32.khaata.core.receipts.ReceiptImagePlan
 import ai.labs32.khaata.core.ui.theme.KhaataShapeTokens
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import ai.labs32.khaata.data.repository.ReceiptAttachResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -77,14 +78,22 @@ import java.io.File
  * that is invisible until you pay for it cannot be wanted, and hiding it means the first a user
  * hears of receipts is a line on the paywall.
  */
+/**
+ * One thumbnail in the strip.
+ *
+ * A file and a stable key rather than a [Receipt], so the strip works identically before and
+ * after the transaction exists: during entry there is no row to point at yet, and the image is
+ * already on disk waiting for one.
+ */
+data class ReceiptTile(val key: String, val file: File)
+
 @Composable
 fun ReceiptStrip(
-    receipts: List<Receipt>,
+    tiles: List<ReceiptTile>,
     canAttach: Boolean,
     isAttaching: Boolean,
-    fileFor: (Receipt) -> File,
     onAdd: () -> Unit,
-    onOpen: (Receipt) -> Unit,
+    onOpen: (ReceiptTile) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
@@ -106,10 +115,10 @@ fun ReceiptStrip(
         Spacer(Modifier.height(KhaataTheme.spacing.small))
 
         LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
-            items(receipts, key = { it.id }) { receipt ->
+            items(tiles, key = { it.key }) { tile ->
                 ReceiptThumbnail(
-                    file = fileFor(receipt),
-                    onClick = { onOpen(receipt) },
+                    file = tile.file,
+                    onClick = { onOpen(tile) },
                 )
             }
 
@@ -182,6 +191,22 @@ private fun AddReceiptTile(locked: Boolean, isBusy: Boolean, onClick: () -> Unit
     }
 }
 
+/**
+ * Why an attach failed, in a sentence for the snackbar.
+ *
+ * Shared by every screen that attaches, so the same refusal never gets two different wordings.
+ */
+@Composable
+fun receiptErrorText(error: ReceiptAttachResult): String = stringResource(
+    when (error) {
+        ReceiptAttachResult.Unreadable -> R.string.receipts_error_unreadable
+        ReceiptAttachResult.TooManyForTransaction -> R.string.receipts_error_too_many
+        ReceiptAttachResult.OutOfSpace -> R.string.receipts_error_out_of_space
+        // Never reached: successes are filtered out before they reach the snackbar.
+        is ReceiptAttachResult.Attached, is ReceiptAttachResult.Staged -> R.string.receipts_title
+    },
+)
+
 /** Camera or gallery, asked once, at the moment the user has decided to attach something. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -237,9 +262,9 @@ private fun SheetAction(
  */
 @Composable
 fun ReceiptViewerDialog(
-    receipt: Receipt,
     file: File,
-    onShare: () -> Unit,
+    /** Null while the receipt is only staged: there is nothing to hand another app yet. */
+    onShare: (() -> Unit)?,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -263,12 +288,14 @@ fun ReceiptViewerDialog(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onShare) {
-                    Icon(
-                        Icons.Default.Share,
-                        contentDescription = stringResource(R.string.receipts_share),
-                        tint = Color.White,
-                    )
+                if (onShare != null) {
+                    IconButton(onClick = onShare) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = stringResource(R.string.receipts_share),
+                            tint = Color.White,
+                        )
+                    }
                 }
                 IconButton(onClick = { confirmingDelete = true }) {
                     Icon(

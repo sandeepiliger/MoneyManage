@@ -112,6 +112,7 @@ fun KhaataNavHost(
                 onDone = { navController.popBackStack() },
                 // Not listening: this user opened manual entry and chose to type instead.
                 onDescribeInstead = { navController.navigate(Routes.naturalLanguageEntry()) },
+                onOpenPaywall = { navController.navigate(Routes.PAYWALL) },
             )
         }
 
@@ -123,6 +124,7 @@ fun KhaataNavHost(
                 transactionId = entry.arguments?.getString(Routes.Args.TRANSACTION_ID),
                 onDone = { navController.popBackStack() },
                 onDescribeInstead = null,
+                onOpenPaywall = { navController.navigate(Routes.PAYWALL) },
             )
         }
 

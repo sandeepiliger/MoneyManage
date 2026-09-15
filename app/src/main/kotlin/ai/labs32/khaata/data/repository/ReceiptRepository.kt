@@ -11,9 +11,12 @@ import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.Receipt
 import ai.labs32.khaata.data.receipts.ReceiptImageStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
@@ -23,6 +26,9 @@ import javax.inject.Singleton
 /** Why a receipt could not be attached, in terms the UI can put in front of someone. */
 sealed interface ReceiptAttachResult {
     data class Attached(val receipt: Receipt) : ReceiptAttachResult
+
+    /** Imported and on disk, but not yet owned by a transaction — see [StagedReceipt]. */
+    data class Staged(val staged: StagedReceipt) : ReceiptAttachResult
 
     /** The file could not be read or decoded — a corrupt pick, or not an image at all. */
     data object Unreadable : ReceiptAttachResult
@@ -37,6 +43,20 @@ sealed interface ReceiptAttachResult {
         const val MAX_PER_TRANSACTION = 5
     }
 }
+
+/**
+ * A receipt imported before the transaction it belongs to exists.
+ *
+ * Attaching during entry is the natural moment — the bill is in the user's hand — but a receipt
+ * row has a CASCADE foreign key onto a transaction, and during entry there is no transaction to
+ * point at yet. So the image is imported immediately (which is what makes the thumbnail appear
+ * at once) and the row is written when the transaction is saved.
+ *
+ * An entry the user abandons leaves the file with no row. That is already a case the app handles:
+ * the maintenance worker's orphan sweep reclaims it, and the screen discards staged images on the
+ * way out rather than waiting a week for that.
+ */
+data class StagedReceipt(val relativePath: String, val sizeBytes: Long)
 
 /**
  * Receipt images and the rows that point at them.
@@ -60,6 +80,9 @@ class ReceiptRepository @Inject constructor(
     private val imageStore: ReceiptImageStore,
     private val clock: KhaataClock,
 ) {
+
+    // Outlives any screen, so cleanup started as one leaves is not cancelled with it.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun observeForTransaction(transactionId: String): Flow<List<Receipt>> =
         receiptDao.observeForTransaction(transactionId).map { rows -> rows.map { it.toDomain() } }
@@ -113,6 +136,71 @@ class ReceiptRepository @Inject constructor(
             ReceiptAttachResult.Unreadable
         }
     }
+
+    /**
+     * Imports an image that has no transaction yet.
+     *
+     * [alreadyStaged] is what the caller is holding, since nothing is counted in the database
+     * until the transaction is saved.
+     */
+    suspend fun stage(source: Uri, alreadyStaged: Int): ReceiptAttachResult {
+        if (alreadyStaged >= ReceiptAttachResult.MAX_PER_TRANSACTION) {
+            return ReceiptAttachResult.TooManyForTransaction
+        }
+        if (receiptDao.totalBytes() >= MAX_TOTAL_BYTES) {
+            return ReceiptAttachResult.OutOfSpace
+        }
+
+        val stored = imageStore.import(source) ?: return ReceiptAttachResult.Unreadable
+        return ReceiptAttachResult.Staged(
+            StagedReceipt(relativePath = stored.relativePath, sizeBytes = stored.sizeBytes),
+        )
+    }
+
+    /**
+     * Writes rows for images staged during entry, now that [transactionId] exists.
+     *
+     * Failures are logged and swallowed rather than propagated: the transaction itself is already
+     * saved by this point, and losing the whole entry because one receipt row would not write is
+     * far worse than losing the receipt. The image is removed so it does not linger unreferenced.
+     */
+    suspend fun commitStaged(transactionId: String, staged: List<StagedReceipt>) {
+        staged.forEach { item ->
+            val receipt = Receipt(
+                id = UUID.randomUUID().toString(),
+                transactionId = transactionId,
+                relativePath = item.relativePath,
+                mimeType = MIME_JPEG,
+                sizeBytes = item.sizeBytes,
+                capturedOn = clock.today(),
+            )
+            runCatching { receiptDao.upsert(receipt.toEntity()) }
+                .onFailure { error ->
+                    KhaataLog.e(TAG, "Could not record a staged receipt", error)
+                    imageStore.delete(item.relativePath)
+                }
+        }
+    }
+
+    /** Deletes images staged for an entry that was abandoned or a receipt removed before saving. */
+    suspend fun discardStaged(staged: List<StagedReceipt>) {
+        staged.forEach { imageStore.delete(it.relativePath) }
+    }
+
+    /**
+     * The same, for a caller whose own scope is about to be cancelled.
+     *
+     * A screen discarding its staged images as it leaves cannot await the deletes: its scope dies
+     * with it and the work would be cancelled halfway. This is scoped to the repository, which is
+     * a singleton, so the files are actually reclaimed.
+     */
+    fun discardStagedDetached(staged: List<StagedReceipt>) {
+        if (staged.isEmpty()) return
+        scope.launch { discardStaged(staged) }
+    }
+
+    /** The file behind a staged image, for the strip to show before it has a row. */
+    fun fileFor(staged: StagedReceipt): File = imageStore.fileFor(staged.relativePath)
 
     /** Removes a receipt and its image. */
     suspend fun delete(receipt: Receipt) {
