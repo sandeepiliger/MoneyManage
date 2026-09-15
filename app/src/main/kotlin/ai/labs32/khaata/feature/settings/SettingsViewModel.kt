@@ -196,6 +196,23 @@ class SettingsViewModel @Inject constructor(
     }
 
     /**
+     * Grants a tier locally, for debug builds only.
+     *
+     * Debug builds have no Play connection, so without this every paid feature is permanently
+     * locked and cannot be opened on a device at all. The developer section that calls this is
+     * only composed under `BuildConfig.DEBUG`, and the override behind it is read only by
+     * `DebugBillingProvider`, which release builds never construct.
+     *
+     * FREE clears the override rather than storing it, so the absence of a purchase is
+     * represented by the absence of a value — the same shape a real free user has.
+     */
+    fun setDebugTier(tier: Tier) {
+        viewModelScope.launch {
+            settingsRepository.setDebugTierOverride(tier.takeIf { it != Tier.FREE }?.name)
+        }
+    }
+
+    /**
      * Changes the app lock.
      *
      * Turning the lock off clears any stored PIN, so a re-enabled lock always asks for a new one

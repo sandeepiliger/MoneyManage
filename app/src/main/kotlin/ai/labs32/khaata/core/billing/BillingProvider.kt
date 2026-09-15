@@ -111,8 +111,11 @@ enum class PurchaseState {
 /**
  * A billing provider that owns nothing and sells nothing.
  *
- * Used in debug, in tests, and on devices without Play services. Every screen behaves as it would
- * for a free user, and the paywall reports that purchases are unavailable rather than failing.
+ * Every screen behaves as it would for a free user, and the paywall reports that purchases are
+ * unavailable rather than failing. Nothing binds it today: debug builds use `DebugBillingProvider`
+ * so that paid features can actually be opened on a device, and release uses Play. It is kept as
+ * the reference implementation of this seam and as a stand-in for tests that need a provider
+ * granting nothing.
  */
 class NoOpBillingProvider : BillingProvider {
 

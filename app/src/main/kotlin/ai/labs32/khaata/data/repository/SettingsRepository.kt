@@ -120,6 +120,28 @@ class SettingsRepository @Inject constructor(
         if (uri == null) prefs.remove(Keys.BACKUP_FOLDER) else prefs[Keys.BACKUP_FOLDER] = uri
     }
 
+    /**
+     * The tier a debug build should pretend the user has bought, or null for free.
+     *
+     * Debug builds have no Play connection, so every paid feature is locked and there is no way
+     * to reach one — including to check it works before release. This is the override behind the
+     * developer section in settings; it is read only by `DebugBillingProvider`, which is only
+     * ever constructed under `BuildConfig.DEBUG`, so nothing in a release build consults it.
+     *
+     * Kept out of [AppSettings] on purpose: that model is a real domain type, and a debug-only
+     * concept has no business travelling with it into backups and the rest of the app.
+     */
+    val debugTierOverride: Flow<String?> = context.settingsDataStore.data
+        .catch { error ->
+            if (error is IOException) emit(emptyPreferences()) else throw error
+        }
+        .map { it[Keys.DEBUG_TIER_OVERRIDE] }
+
+    suspend fun setDebugTierOverride(tierName: String?) = edit { prefs ->
+        if (tierName == null) prefs.remove(Keys.DEBUG_TIER_OVERRIDE)
+        else prefs[Keys.DEBUG_TIER_OVERRIDE] = tierName
+    }
+
     /** Clears every preference — part of "delete all my data". */
     suspend fun resetAll() {
         context.settingsDataStore.edit { it.clear() }
@@ -189,5 +211,6 @@ class SettingsRepository @Inject constructor(
         val SMS_INBOX_SCANNED = booleanPreferencesKey("sms_inbox_scanned")
         val SCHEDULED_BACKUP = booleanPreferencesKey("scheduled_backup_enabled")
         val BACKUP_FOLDER = stringPreferencesKey("backup_folder_uri")
+        val DEBUG_TIER_OVERRIDE = stringPreferencesKey("debug_tier_override")
     }
 }

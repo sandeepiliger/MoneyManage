@@ -731,6 +731,9 @@
     <string name="settings_version">Version %1$s</string>
     <string name="settings_privacy_policy">Privacy policy</string>
     <string name="settings_terms">Terms of use</string>
+    <string name="settings_developer">Developer</string>
+    <string name="settings_developer_body">Debug builds only. Grants a subscription tier locally so paid features can be opened on a device; no payment is taken and this section does not exist in a release build.</string>
+    <string name="settings_developer_tier">Simulated tier</string>
     <string name="settings_delete_all">Delete all my data</string>
     <string name="settings_delete_all_title">Delete everything?</string>
     <string name="settings_delete_all_body">This permanently removes every account, transaction, budget and goal from this device. It cannot be undone. Consider making a backup first.</string>

@@ -367,6 +367,29 @@ fun SettingsScreen(
                 )
             }
 
+            // Debug builds only. Release resolves PlayBillingProvider, which has no override to
+            // read, and BuildConfig.DEBUG is a compile-time constant so this whole block is
+            // removed from a release APK rather than merely hidden in it.
+            if (BuildConfig.DEBUG) {
+                SectionCard(title = stringResource(R.string.settings_developer)) {
+                    Text(
+                        text = stringResource(R.string.settings_developer_body),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                    ChipRow(
+                        label = stringResource(R.string.settings_developer_tier),
+                        // FAMILY is left out: it is not purchasable in release either, because
+                        // every feature behind it is still unshipped.
+                        options = listOf(Tier.FREE, Tier.PRO, Tier.AI_PRO),
+                        selected = state.tier,
+                        optionLabel = { tierLabel(it) },
+                        onSelect = viewModel::setDebugTier,
+                    )
+                }
+            }
+
             SectionCard(title = stringResource(R.string.settings_delete_all)) {
                 SettingsRow(
                     title = stringResource(R.string.settings_delete_all),

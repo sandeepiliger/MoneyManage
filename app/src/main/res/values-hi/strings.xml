@@ -713,6 +713,9 @@
     <string name="settings_version">वर्शन %1$s</string>
     <string name="settings_privacy_policy">प्राइवेसी पॉलिसी</string>
     <string name="settings_terms">इस्तेमाल की शर्तें</string>
+    <string name="settings_developer">डेवलपर</string>
+    <string name="settings_developer_body">केवल डीबग बिल्ड के लिए। पेड सुविधाएँ डिवाइस पर खोली जा सकें इसलिए सदस्यता स्तर स्थानीय रूप से दिया जाता है; कोई भुगतान नहीं लिया जाता और रिलीज़ बिल्ड में यह अनुभाग नहीं होता।</string>
+    <string name="settings_developer_tier">नकली स्तर</string>
     <string name="settings_delete_all">मेरा सारा डेटा हटाएँ</string>
     <string name="settings_delete_all_title">सब कुछ हटाएँ?</string>
     <string name="settings_delete_all_body">यह इस फ़ोन से हर खाता, लेन-देन, बजट और लक्ष्य हमेशा के लिए हटा देगा। यह वापस नहीं आएगा। पहले बैकअप बना लें।</string>

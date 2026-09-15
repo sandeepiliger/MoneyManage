@@ -76,13 +76,48 @@ class PaywallViewModel @Inject constructor(
 
         // Purchases can also arrive from outside this screen — a pending UPI mandate clearing
         // while the app is open — so the stream is observed rather than only polled on demand.
+        //
+        // Only tokens that were not already owned count as an event. The stream is a StateFlow
+        // that the launch-time restore has usually filled in already, so its first emission is
+        // whatever the user bought previously, not something that just happened: reacting to it
+        // congratulated every existing subscriber on a fresh purchase each time they opened this
+        // screen, and re-ran the entitlement refresh to do it.
+        // Settled and pending are tracked apart rather than as one set of tokens, because a UPI
+        // mandate clearing keeps its token and only changes state. Comparing tokens alone would
+        // treat that as nothing having happened, and the user who had just been told their
+        // payment was processing would never be told it went through.
+        var seenSettled: Set<String>? = null
+        var seenPending: Set<String> = emptySet()
+
         billingProvider.purchases
             .onEach { purchases ->
-                if (purchases.any { it.state == PurchaseState.PURCHASED }) {
-                    entitlementRepository.refresh()
-                    _uiState.update { it.copy(message = PaywallMessage.PurchaseCompleted) }
-                } else if (purchases.any { it.state == PurchaseState.PENDING }) {
-                    _uiState.update { it.copy(message = PaywallMessage.PurchasePending) }
+                val settled = purchases
+                    .filter { it.state == PurchaseState.PURCHASED }
+                    .map { it.purchaseToken }
+                    .toSet()
+                val pending = purchases
+                    .filter { it.state == PurchaseState.PENDING }
+                    .map { it.purchaseToken }
+                    .toSet()
+
+                val previousSettled = seenSettled
+                val previousPending = seenPending
+                seenSettled = settled
+                seenPending = pending
+
+                // The state the screen opened in, which currentTier already reports rather than
+                // announcing it as news.
+                if (previousSettled == null) return@onEach
+
+                when {
+                    (settled - previousSettled).isNotEmpty() -> {
+                        entitlementRepository.refresh()
+                        _uiState.update { it.copy(message = PaywallMessage.PurchaseCompleted) }
+                    }
+
+                    (pending - previousPending).isNotEmpty() -> {
+                        _uiState.update { it.copy(message = PaywallMessage.PurchasePending) }
+                    }
                 }
             }
             .launchIn(viewModelScope)

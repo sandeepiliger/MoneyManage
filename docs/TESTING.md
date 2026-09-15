@@ -119,6 +119,27 @@ Running them, once an SDK is available:
 
 ---
 
+## Trying paid features on a device
+
+Debug builds have no Play connection, so for a long time every paid feature was unreachable on a
+device: `isUnlocked` could not return true for anything, which meant receipt attachments, scheduled
+backup and dashboard customisation could be compiled and unit tested but never actually opened.
+
+**Settings → Developer → Simulated tier** grants a tier locally. Pick `PRO` and the paid features
+unlock immediately; pick `FREE` and the locked state comes back, which is worth checking too, since
+it is what most users see. The choice persists across restarts the way a real purchase would.
+
+The section is composed under `BuildConfig.DEBUG`, a compile-time constant, so it is removed from a
+release APK rather than hidden inside one. The override behind it is read only by
+`DebugBillingProvider`, which release builds never construct — release resolves `PlayBillingProvider`
+and there is no override for it to consult.
+
+The debug paywall also works end to end: its plans carry a `₹0 (debug)` price and "buying" one
+grants the tier without any payment, so the purchase path through `PaywallViewModel` can be
+exercised without Play.
+
+---
+
 ## What is not tested
 
 Stated plainly rather than left to be discovered:

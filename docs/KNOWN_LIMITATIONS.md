@@ -39,7 +39,6 @@ the half where a bug is most expensive — see [TESTING.md](TESTING.md).
 | --- | --- |
 | **No Compose UI tests** | Semantics are written for them; nothing asserts a screen renders or that a tap works. |
 | **No UMP consent flow** | Blocks an EEA/UK release with ads. Not required for India. |
-| **Receipt attachments** | `receipts` table and `RECEIPT_ATTACHMENTS` entitlement exist; there is no camera or file-picker UI behind them. |
 | **Family sharing** | The FAMILY tier's three features are named in `Feature` but **nothing implements them.** They are listed in `Feature.UNSHIPPED`, so `isUnlocked` refuses them and `PaywallViewModel` drops any tier whose every feature is unshipped — the tier does not appear on the paywall and cannot be bought. Sharing a household ledger needs a server this app deliberately does not have, so this is not close. |
 | **Notification-based import** | `notificationImportEnabled` exists in settings and nothing reads it; no `NotificationListenerService` is implemented. Needs a Play policy declaration as well as code. |
 | **AI insights and categorisation** | `AI_ENHANCED_INSIGHTS` and `AI_SMART_CATEGORISATION` are AI Pro features with no implementation. `LocalFinancialAiService` answers the assistant on-device; the cloud path needs `CLOUD_AI_ENDPOINT` configured before anything can be built against it. |

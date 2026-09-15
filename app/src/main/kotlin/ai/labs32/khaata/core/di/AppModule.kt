@@ -17,7 +17,6 @@ import ai.labs32.khaata.core.analytics.AnalyticsProvider
 import ai.labs32.khaata.core.analytics.ConsentGatedAnalyticsProvider
 import ai.labs32.khaata.core.analytics.NoOpAnalyticsProvider
 import ai.labs32.khaata.core.billing.BillingProvider
-import ai.labs32.khaata.core.billing.NoOpBillingProvider
 import ai.labs32.khaata.core.billing.PlayBillingProvider
 import ai.labs32.khaata.core.categorize.MerchantCategorizer
 import ai.labs32.khaata.core.common.KhaataClock
@@ -43,6 +42,8 @@ import ai.labs32.khaata.core.database.dao.UserProfileDao
 import ai.labs32.khaata.core.entitlement.EntitlementManager
 import ai.labs32.khaata.core.insights.InsightEngine
 import ai.labs32.khaata.core.nlp.NaturalLanguageParser
+import ai.labs32.khaata.data.billing.DebugBillingProvider
+import ai.labs32.khaata.data.repository.SettingsRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -161,9 +162,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideBillingProvider(playBilling: dagger.Lazy<PlayBillingProvider>): BillingProvider =
-        // Debug builds never touch a real purchase flow.
-        if (BuildConfig.DEBUG) NoOpBillingProvider() else playBilling.get()
+    fun provideBillingProvider(
+        playBilling: dagger.Lazy<PlayBillingProvider>,
+        settingsRepository: dagger.Lazy<SettingsRepository>,
+    ): BillingProvider =
+        // Debug builds never touch a real purchase flow. They get a provider that grants whatever
+        // tier the developer picked in settings instead of one that owns nothing: with the latter,
+        // no paid feature could be opened on a device at all, which is the wrong trade for
+        // features whose risk lives in the parts a unit test cannot reach.
+        if (BuildConfig.DEBUG) DebugBillingProvider(settingsRepository.get()) else playBilling.get()
 
     @Provides
     @Singleton
