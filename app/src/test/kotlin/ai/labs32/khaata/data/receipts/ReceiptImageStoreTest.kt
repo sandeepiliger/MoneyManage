@@ -1,6 +1,7 @@
 package ai.labs32.khaata.data.receipts
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
@@ -9,9 +10,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.awt.image.BufferedImage
 import java.io.File
-import javax.imageio.ImageIO
+import java.io.FileOutputStream
 
 /**
  * Importing a picked image.
@@ -26,9 +26,9 @@ import javax.imageio.ImageIO
  * The maths around it was covered by `ReceiptImagePlanTest` and was never wrong. What was missing
  * was a test that ran the import itself, which is what this is.
  *
- * Assertions here deliberately stay on strings and booleans rather than on `File` objects: Truth
- * has no `File` overload, so `assertThat(someFile)` is an overload ambiguity in Kotlin rather
- * than the readable assertion it looks like.
+ * Assertions stay on strings and booleans rather than on `File` objects, because Truth has no
+ * `File` overload and `assertThat(someFile)` is an overload ambiguity in Kotlin rather than the
+ * readable assertion it looks like.
  */
 @RunWith(RobolectricTestRunner::class)
 // Pinned rather than inherited from targetSdk: this Robolectric cannot run SDK 36.
@@ -91,10 +91,18 @@ class ReceiptImageStoreTest {
         assertThat(store.fileFor(orphan!!.relativePath).exists()).isFalse()
     }
 
-    /** A real PNG on disk, addressed the way the photo picker addresses one. */
+    /**
+     * A PNG on disk, addressed the way the photo picker addresses one.
+     *
+     * Written through Android's own Bitmap rather than ImageIO: unit tests compile against
+     * android.jar, which carries no java.awt or javax.imageio, so reaching for the JDK's image
+     * classes here does not compile at all.
+     */
     private fun imageUri(width: Int, height: Int): Uri {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val file = File.createTempFile("receipt-source", ".png", context.cacheDir)
-        ImageIO.write(BufferedImage(width, height, BufferedImage.TYPE_INT_RGB), "png", file)
+        FileOutputStream(file).use { out -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, out) }
+        bitmap.recycle()
         return Uri.fromFile(file)
     }
 }
