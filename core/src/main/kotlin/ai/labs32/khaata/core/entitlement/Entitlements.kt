@@ -145,6 +145,18 @@ data class Entitlement(
  */
 class EntitlementManager(
     private val freeAccountLimit: Int = DEFAULT_FREE_ACCOUNT_LIMIT,
+    /**
+     * Features this particular build cannot deliver, whatever the user pays.
+     *
+     * [Feature.UNSHIPPED] covers "nobody has written this yet", which is a property of the source.
+     * This covers "this build has nothing to talk to", which is a property of the configuration —
+     * the cloud assistant with no endpoint compiled in is written, shipped, and still incapable of
+     * answering. Without this the paywall sells AI Pro to someone whose only new feature then
+     * reports that cloud AI is not configured in this build.
+     *
+     * Empty by default so the pure-JVM tests and any fully configured build behave identically.
+     */
+    private val unavailableInThisBuild: Set<Feature> = emptySet(),
 ) {
 
     /**
@@ -154,7 +166,9 @@ class EntitlementManager(
      * anything, because the money has not moved.
      */
     fun isUnlocked(feature: Feature, entitlement: Entitlement, now: Instant): Boolean =
-        feature.isShipped && effectiveTier(entitlement, now).includes(feature.minimumTier)
+        feature.isShipped &&
+            feature !in unavailableInThisBuild &&
+            effectiveTier(entitlement, now).includes(feature.minimumTier)
 
     /**
      * The tier actually in force.
@@ -188,6 +202,16 @@ class EntitlementManager(
 
     /** The tier a user must reach to unlock [feature], for the paywall's headline. */
     fun requiredTier(feature: Feature): Tier = feature.minimumTier
+
+    /**
+     * What this tier may actually be sold on, over the tier below it.
+     *
+     * The paywall builds its plan cards from this rather than from [Feature.SHIPPED] directly, so
+     * a feature the build cannot deliver is not advertised — and a plan left with nothing to offer
+     * is dropped by the paywall's own empty-list filter instead of being sold as an empty card.
+     */
+    fun sellableFeatures(tier: Tier): List<Feature> =
+        Feature.SHIPPED.filter { it.minimumTier == tier && it !in unavailableInThisBuild }
 
     companion object {
         /**

@@ -40,6 +40,7 @@ import ai.labs32.khaata.core.database.dao.TagDao
 import ai.labs32.khaata.core.database.dao.TransactionDao
 import ai.labs32.khaata.core.database.dao.UserProfileDao
 import ai.labs32.khaata.core.entitlement.EntitlementManager
+import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.insights.InsightEngine
 import ai.labs32.khaata.core.nlp.NaturalLanguageParser
 import ai.labs32.khaata.data.billing.DebugBillingProvider
@@ -114,7 +115,17 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideEntitlementManager(): EntitlementManager = EntitlementManager()
+    fun provideEntitlementManager(): EntitlementManager = EntitlementManager(
+        // The cloud assistant is written and shipped, and without an endpoint compiled in it can
+        // only report that it is not configured. Declaring it unavailable here keeps it off the
+        // paywall and out of isUnlocked, so AI Pro is not sold on a feature this build cannot
+        // deliver. Configure the secrets and the plan reappears on its own.
+        unavailableInThisBuild = buildSet {
+            if (BuildConfig.CLOUD_AI_ENDPOINT.isBlank() || BuildConfig.CLOUD_AI_API_KEY.isBlank()) {
+                add(Feature.CLOUD_AI_ASSISTANT)
+            }
+        },
+    )
 
     // ---- AI ----------------------------------------------------------------------------------
 

@@ -179,7 +179,7 @@ class PaywallViewModel @Inject constructor(
      * entitlement check will then refuse.
      */
     private fun featuresIntroducedBy(tier: Tier): List<Feature> =
-        Feature.SHIPPED.filter { it.minimumTier == tier }
+        entitlementRepository.sellableFeatures(tier)
 
     fun purchase(activity: Activity, productId: String) {
         analytics.track(AnalyticsEvent.PurchaseStarted(productId))

@@ -59,6 +59,9 @@ class EntitlementRepository @Inject constructor(
     suspend fun canAddAccount(currentCount: Int): Boolean =
         entitlementManager.canAddAccount(currentCount, current(), clock.now())
 
+    /** What [tier] may be advertised on in this build. See `EntitlementManager.sellableFeatures`. */
+    fun sellableFeatures(tier: Tier): List<Feature> = entitlementManager.sellableFeatures(tier)
+
     /** Re-reads purchases from the store — on launch and from "Restore purchases". */
     suspend fun refresh(): Result<Unit> {
         billingProvider.connect()

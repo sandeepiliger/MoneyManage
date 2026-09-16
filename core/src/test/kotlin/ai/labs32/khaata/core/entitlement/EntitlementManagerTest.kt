@@ -180,4 +180,69 @@ class EntitlementManagerTest {
         assertThat(manager.requiredTier(Feature.CLOUD_AI_ASSISTANT)).isEqualTo(Tier.AI_PRO)
         assertThat(manager.requiredTier(Feature.SHARED_GOALS)).isEqualTo(Tier.FAMILY)
     }
+
+    // ---- What a build cannot deliver ---------------------------------------------------------
+
+    @Test
+    fun `a feature this build cannot deliver is withheld from someone who paid for it`() {
+        val restricted = EntitlementManager(
+            unavailableInThisBuild = setOf(Feature.CLOUD_AI_ASSISTANT),
+        )
+
+        // The tier is right, the purchase is settled, and the build still has no endpoint to
+        // reach -- so the answer is no, rather than a subscription that reports it is unconfigured.
+        assertThat(
+            restricted.isUnlocked(Feature.CLOUD_AI_ASSISTANT, Entitlement(Tier.AI_PRO), now),
+        ).isFalse()
+    }
+
+    @Test
+    fun `a feature this build cannot deliver is not advertised on the paywall`() {
+        val restricted = EntitlementManager(
+            unavailableInThisBuild = setOf(Feature.CLOUD_AI_ASSISTANT),
+        )
+
+        // AI Pro's other two features are unshipped, so with the assistant withheld the tier has
+        // nothing left to sell. The paywall drops a plan with no features, which is the point:
+        // charging for a plan whose every feature is unavailable is taking money for nothing.
+        assertThat(restricted.sellableFeatures(Tier.AI_PRO)).isEmpty()
+    }
+
+    @Test
+    fun `restricting one feature does not withhold the others`() {
+        val restricted = EntitlementManager(
+            unavailableInThisBuild = setOf(Feature.CLOUD_AI_ASSISTANT),
+        )
+
+        assertThat(
+            restricted.isUnlocked(Feature.RECEIPT_ATTACHMENTS, Entitlement(Tier.PRO), now),
+        ).isTrue()
+        assertThat(restricted.sellableFeatures(Tier.PRO)).isNotEmpty()
+    }
+
+    @Test
+    fun `a fully configured build sells and unlocks the assistant as normal`() {
+        // The default manager is the configured case, so this is also the guard against the
+        // restriction leaking into builds that can in fact deliver.
+        assertThat(manager.isUnlocked(Feature.CLOUD_AI_ASSISTANT, Entitlement(Tier.AI_PRO), now))
+            .isTrue()
+        assertThat(manager.sellableFeatures(Tier.AI_PRO)).contains(Feature.CLOUD_AI_ASSISTANT)
+    }
+
+    @Test
+    fun `every sellable feature is one the entitlement check will actually grant`() {
+        val restricted = EntitlementManager(
+            unavailableInThisBuild = setOf(Feature.CLOUD_AI_ASSISTANT),
+        )
+
+        // The invariant the paywall depends on: nothing advertised for a tier may then be refused
+        // to someone who buys that tier. This is the drift that let ADVANCED_REPORTS be sold while
+        // gating nothing, in the other direction.
+        Tier.entries.forEach { tier ->
+            restricted.sellableFeatures(tier).forEach { feature ->
+                assertThat(restricted.isUnlocked(feature, Entitlement(tier), now)).isTrue()
+            }
+        }
+    }
+
 }
