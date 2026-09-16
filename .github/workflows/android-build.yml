@@ -14,6 +14,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Needed only by the "Publish installable APKs" step below, which writes a release.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -123,6 +126,74 @@ jobs:
           name: khaata-release-apk
           path: app/build/outputs/apk/release/*.apk
           retention-days: 14
+
+      # Actions artifacts are always delivered as a zip, even when they hold a single file, and
+      # Android's built-in Downloads extractor cannot open the zips GitHub produces -- it reports
+      # "Could not extract file. Error unknown" and there is nothing wrong with the APK inside.
+      # A phone cannot install an APK it cannot get out of the container, so the same APKs are
+      # also attached to a rolling prerelease, where the browser downloads a raw .apk that installs
+      # on tap. The artifacts above stay as they are: they are what this Claude Code session and
+      # any desktop checkout use.
+      #
+      # gh is preinstalled on GitHub-hosted runners. Deliberately not a third-party release action:
+      # this workflow is the only place :app is ever compiled, and it has already been taken out
+      # once by a third-party action breaking (see "Set up Android SDK" above).
+      #
+      # continue-on-error because publishing is a convenience, not a build result. If a repository
+      # or org policy refuses the release write, that must not turn a green build red -- the
+      # artifacts are still there to fall back on.
+      - name: Publish installable APKs
+        if: success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SHORT_SHA="$(git rev-parse --short HEAD)"
+          mkdir -p dist
+
+          # Named by build type and commit, because "app-debug.apk" in a Downloads folder tells
+          # you nothing about which build you are holding.
+          cp app/build/outputs/apk/debug/*.apk "dist/khaata-debug-${SHORT_SHA}.apk"
+          cp app/build/outputs/apk/release/*.apk "dist/khaata-optimised-${SHORT_SHA}.apk"
+
+          NOTES=$(cat <<EOF
+          Build \`${SHORT_SHA}\` from \`${GITHUB_REF_NAME}\`, $(date -u '+%Y-%m-%d %H:%M UTC').
+
+          **khaata-debug-${SHORT_SHA}.apk** — debuggable and unminified. Use this for trying
+          features out. Compose scrolling is slower here than in a real release build.
+
+          **khaata-optimised-${SHORT_SHA}.apk** — the same code built the way it ships (R8,
+          resource shrinking). Judge performance on this one.
+
+          The two install side by side as separate apps with separate data: the debug build carries
+          a \`.debug\` application id. Entering transactions in one will not show them in the other.
+
+          **Paid features can only be unlocked in the debug build**, under Settings → Developer →
+          Simulated tier. That section is compiled out of the optimised build, which reaches the
+          real Play billing that has no products configured yet — so receipts, scheduled backup
+          and dashboard customisation stay locked there with no way through. Test features on
+          debug; use optimised only to judge how the app performs.
+
+          Both are signed with the standard Android debug key so they can be sideloaded. Neither is
+          a Play build, and they cannot be installed over a Play-signed copy of the app.
+
+          Tap an .apk below on the phone to install it. Android will ask for permission to install
+          from your browser the first time.
+          EOF
+          )
+
+          # Rolling: the link stays the same build to build, so there is one place to go for the
+          # newest APK. Recreated rather than updated so assets from older commits do not pile up
+          # and leave two builds with no obvious newest.
+          gh release delete latest-build --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest-build \
+            --prerelease \
+            --title "Latest build (${SHORT_SHA})" \
+            --notes "${NOTES}" \
+            dist/*.apk
+
+          echo "Installable APKs: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/latest-build"
 
       - name: Upload lint report on failure
         if: failure()
