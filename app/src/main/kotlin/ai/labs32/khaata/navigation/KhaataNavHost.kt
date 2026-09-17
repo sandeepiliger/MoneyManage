@@ -26,6 +26,7 @@ import ai.labs32.khaata.feature.dashboard.DashboardScreen
 import ai.labs32.khaata.feature.goals.GoalEditScreen
 import ai.labs32.khaata.feature.goals.GoalsScreen
 import ai.labs32.khaata.feature.insights.InsightsScreen
+import ai.labs32.khaata.feature.investments.InvestmentEditScreen
 import ai.labs32.khaata.feature.investments.InvestmentsScreen
 import ai.labs32.khaata.feature.loans.LoanDetailScreen
 import ai.labs32.khaata.feature.loans.LoansScreen
@@ -271,7 +272,29 @@ fun KhaataNavHost(
         }
 
         composable(Routes.INVESTMENTS) {
-            InvestmentsScreen(onBack = { navController.popBackStack() })
+            InvestmentsScreen(
+                onBack = { navController.popBackStack() },
+                onAddInvestment = { navController.navigate(Routes.ADD_INVESTMENT) },
+                onEditInvestment = { navController.navigate(Routes.investmentDetail(it)) },
+            )
+        }
+
+        composable(Routes.ADD_INVESTMENT) {
+            InvestmentEditScreen(investmentId = null, onDone = { navController.popBackStack() })
+        }
+
+        // A holding edits in place rather than having a separate read-only detail screen: the gain,
+        // return and valuation age a detail view would show are already on the card that leads here.
+        composable(
+            route = Routes.INVESTMENT_DETAIL,
+            arguments = listOf(
+                navArgument(Routes.Args.INVESTMENT_ID) { type = NavType.StringType },
+            ),
+        ) { entry ->
+            InvestmentEditScreen(
+                investmentId = entry.arguments?.getString(Routes.Args.INVESTMENT_ID),
+                onDone = { navController.popBackStack() },
+            )
         }
 
         composable(Routes.GOALS) {

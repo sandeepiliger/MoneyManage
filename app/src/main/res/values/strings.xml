@@ -518,6 +518,17 @@
     <string name="investments_empty_title">No investments tracked</string>
     <string name="investments_empty_body">Add your funds, deposits and gold to see them alongside everything else.</string>
 
+    <string name="investments_started_on">Started on</string>
+    <string name="investments_valued_on_label">Valued on</string>
+    <string name="investments_current_value_help">What it is worth today. Khaata never fetches prices, so this is only as fresh as you make it.</string>
+    <string name="investments_units">Units</string>
+    <string name="investments_folio">Folio or symbol</string>
+    <string name="investments_notes">Notes</string>
+    <string name="investments_colour">Colour</string>
+    <string name="investments_closed">Closed</string>
+    <string name="investments_closed_help">Keeps it out of the portfolio total without deleting the record.</string>
+    <string name="investments_delete_title">Delete this investment?</string>
+    <string name="investments_delete_body">The holding and its history are removed. This cannot be undone.</string>
     <string name="investment_kind_mutual_fund">Mutual fund</string>
     <string name="investment_kind_sip">SIP</string>
     <string name="investment_kind_stock">Stocks</string>

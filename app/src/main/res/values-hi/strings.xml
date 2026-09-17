@@ -519,6 +519,17 @@
     <string name="investments_empty_title">कोई निवेश नहीं</string>
     <string name="investments_empty_body">अपने फ़ंड, डिपॉज़िट और सोना जोड़ें ताकि बाकी सब के साथ यह भी दिखे।</string>
 
+    <string name="investments_started_on">शुरू होने की तारीख़</string>
+    <string name="investments_valued_on_label">मूल्यांकन की तारीख़</string>
+    <string name="investments_current_value_help">आज इसका जो मूल्य है। खाता कभी भाव नहीं लाता, इसलिए यह उतना ही ताज़ा रहेगा जितना आप रखेंगे।</string>
+    <string name="investments_units">यूनिट</string>
+    <string name="investments_folio">फ़ोलियो या सिंबल</string>
+    <string name="investments_notes">नोट</string>
+    <string name="investments_colour">रंग</string>
+    <string name="investments_closed">बंद</string>
+    <string name="investments_closed_help">रिकॉर्ड हटाए बिना इसे पोर्टफ़ोलियो कुल से बाहर रखता है।</string>
+    <string name="investments_delete_title">यह निवेश हटाएँ?</string>
+    <string name="investments_delete_body">होल्डिंग और उसका इतिहास हट जाएगा। इसे पहले जैसा नहीं किया जा सकता।</string>
     <string name="investment_kind_mutual_fund">म्यूचुअल फ़ंड</string>
     <string name="investment_kind_sip">एसआईपी</string>
     <string name="investment_kind_stock">शेयर</string>

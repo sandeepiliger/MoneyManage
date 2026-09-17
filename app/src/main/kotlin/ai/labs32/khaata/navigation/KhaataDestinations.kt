@@ -113,6 +113,10 @@ object Routes {
     const val INVESTMENTS = "investments"
     const val ADD_INVESTMENT = "investments/add"
 
+    private const val INVESTMENT_DETAIL_BASE = "investments/detail"
+    const val INVESTMENT_DETAIL = "$INVESTMENT_DETAIL_BASE/{investmentId}"
+    fun investmentDetail(investmentId: String) = "$INVESTMENT_DETAIL_BASE/$investmentId"
+
     const val GOALS = "goals"
     const val ADD_GOAL = "goals/add"
 
@@ -146,6 +150,7 @@ object Routes {
         const val CARD_ID = "cardId"
         const val LOAN_ID = "loanId"
         const val GOAL_ID = "goalId"
+        const val INVESTMENT_ID = "investmentId"
         const val LISTEN = "listen"
     }
 }

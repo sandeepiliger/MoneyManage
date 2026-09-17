@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -91,6 +92,8 @@ class InvestmentsViewModel @Inject constructor(
 @Composable
 fun InvestmentsScreen(
     onBack: () -> Unit,
+    onAddInvestment: () -> Unit,
+    onEditInvestment: (String) -> Unit,
     viewModel: InvestmentsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -108,6 +111,14 @@ fun InvestmentsScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = onAddInvestment) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.investments_add),
+                        )
+                    }
+                },
             )
         },
     ) { padding ->
@@ -120,6 +131,10 @@ fun InvestmentsScreen(
                 title = stringResource(R.string.investments_empty_title),
                 description = stringResource(R.string.investments_empty_body),
                 modifier = Modifier.padding(padding),
+                // The empty state is the screen most people meet first, so it carries the action
+                // rather than describing a portfolio and leaving them to find the toolbar.
+                actionLabel = stringResource(R.string.investments_add),
+                onAction = onAddInvestment,
             )
 
             else -> LazyColumn(
@@ -133,7 +148,10 @@ fun InvestmentsScreen(
                 item { AllocationCard(portfolio) }
 
                 items(portfolio.performances, key = { it.investment.id }) { performance ->
-                    HoldingCard(performance)
+                    HoldingCard(
+                        performance = performance,
+                        onClick = { onEditInvestment(performance.investment.id) },
+                    )
                 }
 
                 item {
@@ -224,11 +242,11 @@ private fun AllocationCard(portfolio: PortfolioSummary) {
 }
 
 @Composable
-private fun HoldingCard(performance: InvestmentPerformance) {
+private fun HoldingCard(performance: InvestmentPerformance, onClick: () -> Unit) {
     val money = KhaataTheme.money
     val isProfit = performance.isProfit
 
-    KhaataCard {
+    KhaataCard(onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
@@ -273,7 +291,7 @@ private fun HoldingCard(performance: InvestmentPerformance) {
 }
 
 @Composable
-private fun investmentKindLabel(kind: InvestmentKind): String = stringResource(
+internal fun investmentKindLabel(kind: InvestmentKind): String = stringResource(
     when (kind) {
         InvestmentKind.MUTUAL_FUND -> R.string.investment_kind_mutual_fund
         InvestmentKind.SIP -> R.string.investment_kind_sip

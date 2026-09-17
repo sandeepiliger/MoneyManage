@@ -317,3 +317,71 @@ object GoalValidator {
         return if (errors.isEmpty()) ValidationResult.Valid(Unit) else ValidationResult.Invalid(errors)
     }
 }
+
+/**
+ * A holding, before it becomes an [ai.labs32.khaata.core.model.Investment].
+ *
+ * The model's own `init` block rejects a negative amount or a valuation dated before the start,
+ * by throwing. That is the right last line of defence and the wrong thing to show a user, so the
+ * same rules are checked here first and come back as messages a field can display.
+ */
+object InvestmentValidator {
+
+    fun validate(
+        name: String?,
+        investedText: String?,
+        currentValueText: String?,
+        unitsText: String?,
+        currency: CurrencyCode,
+        startedOn: LocalDate,
+        valuedOn: LocalDate,
+        today: LocalDate,
+    ): ValidationResult<Unit> {
+        val errors = buildList {
+            if (name.isNullOrBlank()) {
+                add(ValidationError("name", "name_required", "Give the investment a name"))
+            }
+
+            val invested = MoneyParser.parse(investedText, currency)
+            when {
+                investedText.isNullOrBlank() ->
+                    add(ValidationError("invested", "invested_required", "Enter the amount invested"))
+                invested == null ->
+                    add(ValidationError("invested", "invested_invalid", "That is not a valid amount"))
+                invested.isNegative ->
+                    add(ValidationError("invested", "invested_negative", "Amount cannot be negative"))
+            }
+
+            // Required rather than optional: a holding with no current value cannot show a gain,
+            // which is the only reason to track it here. The editor prefills it with the invested
+            // amount on a new holding, so this is one tap for someone who has not valued it yet.
+            val currentValue = MoneyParser.parse(currentValueText, currency)
+            when {
+                currentValueText.isNullOrBlank() ->
+                    add(ValidationError("currentValue", "value_required", "Enter what it is worth now"))
+                currentValue == null ->
+                    add(ValidationError("currentValue", "value_invalid", "That is not a valid amount"))
+                currentValue.isNegative ->
+                    add(ValidationError("currentValue", "value_negative", "Value cannot be negative"))
+            }
+
+            if (!unitsText.isNullOrBlank() && unitsText.toBigDecimalOrNull() == null) {
+                add(ValidationError("units", "units_invalid", "That is not a valid number of units"))
+            }
+
+            // A holding cannot start in the future, and cannot be valued before it existed. The
+            // second is what the model throws on, so catching it here is the difference between a
+            // field error and a crash.
+            if (startedOn.isAfter(today)) {
+                add(ValidationError("startedOn", "start_in_future", "Choose a date in the past"))
+            }
+            if (valuedOn.isBefore(startedOn)) {
+                add(ValidationError("valuedOn", "valued_before_start", "Valuation cannot predate the start"))
+            }
+            if (valuedOn.isAfter(today)) {
+                add(ValidationError("valuedOn", "valued_in_future", "Choose a date in the past"))
+            }
+        }
+        return if (errors.isEmpty()) ValidationResult.Valid(Unit) else ValidationResult.Invalid(errors)
+    }
+}
