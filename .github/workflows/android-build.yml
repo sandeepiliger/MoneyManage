@@ -152,18 +152,19 @@ jobs:
           SHORT_SHA="$(git rev-parse --short HEAD)"
           mkdir -p dist
 
-          # Named by build type and commit, because "app-debug.apk" in a Downloads folder tells
-          # you nothing about which build you are holding.
-          cp app/build/outputs/apk/debug/*.apk "dist/khaata-debug-${SHORT_SHA}.apk"
-          cp app/build/outputs/apk/release/*.apk "dist/khaata-optimised-${SHORT_SHA}.apk"
+          # Stable names, so each build replaces the last rather than adding to a pile. Which
+          # build an APK is comes from the release title and notes, and from the app's own version
+          # name -- not from the filename, which has to stay constant for --clobber to work.
+          cp app/build/outputs/apk/debug/*.apk "dist/khaata-debug.apk"
+          cp app/build/outputs/apk/release/*.apk "dist/khaata-optimised.apk"
 
           NOTES=$(cat <<EOF
           Build \`${SHORT_SHA}\` from \`${GITHUB_REF_NAME}\`, $(date -u '+%Y-%m-%d %H:%M UTC').
 
-          **khaata-debug-${SHORT_SHA}.apk** — debuggable and unminified. Use this for trying
+          **khaata-debug.apk** — debuggable and unminified. Use this for trying
           features out. Compose scrolling is slower here than in a real release build.
 
-          **khaata-optimised-${SHORT_SHA}.apk** — the same code built the way it ships (R8,
+          **khaata-optimised.apk** — the same code built the way it ships (R8,
           resource shrinking). Judge performance on this one.
 
           The two install side by side as separate apps with separate data: the debug build carries
@@ -184,14 +185,32 @@ jobs:
           )
 
           # Rolling: the link stays the same build to build, so there is one place to go for the
-          # newest APK. Recreated rather than updated so assets from older commits do not pile up
-          # and leave two builds with no obvious newest.
-          gh release delete latest-build --yes --cleanup-tag 2>/dev/null || true
-          gh release create latest-build \
+          # newest APK.
+          #
+          # Updated in place, never deleted and recreated. Deleting first left a window with no
+          # release at all -- minutes wide, because a 30MB upload is not instant -- and would have
+          # left nothing at all had the upload then failed. Since this release is the only way to
+          # get the app onto a phone, the one thing it must never do is disappear.
+          if ! gh release view latest-build >/dev/null 2>&1; then
+            gh release create latest-build --prerelease --title "Latest build (${SHORT_SHA})" --notes "Publishing…"
+          fi
+
+          # Assets first, then the notes: the notes describe what is attached, so they should not
+          # start claiming a build whose APKs are still uploading.
+          gh release upload latest-build dist/*.apk --clobber
+
+          # Assets from before this workflow used stable names, cleaned up once and thereafter a
+          # no-op, so the release cannot accumulate a pile of builds with no obvious newest.
+          gh release view latest-build --json assets --jq '.assets[].name' \
+            | grep -vx -e 'khaata-debug.apk' -e 'khaata-optimised.apk' \
+            | while read -r stale; do
+                [ -n "$stale" ] && gh release delete-asset latest-build "$stale" --yes || true
+              done
+
+          gh release edit latest-build \
             --prerelease \
             --title "Latest build (${SHORT_SHA})" \
-            --notes "${NOTES}" \
-            dist/*.apk
+            --notes "${NOTES}"
 
           echo "Installable APKs: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/latest-build"
 
