@@ -21,6 +21,7 @@ import ai.labs32.khaata.feature.budgets.BudgetDetailScreen
 import ai.labs32.khaata.feature.budgets.BudgetEditScreen
 import ai.labs32.khaata.feature.budgets.BudgetsScreen
 import ai.labs32.khaata.feature.categories.CategoriesScreen
+import ai.labs32.khaata.feature.creditcards.CreditCardEditScreen
 import ai.labs32.khaata.feature.creditcards.CreditCardsScreen
 import ai.labs32.khaata.feature.dashboard.DashboardScreen
 import ai.labs32.khaata.feature.goals.GoalEditScreen
@@ -29,6 +30,7 @@ import ai.labs32.khaata.feature.insights.InsightsScreen
 import ai.labs32.khaata.feature.investments.InvestmentEditScreen
 import ai.labs32.khaata.feature.investments.InvestmentsScreen
 import ai.labs32.khaata.feature.loans.LoanDetailScreen
+import ai.labs32.khaata.feature.loans.LoanEditScreen
 import ai.labs32.khaata.feature.loans.LoansScreen
 import ai.labs32.khaata.feature.more.MoreScreen
 import ai.labs32.khaata.feature.recurring.RecurringScreen
@@ -251,13 +253,48 @@ fun KhaataNavHost(
         // ---- Products ------------------------------------------------------------------------
 
         composable(Routes.CREDIT_CARDS) {
-            CreditCardsScreen(onBack = { navController.popBackStack() })
+            CreditCardsScreen(
+                onBack = { navController.popBackStack() },
+                onAddCard = { navController.navigate(Routes.ADD_CREDIT_CARD) },
+                onEditCard = { navController.navigate(Routes.creditCardDetail(it)) },
+            )
+        }
+
+        composable(Routes.ADD_CREDIT_CARD) {
+            CreditCardEditScreen(cardId = null, onDone = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Routes.CREDIT_CARD_DETAIL,
+            arguments = listOf(navArgument(Routes.Args.CARD_ID) { type = NavType.StringType }),
+        ) { entry ->
+            CreditCardEditScreen(
+                cardId = entry.arguments?.getString(Routes.Args.CARD_ID),
+                onDone = { navController.popBackStack() },
+            )
         }
 
         composable(Routes.LOANS) {
             LoansScreen(
                 onBack = { navController.popBackStack() },
                 onOpenLoan = { navController.navigate(Routes.loanDetail(it)) },
+                onAddLoan = { navController.navigate(Routes.ADD_LOAN) },
+            )
+        }
+
+        composable(Routes.ADD_LOAN) {
+            LoanEditScreen(loanId = null, onDone = { navController.popBackStack() })
+        }
+
+        // Editing reuses the loan id, reached from the detail screen's edit action rather than by
+        // tapping the row -- the row opens the amortisation schedule, which is why people come here.
+        composable(
+            route = Routes.EDIT_LOAN,
+            arguments = listOf(navArgument(Routes.Args.LOAN_ID) { type = NavType.StringType }),
+        ) { entry ->
+            LoanEditScreen(
+                loanId = entry.arguments?.getString(Routes.Args.LOAN_ID),
+                onDone = { navController.popBackStack() },
             )
         }
 
@@ -268,6 +305,7 @@ fun KhaataNavHost(
             LoanDetailScreen(
                 loanId = entry.arguments?.getString(Routes.Args.LOAN_ID).orEmpty(),
                 onBack = { navController.popBackStack() },
+                onEditLoan = { navController.navigate(Routes.editLoan(it)) },
             )
         }
 

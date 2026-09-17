@@ -385,3 +385,161 @@ object InvestmentValidator {
         return if (errors.isEmpty()) ValidationResult.Valid(Unit) else ValidationResult.Invalid(errors)
     }
 }
+
+/**
+ * A loan, before it becomes an [ai.labs32.khaata.core.model.Loan].
+ *
+ * Every rule here mirrors one of that model's `init` requirements. The model throws, which is the
+ * right last line of defence and the wrong thing to show someone filling in a form, so a gap
+ * between the two is a crash on save rather than a message under a field.
+ */
+object LoanValidator {
+
+    /** Above this, an interest rate is a data entry error rather than a loan. */
+    private val MAX_RATE = java.math.BigDecimal("100")
+
+    fun validate(
+        name: String?,
+        principalText: String?,
+        ratePercentText: String?,
+        tenureMonthsText: String?,
+        emiDayText: String?,
+        emiOverrideText: String?,
+        currency: CurrencyCode,
+    ): ValidationResult<Unit> {
+        val errors = buildList {
+            if (name.isNullOrBlank()) {
+                add(ValidationError("name", "name_required", "Give the loan a name"))
+            }
+
+            val principal = MoneyParser.parse(principalText, currency)
+            when {
+                principalText.isNullOrBlank() ->
+                    add(ValidationError("principal", "principal_required", "Enter the loan amount"))
+                principal == null ->
+                    add(ValidationError("principal", "principal_invalid", "That is not a valid amount"))
+                !principal.isPositive ->
+                    add(ValidationError("principal", "principal_not_positive", "Loan amount must be more than zero"))
+            }
+
+            val rate = ratePercentText?.trim()?.toBigDecimalOrNull()
+            when {
+                ratePercentText.isNullOrBlank() ->
+                    add(ValidationError("rate", "rate_required", "Enter the interest rate"))
+                rate == null ->
+                    add(ValidationError("rate", "rate_invalid", "That is not a valid rate"))
+                rate.signum() < 0 ->
+                    add(ValidationError("rate", "rate_negative", "Interest rate cannot be negative"))
+                rate >= MAX_RATE ->
+                    add(ValidationError("rate", "rate_too_high", "A rate of 100% or more is almost certainly a typo"))
+            }
+
+            val tenure = tenureMonthsText?.trim()?.toIntOrNull()
+            when {
+                tenureMonthsText.isNullOrBlank() ->
+                    add(ValidationError("tenure", "tenure_required", "Enter the tenure in months"))
+                tenure == null ->
+                    add(ValidationError("tenure", "tenure_invalid", "Enter a whole number of months"))
+                tenure !in 1..600 ->
+                    add(ValidationError("tenure", "tenure_out_of_range", "Tenure must be between 1 and 600 months"))
+            }
+
+            val emiDay = emiDayText?.trim()?.toIntOrNull()
+            when {
+                emiDayText.isNullOrBlank() ->
+                    add(ValidationError("emiDay", "emi_day_required", "Enter the EMI day"))
+                emiDay == null || emiDay !in 1..31 ->
+                    add(ValidationError("emiDay", "emi_day_out_of_range", "EMI day must be between 1 and 31"))
+            }
+
+            // Optional: the lender's own EMI figure, when it differs from the computed one by a
+            // rupee or two. Blank means "use ours".
+            if (!emiOverrideText.isNullOrBlank()) {
+                val emi = MoneyParser.parse(emiOverrideText, currency)
+                if (emi == null) {
+                    add(ValidationError("emiOverride", "emi_invalid", "That is not a valid amount"))
+                } else if (!emi.isPositive) {
+                    add(ValidationError("emiOverride", "emi_not_positive", "EMI must be more than zero"))
+                }
+            }
+        }
+        return if (errors.isEmpty()) ValidationResult.Valid(Unit) else ValidationResult.Invalid(errors)
+    }
+}
+
+/**
+ * A credit card, before it becomes an [ai.labs32.khaata.core.model.CreditCard].
+ *
+ * As with [LoanValidator], these mirror the model's own `init` requirements so a bad entry is a
+ * field error rather than an exception.
+ */
+object CreditCardValidator {
+
+    private val HUNDRED = java.math.BigDecimal("100")
+
+    fun validate(
+        cardName: String?,
+        issuer: String?,
+        creditLimitText: String?,
+        statementDayText: String?,
+        dueDayText: String?,
+        minimumDuePercentText: String?,
+        lastFourDigits: String?,
+        currency: CurrencyCode,
+    ): ValidationResult<Unit> {
+        val errors = buildList {
+            if (cardName.isNullOrBlank()) {
+                add(ValidationError("cardName", "name_required", "Give the card a name"))
+            }
+            if (issuer.isNullOrBlank()) {
+                add(ValidationError("issuer", "issuer_required", "Enter the issuing bank"))
+            }
+
+            val limit = MoneyParser.parse(creditLimitText, currency)
+            when {
+                creditLimitText.isNullOrBlank() ->
+                    add(ValidationError("creditLimit", "limit_required", "Enter the credit limit"))
+                limit == null ->
+                    add(ValidationError("creditLimit", "limit_invalid", "That is not a valid amount"))
+                !limit.isPositive ->
+                    add(ValidationError("creditLimit", "limit_not_positive", "Credit limit must be more than zero"))
+            }
+
+            val statementDay = statementDayText?.trim()?.toIntOrNull()
+            when {
+                statementDayText.isNullOrBlank() ->
+                    add(ValidationError("statementDay", "statement_day_required", "Enter the statement day"))
+                statementDay == null || statementDay !in 1..31 ->
+                    add(ValidationError("statementDay", "statement_day_out_of_range", "Statement day must be between 1 and 31"))
+            }
+
+            val dueDay = dueDayText?.trim()?.toIntOrNull()
+            when {
+                dueDayText.isNullOrBlank() ->
+                    add(ValidationError("dueDay", "due_day_required", "Enter the payment due day"))
+                dueDay == null || dueDay !in 1..31 ->
+                    add(ValidationError("dueDay", "due_day_out_of_range", "Due day must be between 1 and 31"))
+            }
+
+            // A due day before the statement day is normal -- it falls in the following month --
+            // so the two are deliberately not compared against each other.
+
+            val minimumDue = minimumDuePercentText?.trim()?.toBigDecimalOrNull()
+            when {
+                minimumDuePercentText.isNullOrBlank() ->
+                    add(ValidationError("minimumDue", "minimum_required", "Enter the minimum due percentage"))
+                minimumDue == null ->
+                    add(ValidationError("minimumDue", "minimum_invalid", "That is not a valid percentage"))
+                minimumDue.signum() <= 0 || minimumDue > HUNDRED ->
+                    add(ValidationError("minimumDue", "minimum_out_of_range", "Minimum due must be between 0 and 100 percent"))
+            }
+
+            // Only ever the last four. The field rejects anything else rather than silently
+            // truncating, so a full card number pasted in is refused instead of half-stored.
+            if (!lastFourDigits.isNullOrBlank() && !lastFourDigits.matches(Regex("\\d{4}"))) {
+                add(ValidationError("lastFour", "last_four_invalid", "Enter exactly four digits, or leave blank"))
+            }
+        }
+        return if (errors.isEmpty()) ValidationResult.Valid(Unit) else ValidationResult.Invalid(errors)
+    }
+}

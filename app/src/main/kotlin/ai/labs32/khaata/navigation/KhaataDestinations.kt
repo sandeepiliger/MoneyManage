@@ -106,6 +106,10 @@ object Routes {
     const val LOANS = "loans"
     const val ADD_LOAN = "loans/add"
 
+    private const val LOAN_EDIT_BASE = "loans/edit"
+    const val EDIT_LOAN = "$LOAN_EDIT_BASE/{loanId}"
+    fun editLoan(loanId: String) = "$LOAN_EDIT_BASE/$loanId"
+
     private const val LOAN_DETAIL_BASE = "loans/detail"
     const val LOAN_DETAIL = "$LOAN_DETAIL_BASE/{loanId}"
     fun loanDetail(loanId: String) = "$LOAN_DETAIL_BASE/$loanId"

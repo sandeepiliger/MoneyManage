@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -98,6 +99,8 @@ class CreditCardsViewModel @Inject constructor(
 @Composable
 fun CreditCardsScreen(
     onBack: () -> Unit,
+    onAddCard: () -> Unit,
+    onEditCard: (String) -> Unit,
     viewModel: CreditCardsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -117,6 +120,14 @@ fun CreditCardsScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = onAddCard) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.cards_add),
+                        )
+                    }
+                },
             )
         },
     ) { padding ->
@@ -128,6 +139,8 @@ fun CreditCardsScreen(
                 title = stringResource(R.string.cards_empty_title),
                 description = stringResource(R.string.cards_empty_body),
                 modifier = Modifier.padding(padding),
+                actionLabel = stringResource(R.string.cards_add),
+                onAction = onAddCard,
             )
 
             else -> LazyColumn(
@@ -142,6 +155,7 @@ fun CreditCardsScreen(
                         status = status,
                         dueLabel = status.paymentDueOn.format(dateFormatter),
                         isOverdue = status.isOverdue(today),
+                        onClick = { onEditCard(status.card.id) },
                     )
                 }
 
@@ -163,10 +177,11 @@ private fun CreditCardCard(
     status: CreditCardStatus,
     dueLabel: String,
     isOverdue: Boolean,
+    onClick: () -> Unit,
 ) {
     val bandColor = utilisationColor(status.utilisationBand)
 
-    KhaataCard {
+    KhaataCard(onClick = onClick) {
         CardHeader(
             title = status.card.cardName,
             subtitle = listOfNotNull(

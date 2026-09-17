@@ -470,6 +470,26 @@
     <string name="utilisation_over_limit">Over limit</string>
 
     <!-- ==================== Loans ==================== -->
+    <string name="loans_emi_preview">Estimated EMI</string>
+    <string name="loans_emi_day_help">The day each instalment is debited.</string>
+    <string name="loans_colour">Colour</string>
+    <string name="loans_closed">Closed</string>
+    <string name="loans_closed_help">Keeps it out of your outstanding total without deleting the record.</string>
+    <string name="loans_delete_title">Delete this loan?</string>
+    <string name="loans_delete_body">The loan and its schedule are removed. This cannot be undone.</string>
+    <string name="cards_days_help">Statement on one day, payment due on another — a due day earlier in the month simply falls in the following month.</string>
+    <string name="cards_last_four">Last four digits (optional)</string>
+    <string name="cards_last_four_help">Only the last four are ever stored, so the card can be told apart from another.</string>
+    <string name="cards_minimum_percent">Minimum due</string>
+    <string name="cards_minimum_floor">Minimum floor</string>
+    <string name="cards_account">Account</string>
+    <string name="cards_account_new">Create a new one</string>
+    <string name="cards_linked_account">Outstanding is tracked on %1$s</string>
+    <string name="cards_colour">Colour</string>
+    <string name="cards_active">Active</string>
+    <string name="cards_active_help">Turn off for a card you have closed, without losing its history.</string>
+    <string name="cards_delete_title">Delete this card?</string>
+    <string name="cards_delete_body">The card is removed. Its account and transactions are kept.</string>
     <string name="loans_title">Loans</string>
     <string name="loans_add">Add loan</string>
     <string name="loans_edit">Edit loan</string>

@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -93,6 +95,7 @@ class LoansViewModel @Inject constructor(
 fun LoansScreen(
     onBack: () -> Unit,
     onOpenLoan: (String) -> Unit,
+    onAddLoan: () -> Unit,
     viewModel: LoansViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -110,6 +113,14 @@ fun LoansScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = onAddLoan) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.loans_add),
+                        )
+                    }
+                },
             )
         },
     ) { padding ->
@@ -121,6 +132,8 @@ fun LoansScreen(
                 title = stringResource(R.string.loans_empty_title),
                 description = stringResource(R.string.loans_empty_body),
                 modifier = Modifier.padding(padding),
+                actionLabel = stringResource(R.string.loans_add),
+                onAction = onAddLoan,
             )
 
             else -> LazyColumn(
@@ -236,6 +249,7 @@ class LoanDetailViewModel @Inject constructor(
 fun LoanDetailScreen(
     loanId: String,
     onBack: () -> Unit,
+    onEditLoan: (String) -> Unit,
     viewModel: LoanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -253,6 +267,14 @@ fun LoanDetailScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { onEditLoan(loanId) }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.loans_edit),
                         )
                     }
                 },

@@ -471,6 +471,26 @@
     <string name="utilisation_over_limit">लिमिट से ऊपर</string>
 
     <!-- Loans -->
+    <string name="loans_emi_preview">अनुमानित EMI</string>
+    <string name="loans_emi_day_help">हर क़िस्त जिस दिन कटती है।</string>
+    <string name="loans_colour">रंग</string>
+    <string name="loans_closed">बंद</string>
+    <string name="loans_closed_help">रिकॉर्ड हटाए बिना इसे बक़ाया कुल से बाहर रखता है।</string>
+    <string name="loans_delete_title">यह क़र्ज़ हटाएँ?</string>
+    <string name="loans_delete_body">क़र्ज़ और उसका शेड्यूल हट जाएगा। इसे पहले जैसा नहीं किया जा सकता।</string>
+    <string name="cards_days_help">स्टेटमेंट एक दिन बनता है और भुगतान दूसरे दिन देय होता है — महीने में पहले पड़ने वाला देय दिन अगले महीने का होता है।</string>
+    <string name="cards_last_four">आख़िरी चार अंक (वैकल्पिक)</string>
+    <string name="cards_last_four_help">सिर्फ़ आख़िरी चार अंक सहेजे जाते हैं, ताकि कार्ड को दूसरे से अलग पहचाना जा सके।</string>
+    <string name="cards_minimum_percent">न्यूनतम देय</string>
+    <string name="cards_minimum_floor">न्यूनतम सीमा</string>
+    <string name="cards_account">खाता</string>
+    <string name="cards_account_new">नया बनाएँ</string>
+    <string name="cards_linked_account">बक़ाया %1$s पर दर्ज होता है</string>
+    <string name="cards_colour">रंग</string>
+    <string name="cards_active">सक्रिय</string>
+    <string name="cards_active_help">बंद कर चुके कार्ड के लिए इसे बंद करें, इतिहास खोए बिना।</string>
+    <string name="cards_delete_title">यह कार्ड हटाएँ?</string>
+    <string name="cards_delete_body">कार्ड हट जाएगा। उसका खाता और लेनदेन बने रहेंगे।</string>
     <string name="loans_title">लोन</string>
     <string name="loans_add">लोन जोड़ें</string>
     <string name="loans_edit">लोन बदलें</string>
