@@ -120,6 +120,25 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE parentId IS NULL AND isArchived = 0 ORDER BY sortOrder")
     fun observeTopLevel(): Flow<List<CategoryEntity>>
 
+    /**
+     * Category ids this user reaches for most, commonest first.
+     *
+     * Drives the quick row on the entry screen. Ordered by count and then by recency, so a
+     * category used twenty times last year ranks below one used ten times last month once the
+     * window moves past it. Deleted transactions are excluded -- a category only used on entries
+     * that were since removed is not a habit.
+     */
+    @Query(
+        """
+        SELECT categoryId FROM transactions
+        WHERE categoryId IS NOT NULL AND deletedAt IS NULL AND occurredOn >= :since
+        GROUP BY categoryId
+        ORDER BY COUNT(*) DESC, MAX(occurredOn) DESC
+        LIMIT :limit
+        """,
+    )
+    suspend fun mostUsedCategoryIds(since: java.time.LocalDate, limit: Int): List<String>
+
     @Query("SELECT * FROM categories WHERE parentId = :parentId AND isArchived = 0 ORDER BY sortOrder")
     fun observeChildren(parentId: String): Flow<List<CategoryEntity>>
 

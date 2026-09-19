@@ -30,10 +30,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notes
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
@@ -79,6 +78,7 @@ import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.money.MoneyStyle
 import ai.labs32.khaata.core.money.SignStyle
 import ai.labs32.khaata.core.ui.components.ErrorState
+import ai.labs32.khaata.core.ui.components.CategoryIcons
 import ai.labs32.khaata.core.ui.components.LoadingState
 import ai.labs32.khaata.core.ui.theme.KhaataShapeTokens
 import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
@@ -115,6 +115,7 @@ fun TransactionEditScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showReceiptSource by remember { mutableStateOf(false) }
     var viewingReceipt by remember { mutableStateOf<ReceiptTile?>(null) }
+    var showCategorySheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(transactionId) { viewModel.initialise(transactionId) }
 
@@ -194,8 +195,21 @@ fun TransactionEditScreen(
                     if (state.canAttachReceipts) showReceiptSource = true else onOpenPaywall()
                 },
                 onOpenReceipt = { viewingReceipt = it },
+                onBrowseCategories = { showCategorySheet = true },
             )
         }
+    }
+
+    if (showCategorySheet) {
+        CategoryPickerSheet(
+            categories = state.relevantCategories,
+            selectedId = state.categoryId,
+            onSelect = { id ->
+                viewModel.onCategoryChange(id)
+                showCategorySheet = false
+            },
+            onDismiss = { showCategorySheet = false },
+        )
     }
 
     if (showReceiptSource) {
@@ -239,6 +253,7 @@ private fun TransactionEditContent(
     modifier: Modifier = Modifier,
     onAddReceipt: () -> Unit,
     onOpenReceipt: (ReceiptTile) -> Unit,
+    onBrowseCategories: () -> Unit,
 ) {
     var showOptionalFields by remember { mutableStateOf(state.isEditing) }
     val spacing = KhaataTheme.spacing
@@ -296,10 +311,11 @@ private fun TransactionEditContent(
             } else {
                 Spacer(Modifier.height(spacing.default))
                 CategorySelector(
-                    categories = state.relevantCategories,
+                    quick = state.quickCategories,
                     selectedId = state.categoryId,
                     hint = state.categoryHint,
                     onSelect = viewModel::onCategoryChange,
+                    onBrowseAll = onBrowseCategories,
                     error = state.errorFor("category")?.message,
                 )
             }
@@ -524,20 +540,13 @@ private fun AccountSelector(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CategorySelector(
-    categories: List<ai.labs32.khaata.core.model.Category>,
+    quick: List<ai.labs32.khaata.core.model.Category>,
     selectedId: String?,
     hint: String?,
     onSelect: (String) -> Unit,
+    onBrowseAll: () -> Unit,
     error: String?,
 ) {
-    // Top-level categories first, then the selected subcategory if one is chosen, so the row
-    // stays short without hiding the current choice.
-    val visible = remember(categories, selectedId) {
-        val topLevel = categories.filter { it.parentId == null }
-        val selected = categories.firstOrNull { it.id == selectedId }
-        if (selected != null && selected.parentId != null) listOf(selected) + topLevel else topLevel
-    }
-
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -556,15 +565,37 @@ private fun CategorySelector(
         }
         Spacer(Modifier.height(6.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(visible, key = { it.id }) { category ->
+            items(quick, key = { it.id }) { category ->
                 FilterChip(
                     selected = category.id == selectedId,
                     onClick = { onSelect(category.id) },
                     label = { Text(category.name, maxLines = 1) },
-                    leadingIcon = if (category.id == selectedId) {
-                        { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
-                    } else {
-                        null
+                    // Always an icon, never only on selection. A row of identical text chips has
+                    // to be read one by one; a row of distinct glyphs is scanned at a glance, and
+                    // scanning is what someone standing at a counter is actually doing.
+                    leadingIcon = {
+                        Icon(
+                            imageVector = CategoryIcons[category.iconKey],
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                )
+            }
+
+            // Everything not in the quick row lives one tap away, searchable. Last rather than
+            // first so it never displaces a category the user could have tapped directly.
+            item(key = "__browse_all") {
+                FilterChip(
+                    selected = false,
+                    onClick = onBrowseAll,
+                    label = { Text(stringResource(R.string.category_browse_all), maxLines = 1) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
                     },
                 )
             }

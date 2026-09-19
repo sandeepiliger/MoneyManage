@@ -172,6 +172,9 @@
     <string name="transaction_account">Account</string>
     <string name="transaction_to_account">To account</string>
     <string name="transaction_from_account">From account</string>
+    <string name="category_browse_all">All categories</string>
+    <string name="category_search">Search categories</string>
+    <string name="category_search_none">No category matches that.</string>
     <string name="transaction_category">Category</string>
     <string name="transaction_merchant">Merchant</string>
     <string name="transaction_note">Note</string>

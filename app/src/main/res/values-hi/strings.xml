@@ -173,6 +173,9 @@
     <string name="transaction_amount">राशि</string>
     <string name="transaction_account">खाता</string>
     <string name="transaction_to_account">किस खाते में</string>
+    <string name="category_browse_all">सभी श्रेणियाँ</string>
+    <string name="category_search">श्रेणी खोजें</string>
+    <string name="category_search_none">उससे मेल खाती कोई श्रेणी नहीं।</string>
     <string name="transaction_category">श्रेणी</string>
     <string name="transaction_merchant">दुकान / सेवा</string>
     <string name="transaction_note">नोट</string>

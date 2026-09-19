@@ -40,6 +40,15 @@ class CategoryRepository @Inject constructor(
     fun observeAll(): Flow<List<Category>> =
         categoryDao.observeAll().map { list -> list.map { it.toDomain() } }
 
+    /**
+     * Category ids this user reaches for most, commonest first, over the last [days].
+     *
+     * A year is long enough to learn someone's habits and short enough that a category they have
+     * stopped using drops off the quick row on its own.
+     */
+    suspend fun mostUsedIds(today: java.time.LocalDate, days: Long = 365, limit: Int = 16): List<String> =
+        categoryDao.mostUsedCategoryIds(today.minusDays(days), limit)
+
     /** Categories grouped into parent → children, which is how the picker is laid out. */
     fun observeTrees(kind: CategoryKind? = null): Flow<List<CategoryTree>> =
         observeActive().map { categories ->

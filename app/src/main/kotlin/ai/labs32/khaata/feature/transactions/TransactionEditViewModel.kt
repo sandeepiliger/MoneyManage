@@ -22,6 +22,7 @@ import ai.labs32.khaata.core.validation.TransactionValidator
 import ai.labs32.khaata.core.validation.ValidationError
 import ai.labs32.khaata.core.validation.ValidationResult
 import android.net.Uri
+import ai.labs32.khaata.core.categorize.QuickCategories
 import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.model.Receipt
 import ai.labs32.khaata.data.repository.EntitlementRepository
@@ -68,6 +69,8 @@ data class TransactionEditUiState(
     val merchantSuggestions: List<String> = emptyList(),
     /** Why a category was preselected, shown as a subtle hint rather than a silent change. */
     val categoryHint: String? = null,
+    /** Category ids this user reaches for most, commonest first. Drives the quick row. */
+    val recentCategoryIds: List<String> = emptyList(),
     val errors: List<ValidationError> = emptyList(),
     val overdraftWarning: String? = null,
     val isSaving: Boolean = false,
@@ -92,6 +95,21 @@ data class TransactionEditUiState(
 
     val amountPreview: Money?
         get() = MoneyParser.parse(amountText, currency)
+
+    /**
+     * The categories one tap away, most-useful first.
+     *
+     * The picker used to list every top-level category and nothing else, which meant the
+     * forty-two subcategories could not be chosen during entry at all. Now the row is what this
+     * person actually uses — subcategories included — and everything else is one tap further, in
+     * the searchable sheet.
+     */
+    val quickCategories: List<Category>
+        get() = QuickCategories.forEntry(
+            available = relevantCategories,
+            recentlyUsedIds = recentCategoryIds,
+            selectedId = categoryId,
+        )
 
     /** Categories relevant to the current direction, so an expense picker shows no salary rows. */
     val relevantCategories: List<Category>
@@ -136,6 +154,14 @@ class TransactionEditViewModel @Inject constructor(
         viewModelScope.launch {
             val canAttach = entitlementRepository.isUnlocked(Feature.RECEIPT_ATTACHMENTS)
             _uiState.update { it.copy(canAttachReceipts = canAttach) }
+        }
+
+        viewModelScope.launch {
+            // Read once rather than observed: the row should not reshuffle under the user's
+            // finger because a transaction was saved on another screen mid-entry.
+            val recent = runCatching { categoryRepository.mostUsedIds(clock.today()) }
+                .getOrDefault(emptyList())
+            _uiState.update { it.copy(recentCategoryIds = recent) }
         }
 
         viewModelScope.launch {
