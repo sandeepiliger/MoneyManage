@@ -97,6 +97,8 @@
     <string name="onboarding_sms_title">बैंक के मैसेज पढ़ें?</string>
     <string name="onboarding_sms_body">खाता आपके बैंक के लेन-देन वाले SMS पढ़ सकता है ताकि आपको टाइप न करना पड़े। मैसेज आपके फ़ोन में ही पढ़े जाते हैं, कहीं भेजे नहीं जाते। हर एक को सेव करने से पहले आप पक्का करते हैं।</string>
     <string name="onboarding_sms_optional">यह पूरी तरह वैकल्पिक है — इसके बिना भी सब काम करता है।</string>
+    <string name="onboarding_sms_history_title">पिछले 90 दिनों के संदेश भी लाएँ</string>
+    <string name="onboarding_sms_history_body">पिछले 90 दिनों के बैंक संदेश एक बार पढ़े जाते हैं। जो मिलता है वह आपकी पुष्टि का इंतज़ार करता है और आपके दर्ज किए बैलेंस को कभी नहीं बदलता।</string>
     <string name="onboarding_finish_title">सब तैयार है</string>
     <string name="onboarding_finish_body">जब भी कुछ खर्च करें, + बटन दबाएँ। बस इतना ही।</string>
     <string name="onboarding_try_demo">सैंपल डेटा के साथ देखें</string>
@@ -780,6 +782,12 @@
     <string name="privacy_sms_access">बैंक SMS पढ़ें</string>
     <string name="privacy_sms_help">आपके फ़ोन पर ही पढ़े जाते हैं, कभी अपलोड नहीं होते। डिफ़ॉल्ट रूप से बंद।</string>
     <string name="privacy_sms_permission_denied">SMS की अनुमति नहीं दी गई। इसे चालू करने के लिए फ़ोन की ऐप सेटिंग्स में जाकर अनुमति दें।</string>
+    <string name="privacy_sms_import_recent">हाल के बैंक संदेश आयात करें</string>
+    <string name="privacy_sms_import_recent_help">पिछले 90 दिन एक बार पढ़ता है। आपकी पुष्टि के बिना कुछ सहेजा नहीं जाता, और जो पहले से है उसे छोड़ देता है।</string>
+    <string name="privacy_sms_import_running">आपके संदेश पढ़े जा रहे हैं…</string>
+    <string name="privacy_sms_import_found">%1$d लेन-देन मिले। डैशबोर्ड से उनकी पुष्टि करें।</string>
+    <string name="privacy_sms_import_nothing">पिछले 90 दिनों में कोई नया लेन-देन नहीं मिला।</string>
+    <string name="privacy_sms_import_unavailable">SMS पढ़ना बंद है या अनुमति नहीं है, इसलिए कुछ नहीं पढ़ा गया।</string>
     <string name="action_open_settings">सेटिंग्स खोलें</string>
     <string name="privacy_export_data">सब कुछ एक्सपोर्ट करें</string>
     <string name="privacy_delete_data">सब कुछ हटाएँ</string>

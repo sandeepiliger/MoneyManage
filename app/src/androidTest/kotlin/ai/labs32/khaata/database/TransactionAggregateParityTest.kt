@@ -123,6 +123,29 @@ class TransactionAggregateParityTest {
         assertParity(transactions)
     }
 
+    /**
+     * An opening balance with a date is a snapshot: activity before it is already inside it. The
+     * SQL has to skip exactly the rows the calculator skips, on both legs of a transfer.
+     */
+    @Test
+    fun activityBeforeAnOpeningBalanceDateIsExcludedByBoth() = runTest {
+        val snapshot = LocalDate.of(2026, 3, 10)
+        val dated = listOf(
+            hdfc.copy(openingBalanceDate = snapshot),
+            cash,
+            card.copy(openingBalanceDate = snapshot.plusDays(5)),
+        )
+        val transactions = listOf(
+            expense("t1", "850", hdfc.id, on = snapshot.minusDays(20)),
+            expense("t2", "1200", hdfc.id, on = snapshot),
+            income("t3", "35000", hdfc.id, on = snapshot.plusDays(1)),
+            transfer("t4", "4000", from = hdfc.id, to = cash.id, on = snapshot.minusDays(1)),
+            transfer("t5", "900", from = cash.id, to = card.id, on = snapshot.plusDays(2)),
+            expense("t6", "649", card.id, on = snapshot.plusDays(6)),
+        )
+        assertParity(transactions, dated)
+    }
+
     @Test
     fun anAccountWithNoActivityIsItsOpeningBalance() = runTest {
         assertParity(listOf(expense("t1", "100", cash.id)))
@@ -168,15 +191,18 @@ class TransactionAggregateParityTest {
     // ---- Helpers -----------------------------------------------------------------------------
 
     /** Inserts [transactions] and asserts every account's SQL balance equals the calculated one. */
-    private suspend fun assertParity(transactions: List<Transaction>) {
-        insert(transactions)
+    private suspend fun assertParity(
+        transactions: List<Transaction>,
+        accounts: List<Account> = this.accounts,
+    ) {
+        insert(transactions, accounts)
 
         val calculated = BalanceCalculator.balances(accounts, transactions)
             .associate { it.account.id to it.currentBalance }
 
         for (account in accounts) {
             val fromSql = Money.ofMinor(
-                transactionDao.signedTotalForAccount(account.id),
+                transactionDao.signedTotalForAccount(account.id, since = account.openingBalanceDate),
                 CurrencyCode.INR,
             ) + account.openingBalance
 
@@ -193,7 +219,10 @@ class TransactionAggregateParityTest {
         }
     }
 
-    private suspend fun insert(transactions: List<Transaction>) {
+    private suspend fun insert(
+        transactions: List<Transaction>,
+        accounts: List<Account> = this.accounts,
+    ) {
         accountDao.upsertAll(accounts.map { it.toEntity() })
         transactionDao.upsertAll(transactions.map { it.toEntity() })
     }

@@ -296,4 +296,47 @@ class CsvTest {
         assertThat(CsvImporter().parse(csv).rows.single().amount.currency)
             .isEqualTo(CurrencyCode.USD)
     }
+
+    @Test
+    fun `an opening balance date survives a backup round trip`() {
+        // Dropped on restore, it would bring back the double count it exists to prevent: every
+        // backfilled transaction subtracted again from a balance that already contained it.
+        val dated = BackupFile(
+            appVersion = "1.0.0",
+            exportedAt = Instant.parse("2026-03-15T10:30:00Z"),
+            accounts = listOf(
+                Fixtures.account(
+                    id = "acc-1",
+                    openingBalance = "50000",
+                    openingBalanceDate = LocalDate.of(2026, 3, 10),
+                ),
+            ),
+        )
+
+        val restored = (BackupSerializer.read(BackupSerializer.write(dated)) as BackupReadResult.Success)
+            .backup
+
+        assertThat(restored.accounts.single().openingBalanceDate).isEqualTo(LocalDate.of(2026, 3, 10))
+    }
+
+    @Test
+    fun `a backup written before opening balance dates existed still restores`() {
+        // Every backup made before this field was added has no such key. It must read as null --
+        // "no balance stated" -- which is exactly how those accounts behaved when backed up.
+        val legacy = BackupFile(
+            appVersion = "1.0.0",
+            exportedAt = Instant.parse("2026-03-15T10:30:00Z"),
+            accounts = listOf(
+                Fixtures.account(id = "acc-1", openingBalance = "50000"),
+                Fixtures.account(id = "acc-2", name = "ICICI", openingBalance = "1"),
+            ),
+        )
+        val text = BackupSerializer.write(legacy)
+        assertThat(text).doesNotContain("openingBalanceDate")
+
+        val restored = (BackupSerializer.read(text) as BackupReadResult.Success).backup
+
+        assertThat(restored.accounts.map { it.openingBalanceDate }).containsExactly(null, null)
+    }
+
 }

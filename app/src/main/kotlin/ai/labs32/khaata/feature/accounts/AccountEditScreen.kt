@@ -40,6 +40,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.R
+import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.Account
 import ai.labs32.khaata.core.model.AccountType
@@ -87,7 +88,19 @@ class AccountEditViewModel @Inject constructor(
     private val accountRepository: AccountRepository,
     private val profileRepository: ProfileRepository,
     private val entitlementRepository: EntitlementRepository,
+    private val clock: KhaataClock,
 ) : ViewModel() {
+
+    /**
+     * The derived balance when an existing account was opened for editing.
+     *
+     * The field is labelled "Current balance", and it used to be filled with the *opening*
+     * balance instead. So an account opened at ₹50,000 with ₹5,000 spent since showed ₹50,000
+     * here while its own screen showed ₹45,000 -- and someone who corrected it to what their bank
+     * said had that figure stored as the opening balance, with the ₹5,000 then subtracted from it
+     * again. The field now shows what it says, and a change to it is applied as an adjustment.
+     */
+    private var loadedBalance: Money? = null
 
     private val _uiState = MutableStateFlow(AccountEditUiState())
     val uiState: StateFlow<AccountEditUiState> = _uiState.asStateFlow()
@@ -114,6 +127,7 @@ class AccountEditViewModel @Inject constructor(
             } else {
                 val account = accounts.firstOrNull { it.id == accountId }
                 editing = account
+                loadedBalance = account?.let { accountRepository.balanceOf(it.id) }
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -121,7 +135,8 @@ class AccountEditViewModel @Inject constructor(
                         name = account?.name.orEmpty(),
                         institution = account?.institution.orEmpty(),
                         type = account?.type ?: AccountType.BANK,
-                        openingBalanceText = account?.openingBalance?.toPlainString().orEmpty(),
+                        openingBalanceText = (loadedBalance ?: account?.openingBalance)
+                            ?.toPlainString().orEmpty(),
                         maskedIdentifier = account?.maskedIdentifier.orEmpty(),
                         includeInNetWorth = account?.includeInNetWorth ?: true,
                         includeInAvailableBalance = account?.includeInAvailableBalance ?: true,
@@ -199,12 +214,24 @@ class AccountEditViewModel @Inject constructor(
 
                 val existing = editing
                 if (existing != null) {
+                    // What the user typed is the balance they want to see now. The difference from
+                    // the balance they were shown is applied to the opening balance, which leaves
+                    // the account's history and its snapshot date exactly as they were -- and an
+                    // untouched field changes nothing at all.
+                    val shown = loadedBalance
+                    val adjustedOpening = if (shown != null && openingBalance != shown) {
+                        existing.openingBalance + (openingBalance - shown)
+                    } else if (shown == null) {
+                        openingBalance
+                    } else {
+                        existing.openingBalance
+                    }
                     accountRepository.update(
                         existing.copy(
                             name = state.name.trim(),
                             institution = state.institution.trim().takeIf { it.isNotBlank() },
                             type = state.type,
-                            openingBalance = openingBalance,
+                            openingBalance = adjustedOpening,
                             maskedIdentifier = state.maskedIdentifier.takeIf { it.length == 4 },
                             includeInNetWorth = state.includeInNetWorth,
                             includeInAvailableBalance = state.includeInAvailableBalance,
@@ -215,6 +242,10 @@ class AccountEditViewModel @Inject constructor(
                         name = state.name.trim(),
                         type = state.type,
                         openingBalance = openingBalance,
+                        // The field asks for the balance *now*, so a figure typed into it is a
+                        // snapshot as of today. Left blank, it is a placeholder, not a claim.
+                        openingBalanceDate = clock.today()
+                            .takeIf { state.openingBalanceText.isNotBlank() },
                         currency = state.currency,
                         institution = state.institution.trim().takeIf { it.isNotBlank() },
                         maskedIdentifier = state.maskedIdentifier.takeIf { it.length == 4 },

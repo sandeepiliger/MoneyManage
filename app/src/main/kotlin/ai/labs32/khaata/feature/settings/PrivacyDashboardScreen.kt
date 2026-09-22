@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Storage
@@ -84,6 +85,18 @@ data class PrivacyUiState(
     val cloudAiEntitled: Boolean = false,
 )
 
+/** Where a user-requested read of past messages is. Kept apart from [PrivacyUiState], which is rebuilt from settings. */
+sealed interface InboxImportStatus {
+    data object Idle : InboxImportStatus
+    data object Running : InboxImportStatus
+
+    /** Finished; [staged] new transactions are waiting in Pending. Shown once, then cleared. */
+    data class Finished(val staged: Int) : InboxImportStatus
+
+    /** SMS reading is off or the permission has gone, so nothing was read. */
+    data object Unavailable : InboxImportStatus
+}
+
 @HiltViewModel
 class PrivacyDashboardViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -94,6 +107,9 @@ class PrivacyDashboardViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(PrivacyUiState())
     val uiState: StateFlow<PrivacyUiState> = _uiState.asStateFlow()
+
+    private val _inboxImport = MutableStateFlow<InboxImportStatus>(InboxImportStatus.Idle)
+    val inboxImport: StateFlow<InboxImportStatus> = _inboxImport.asStateFlow()
 
     init {
         combine(
@@ -140,11 +156,34 @@ class PrivacyDashboardViewModel @Inject constructor(
             val effective = enabled && SmsPermission.isGranted(context)
             settingsRepository.setSmsImportEnabled(effective)
             SmsTransactionReceiver.setEnabled(context, effective)
+            // No automatic read of past messages here: switching reading on means new messages.
+            // Bringing in the recent past is its own button, so it only happens when asked for.
+        }
+    }
 
-            // Catch up on what is already in the inbox. Without this the app shows nothing until
-            // the user's next transaction, even though the messages explaining the last year of
-            // their spending are already on the phone -- which reads as the feature not working.
-            if (effective) smsInboxScanner.scanIfNeeded()
+    /**
+     * Reads the last 90 days of messages into Pending, on request.
+     *
+     * Repeating it is harmless -- anything already imported is recognised and skipped -- so it
+     * doubles as the retry for a scan that was cut short.
+     */
+    fun importRecentMessages() {
+        if (_inboxImport.value == InboxImportStatus.Running) return
+        _inboxImport.value = InboxImportStatus.Running
+        viewModelScope.launch {
+            val result = runCatching { smsInboxScanner.scanNow() }
+                .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+                .getOrNull()
+            _inboxImport.value = when (result) {
+                null -> InboxImportStatus.Unavailable
+                else -> InboxImportStatus.Finished(result.staged)
+            }
+        }
+    }
+
+    fun inboxImportShown() {
+        if (_inboxImport.value !is InboxImportStatus.Running) {
+            _inboxImport.value = InboxImportStatus.Idle
         }
     }
 
@@ -185,6 +224,7 @@ fun PrivacyDashboardScreen(
     viewModel: PrivacyDashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val inboxImport by viewModel.inboxImport.collectAsStateWithLifecycle()
     val settings = state.settings
 
     val context = LocalContext.current
@@ -231,6 +271,20 @@ fun PrivacyDashboardScreen(
                 }
             }
         }
+    }
+
+    val importFoundMessage = stringResource(R.string.privacy_sms_import_found)
+    val importNothingMessage = stringResource(R.string.privacy_sms_import_nothing)
+    val importUnavailableMessage = stringResource(R.string.privacy_sms_import_unavailable)
+    LaunchedEffect(inboxImport) {
+        val message = when (val status = inboxImport) {
+            is InboxImportStatus.Finished ->
+                if (status.staged > 0) importFoundMessage.format(status.staged) else importNothingMessage
+            InboxImportStatus.Unavailable -> importUnavailableMessage
+            else -> null
+        } ?: return@LaunchedEffect
+        viewModel.inboxImportShown()
+        snackbarHostState.showSnackbar(message)
     }
 
     LaunchedEffect(Unit) {
@@ -402,6 +456,17 @@ fun PrivacyDashboardScreen(
                         )
                     },
                 )
+                if (settings.smsImportEnabled) {
+                    val running = inboxImport == InboxImportStatus.Running
+                    SettingsRow(
+                        title = stringResource(R.string.privacy_sms_import_recent),
+                        subtitle = stringResource(
+                            if (running) R.string.privacy_sms_import_running else R.string.privacy_sms_import_recent_help,
+                        ),
+                        icon = Icons.Default.History,
+                        onClick = if (running) null else viewModel::importRecentMessages,
+                    )
+                }
                 SettingsRow(
                     title = stringResource(R.string.privacy_export_data),
                     icon = Icons.Default.Download,

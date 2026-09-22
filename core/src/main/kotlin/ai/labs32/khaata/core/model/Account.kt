@@ -1,10 +1,12 @@
 package ai.labs32.khaata.core.model
 
 import ai.labs32.khaata.core.common.InstantSerializer
+import ai.labs32.khaata.core.common.LocalDateSerializer
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import kotlinx.serialization.Serializable
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * Where money sits.
@@ -21,6 +23,23 @@ data class Account(
     val type: AccountType,
     val currency: CurrencyCode = CurrencyCode.DEFAULT,
     val openingBalance: Money = Money.zero(currency),
+    /**
+     * The day [openingBalance] was true, when the user actually stated a balance.
+     *
+     * An opening balance entered as "what is in this account now" is a snapshot: every
+     * transaction before that day is already inside the number. Counting those transactions on
+     * top of it again is a double count, and it is exactly what happened when an SMS backfill or a
+     * backdated entry landed in an account whose balance the user had typed in that morning — the
+     * balance went wrong by the net of everything before it.
+     *
+     * Null means no balance was stated -- an account created at zero because nobody knew the
+     * figure, or one that predates this field. Then the opening balance comes before all of the
+     * account's history, and every transaction counts, as it always has. That distinction matters
+     * most for credit cards: a card added with no outstanding stated must still have its imported
+     * spend counted, because its outstanding is derived from exactly that balance.
+     */
+    @Serializable(with = LocalDateSerializer::class)
+    val openingBalanceDate: LocalDate? = null,
     /** Bank or issuer name, e.g. "HDFC Bank". Free text — we never ask for credentials. */
     val institution: String? = null,
     /** Last four digits only, for recognition. Never a full account or card number. */
@@ -36,6 +55,15 @@ data class Account(
     @Serializable(with = InstantSerializer::class) val updatedAt: Instant = Instant.EPOCH,
 ) {
     val isLiability: Boolean get() = type.isLiability
+
+    /**
+     * Whether something that happened on [date] moves this account's balance.
+     *
+     * The snapshot day itself counts: the common order is to enter a balance and then log the
+     * day's spending, so treating the day as after the snapshot is right far more often than not.
+     */
+    fun movesBalanceOn(date: LocalDate): Boolean =
+        openingBalanceDate == null || !date.isBefore(openingBalanceDate)
 }
 
 /**

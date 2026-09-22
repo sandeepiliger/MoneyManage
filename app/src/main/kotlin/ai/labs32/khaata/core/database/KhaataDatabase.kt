@@ -97,17 +97,30 @@ abstract class KhaataDatabase : RoomDatabase() {
     abstract fun appStateDao(): AppStateDao
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 2
         const val NAME = "khaata.db"
 
         /**
-         * Every migration, in order.
+         * Version 2: an account's opening balance can carry the date it was true.
          *
-         * Version 1 is the initial schema, so this is empty. It exists now rather than later so
-         * the pattern is established before the first schema change, and so
-         * `MigrationTest` has something to iterate over from day one.
+         * Without it, an opening balance typed in as "what is in the account now" was treated as
+         * coming before all of the account's history, so every earlier transaction -- an SMS
+         * backfill, or a forgotten expense logged the next day -- was subtracted from a figure
+         * that already reflected it.
+         *
+         * Additive and nullable. Every existing account migrates to null, which is exactly the
+         * behaviour it had before, so no balance on an upgraded install changes. No default is
+         * given because the entity declares none; Room compares the two after migrating and a
+         * mismatch fails the open rather than corrupting anything.
          */
-        val MIGRATIONS: Array<Migration> = arrayOf()
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE accounts ADD COLUMN openingBalanceDate INTEGER")
+            }
+        }
+
+        /** Every migration, in order. */
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
     }
 }
 

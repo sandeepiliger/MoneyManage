@@ -31,9 +31,9 @@ object BalanceCalculator {
      * zero for them, so a caller need not pre-filter.
      */
     fun balanceOf(account: Account, transactions: Iterable<Transaction>): Money =
-        account.openingBalance + transactions.sumOfMoney(account.currency) {
-            it.signedAmountFor(account.id)
-        }
+        account.openingBalance + transactions
+            .filter { account.movesBalanceOn(it.occurredOn) }
+            .sumOfMoney(account.currency) { it.signedAmountFor(account.id) }
 
     /** Balance of [account] as it stood at the end of [asOf]. Used for trend charts. */
     fun balanceAsOf(
@@ -41,7 +41,7 @@ object BalanceCalculator {
         transactions: Iterable<Transaction>,
         asOf: LocalDate,
     ): Money = account.openingBalance + transactions
-        .filter { !it.occurredOn.isAfter(asOf) }
+        .filter { !it.occurredOn.isAfter(asOf) && account.movesBalanceOn(it.occurredOn) }
         .sumOfMoney(account.currency) { it.signedAmountFor(account.id) }
 
     /** Balances for every account, in the accounts' own sort order. */
@@ -54,15 +54,21 @@ object BalanceCalculator {
         val totals = HashMap<String, Money>(accounts.size)
         val counts = HashMap<String, Int>(accounts.size)
         val lastActivity = HashMap<String, java.time.Instant>(accounts.size)
-        val currencyOf = accounts.associate { it.id to it.currency }
+        val accountById = accounts.associateBy { it.id }
 
         for (transaction in transactions) {
             if (!transaction.isEffective) continue
             for (accountId in transaction.touchedAccountIds()) {
-                val currency = currencyOf[accountId] ?: continue
+                val account = accountById[accountId] ?: continue
+                val currency = account.currency
                 val delta = transaction.signedAmountFor(accountId)
                 if (delta.currency != currency) continue // guarded; cross-currency needs FX
-                totals[accountId] = (totals[accountId] ?: Money.zero(currency)) + delta
+                // Activity before a stated opening balance is already inside that balance. It
+                // still counts as activity on the account -- it is listed, it is history -- it
+                // just does not move the figure a second time.
+                if (account.movesBalanceOn(transaction.occurredOn)) {
+                    totals[accountId] = (totals[accountId] ?: Money.zero(currency)) + delta
+                }
                 counts[accountId] = (counts[accountId] ?: 0) + 1
                 val previous = lastActivity[accountId]
                 if (previous == null || transaction.updatedAt.isAfter(previous)) {
@@ -134,7 +140,7 @@ object BalanceCalculator {
         // Sorting once and sweeping forward keeps this O(n log n + n·|dates|) rather than
         // re-scanning the whole ledger for every point on the chart.
         val effective = transactions.filter { it.isEffective }.sortedBy { it.occurredOn }
-        val includedIds = included.map { it.id }.toSet()
+        val includedById = included.associateBy { it.id }
         var running = included.sumOfMoney(currency) { it.openingBalance }
         var cursor = 0
 
@@ -142,7 +148,12 @@ object BalanceCalculator {
             while (cursor < effective.size && !effective[cursor].occurredOn.isAfter(date)) {
                 val transaction = effective[cursor]
                 for (accountId in transaction.touchedAccountIds()) {
-                    if (accountId in includedIds) {
+                    val account = includedById[accountId] ?: continue
+                    // Before a stated snapshot the chart holds at the snapshot figure rather than
+                    // back-computing: the history is usually partial (an SMS import sees only the
+                    // bank's messages), so reconstructing an earlier balance from it would be a
+                    // guess drawn as a fact.
+                    if (account.movesBalanceOn(transaction.occurredOn)) {
                         running += transaction.signedAmountFor(accountId)
                     }
                 }

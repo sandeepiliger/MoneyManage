@@ -87,7 +87,7 @@ class AccountRepository @Inject constructor(
 
     suspend fun balanceOf(accountId: String): Money? {
         val account = accountDao.findById(accountId)?.toDomain() ?: return null
-        val total = transactionDao.signedTotalForAccount(accountId)
+        val total = transactionDao.signedTotalForAccount(accountId, since = account.openingBalanceDate)
         return account.openingBalance + Money.ofMinor(total, account.currency)
     }
 
@@ -97,6 +97,12 @@ class AccountRepository @Inject constructor(
         name: String,
         type: AccountType,
         openingBalance: Money,
+        /**
+         * The day [openingBalance] was true, when the caller has one. Pass it whenever the user
+         * stated a real balance; leave it null when the balance is a placeholder zero. See
+         * [Account.openingBalanceDate] for why the difference matters.
+         */
+        openingBalanceDate: java.time.LocalDate? = null,
         currency: CurrencyCode = CurrencyCode.DEFAULT,
         institution: String? = null,
         maskedIdentifier: String? = null,
@@ -112,6 +118,7 @@ class AccountRepository @Inject constructor(
             type = type,
             currency = currency,
             openingBalance = openingBalance,
+            openingBalanceDate = openingBalanceDate,
             institution = institution?.trim()?.takeIf { it.isNotBlank() },
             // Guarded rather than trusted: only the last four digits are ever stored, so a full
             // number pasted into the field cannot be persisted by mistake.

@@ -17,6 +17,7 @@ import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
 import ai.labs32.khaata.data.repository.SettingsRepository
 import ai.labs32.khaata.data.repository.TransactionRepository
+import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -50,6 +51,13 @@ sealed interface SmsImportOutcome {
 
     /** Parsed, but no account matched the digits in the message and there is none to guess. */
     data object NoMatchingAccount : SmsImportOutcome
+
+    /**
+     * A message from before the account's balance was stated, on that balance's own day, so the
+     * balance already includes it. Staging it would let one tap count it twice. Only an inbox
+     * scan can see such a message; see [SmsTransactionImporter.import]'s `receivedAt`.
+     */
+    data object AlreadyInBalance : SmsImportOutcome
 }
 
 /**
@@ -90,11 +98,20 @@ class SmsTransactionImporter @Inject constructor(
      *   text carries none. Defaults to today, which is right for a message arriving live; a scan
      *   of the existing inbox must pass each message's own timestamp instead, or a year of history
      *   would all land on the day the user turned the feature on.
+     * @param fromInboxScan true when the message is history read back from the inbox rather than
+     *   one arriving now. It changes only how an account created from the message is seeded; see
+     *   [createAccountFromSms].
+     * @param receivedAt the moment the message arrived, when known (the inbox scan knows it). An
+     *   account's opening balance is dated by day, so a message from that same day cannot be
+     *   placed before or after the balance by its date alone; the moment can. One that arrived
+     *   before the account existed is already inside the balance the account was given.
      */
     suspend fun import(
         body: String,
         sender: String?,
         receivedOn: LocalDate = clock.today(),
+        fromInboxScan: Boolean = false,
+        receivedAt: Instant? = null,
     ): SmsImportOutcome {
         if (!settingsRepository.current().smsImportEnabled) return SmsImportOutcome.NotEnabled
 
@@ -115,8 +132,21 @@ class SmsTransactionImporter @Inject constructor(
         val accounts = accountRepository.getAll().filterNot { it.isArchived }
         val (account, isNewAccount) = when (val match = matchAccount(parsed, accounts)) {
             is AccountMatch.Found -> match.account to false
-            is AccountMatch.SafeToCreate -> createAccountFromSms(parsed, sender, currency, match.suffix) to true
+            is AccountMatch.SafeToCreate -> createAccountFromSms(parsed, sender, currency, match.suffix, fromInboxScan) to true
             AccountMatch.Refuse -> return SmsImportOutcome.NoMatchingAccount
+        }
+
+        val snapshotDay = account.openingBalanceDate
+        if (
+            !isNewAccount &&
+            receivedAt != null &&
+            snapshotDay != null &&
+            !parsed.occurredOn.isBefore(snapshotDay) &&
+            receivedAt.isBefore(account.createdAt)
+        ) {
+            // Dated on or after the snapshot day, so it would move the balance -- but it arrived
+            // before the account was set up with that balance, so it is already counted in it.
+            return SmsImportOutcome.AlreadyInBalance
         }
 
         if (
@@ -266,19 +296,19 @@ class SmsTransactionImporter @Inject constructor(
      * [AccountMatch.SafeToCreate] -- in which case the name is the bank alone, or "Account" when
      * even that is unknown.
      *
-     * The opening balance is backed out from the bank's own quoted "Avl Bal", when the message
-     * carries one, so the account is seeded from the bank's own arithmetic rather than a blank
-     * zero the user has to notice and correct. `Avl Bal` describes the balance *after* this
-     * transaction, so the opening balance is that figure with this transaction's own effect
-     * reversed out -- once the transaction is confirmed, the two cancel back out to what the bank
-     * reported. Absent an `Avl Bal`, this is honestly zero, the same starting point manual account
-     * creation already defaults to.
+     * The balance is seeded from the bank's own quoted "Avl Bal" when the message carries one,
+     * rather than a blank zero the user has to notice and correct, and it is dated so history
+     * the user later confirms does not move it a second time. For a live message the snapshot
+     * starts that day with this transaction reversed out; for inbox history -- read newest first
+     * -- it is the newest quoted balance, taken as of the end of its day. Absent an `Avl Bal` it
+     * is honestly zero and undated, the same starting point manual account creation defaults to.
      */
     private suspend fun createAccountFromSms(
         parsed: ParsedSms,
         sender: String?,
         currency: CurrencyCode,
         suffix: String?,
+        fromInboxScan: Boolean,
     ): Account {
         val bankName = BankSenderRegistry.nameFor(sender)
         val displayName = when {
@@ -288,18 +318,38 @@ class SmsTransactionImporter @Inject constructor(
             else -> "Account"
         }
 
-        val openingBalance = parsed.availableBalance?.let { avlBal ->
-            when (parsed.type) {
+        // The balance is a dated snapshot: transactions dated before openingBalanceDate are
+        // already inside it and never move it again, whether or not they are confirmed later.
+        val today = clock.today()
+        val avlBal = parsed.availableBalance
+        val (openingBalance, openingBalanceDate) = when {
+            // Nothing to seed from. Zero, undated -- every confirmed import counts, which is the
+            // same starting point manual account creation has always had.
+            avlBal == null -> Money.zero(currency) to null
+
+            // History from the inbox scan, which reads newest first -- so this is the newest
+            // balance the bank has quoted for the account, and the only one still true. Taken as
+            // the balance at the end of that day: everything older the scan goes on to find, and
+            // anything else from that same day, is already inside it.
+            fromInboxScan && parsed.occurredOn.isBefore(today) ->
+                avlBal to parsed.occurredOn.plusDays(1)
+
+            // A message arriving now (or a scanned one from today, which later messages today
+            // must still move). Avl Bal is the balance *after* this transaction, so its own
+            // effect is reversed out and the snapshot starts today: once confirmed, the two
+            // cancel back to exactly what the bank reported.
+            else -> when (parsed.type) {
                 TransactionType.EXPENSE -> avlBal + parsed.amount
                 TransactionType.INCOME -> avlBal - parsed.amount
                 TransactionType.TRANSFER -> avlBal
-            }
-        } ?: Money.zero(currency)
+            } to parsed.occurredOn
+        }
 
         val id = accountRepository.create(
             name = displayName,
             type = AccountType.BANK,
             openingBalance = openingBalance,
+            openingBalanceDate = openingBalanceDate,
             currency = currency,
             institution = bankName,
             maskedIdentifier = suffix,

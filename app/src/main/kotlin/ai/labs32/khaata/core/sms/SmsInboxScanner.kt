@@ -8,6 +8,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDate
@@ -27,23 +29,26 @@ data class SmsScanResult(
 /**
  * Reads the SMS messages already on the phone and imports the transactions in them.
  *
- * This is what makes the feature useful on the day it is switched on. [SmsTransactionReceiver]
- * only ever sees messages that arrive *after* the user grants permission, so without this the app
- * sits empty until the next time they happen to spend something — while the bank messages
- * explaining the last year of their spending are already sitting in the inbox, unread. Competing
- * India-first trackers all do this scan, and it is the single reason they can show a populated
- * ledger before the user has entered anything.
+ * [SmsTransactionReceiver] only ever sees messages that arrive *after* the user grants
+ * permission, so this is how the recent past gets in. It runs only when the user asks for it --
+ * from the opt-in on the onboarding SMS step, or "Import recent bank messages" in the privacy
+ * dashboard -- and never on its own at launch. An earlier build scanned a year of messages
+ * silently on the first launch after SMS was switched on, and a user who had just typed in
+ * today's balance saw a year of transactions pile on top of it: a ledger that changes
+ * underneath you is worse than an empty one.
  *
  * Deliberate limits:
  *
- *  - **One year.** Long enough to fill the reports this app draws (which top out at a financial
- *    year) without walking a decade of messages on a low-end phone.
- *  - **Once.** Guarded by [AppSettings.hasScannedSmsInbox][ai.labs32.khaata.core.model.AppSettings.hasScannedSmsInbox];
- *    re-running would re-parse thousands of rows that [SmsTransactionImporter] would then
- *    correctly reject as duplicates, which is all cost and no benefit.
- *  - **Silent.** It stages transactions and posts no notifications, because the receiver — not the
- *    importer — is what notifies. A scan that announced each of several hundred finds would be
- *    unusable, and the pending-imports badge already says how many are waiting.
+ *  - **90 days.** Enough to fill this month and the last two for the reports and budgets, without
+ *    walking years of messages on a low-end phone or flooding the review queue.
+ *  - **Newest first.** An account the scan has to create takes its balance from the newest
+ *    message that quotes one, which is the only figure still true today. See
+ *    [SmsTransactionImporter.import]'s `fromInboxScan`.
+ *  - **Review, never balance.** Everything is staged as pending, and every account the user
+ *    stated a balance for carries that balance's date, so confirming history from before it
+ *    lists the spending without moving the balance a second time.
+ *  - **Silent.** It stages transactions and posts no notifications, because the receiver -- not
+ *    the importer -- is what notifies. The caller reports the counts in [SmsScanResult].
  *  - **Never retains a message.** Bodies are read into memory, parsed, and dropped. Nothing here
  *    logs, stores or transmits message text, exactly as the live path already guarantees.
  */
@@ -54,28 +59,24 @@ class SmsInboxScanner @Inject constructor(
     private val settingsRepository: SettingsRepository,
 ) {
 
-    /**
-     * Scans the inbox if it has not been scanned before.
-     *
-     * @return the scan's result, or null when it was skipped (already done, feature off, or the
-     *   permission is not granted).
-     */
-    suspend fun scanIfNeeded(): SmsScanResult? {
-        val settings = settingsRepository.current()
-        if (!settings.smsImportEnabled) return null
-        if (settings.hasScannedSmsInbox) return null
-        if (!SmsPermission.isGranted(context)) return null
-        return scanNow()
-    }
+    /** Two scans at once would race each other's duplicate checks and stage rows twice. */
+    private val mutex = Mutex()
 
     /**
-     * Scans regardless of whether it has run before.
+     * Scans the last [SCAN_DAYS] days of the inbox. Called only on the user's request.
      *
-     * The completion flag is set even when the scan finds nothing, so an inbox with no bank
-     * messages in it is not re-walked on every launch.
+     * Safe to repeat: rows already imported are recognised as duplicates and skipped. Returns
+     * null when SMS reading is off or the permission is missing, so a caller can say why nothing
+     * happened instead of reporting "found nothing".
      */
-    suspend fun scanNow(): SmsScanResult = withContext(Dispatchers.IO) {
-        val since = LocalDate.now().minusYears(SCAN_YEARS)
+    suspend fun scanNow(): SmsScanResult? {
+        if (!settingsRepository.current().smsImportEnabled) return null
+        if (!SmsPermission.isGranted(context)) return null
+        return mutex.withLock { scan() }
+    }
+
+    private suspend fun scan(): SmsScanResult = withContext(Dispatchers.IO) {
+        val since = LocalDate.now().minusDays(SCAN_DAYS)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
@@ -91,7 +92,7 @@ class SmsInboxScanner @Inject constructor(
                 arrayOf(Telephony.Sms.ADDRESS, Telephony.Sms.BODY, Telephony.Sms.DATE),
                 "${Telephony.Sms.DATE} >= ?",
                 arrayOf(since.toString()),
-                "${Telephony.Sms.DATE} ASC",
+                "${Telephony.Sms.DATE} DESC",
             )?.use { cursor ->
                 val addressColumn = cursor.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)
                 val bodyColumn = cursor.getColumnIndexOrThrow(Telephony.Sms.BODY)
@@ -107,17 +108,18 @@ class SmsInboxScanner @Inject constructor(
                     if (body.isBlank()) continue
                     messagesRead++
 
-                    // Oldest first, and each message keeps its own date, so the imported history
-                    // reads as the history it actually was rather than everything landing today.
-                    val receivedOn = Instant.ofEpochMilli(cursor.getLong(dateColumn))
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()
+                    // Each message keeps its own date, so the imported history reads as the
+                    // history it actually was rather than everything landing today.
+                    val receivedAt = Instant.ofEpochMilli(cursor.getLong(dateColumn))
+                    val receivedOn = receivedAt.atZone(ZoneId.systemDefault()).toLocalDate()
 
                     val outcome = runCatching {
                         importer.import(
                             body = body,
                             sender = cursor.getString(addressColumn),
                             receivedOn = receivedOn,
+                            fromInboxScan = true,
+                            receivedAt = receivedAt,
                         )
                     }.getOrElse { error ->
                         if (error is CancellationException) throw error
@@ -141,11 +143,8 @@ class SmsInboxScanner @Inject constructor(
             KhaataLog.e(TAG, "Inbox scan stopped early", error)
         }
 
-        // Only a scan that actually reached the end of the inbox counts as done. Flagging a run
-        // that died partway -- a revoked permission, a provider failure -- would mean the rest of
-        // the messages were never looked at and never would be, since scanIfNeeded skips on the
-        // flag alone. A completed scan that found nothing still flags, so an inbox with no bank
-        // messages in it is not re-walked on every launch.
+        // Only a scan that reached the end of the window counts as done; one cut short by a
+        // revoked permission or a provider failure can simply be asked for again.
         if (completed) settingsRepository.setSmsInboxScanned(true)
         KhaataLog.d(TAG, "Inbox scan: read=$messagesRead staged=$staged accounts=$accountsCreated")
 
@@ -156,8 +155,9 @@ class SmsInboxScanner @Inject constructor(
         )
     }
 
-    private companion object {
-        const val TAG = "SmsInboxScanner"
-        const val SCAN_YEARS = 1L
+    companion object {
+        private const val TAG = "SmsInboxScanner"
+        /** How far back a scan reads. The user-facing copy says 90 days; keep them in step. */
+        const val SCAN_DAYS = 90L
     }
 }

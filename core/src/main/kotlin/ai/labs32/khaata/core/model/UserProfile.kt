@@ -87,11 +87,10 @@ data class AppSettings(
     val hideAmountsWhenLocked: Boolean = true,
     val hasSeenPrivacyDashboard: Boolean = false,
     /**
-     * Whether the existing SMS inbox has already been scanned once.
+     * Whether a user-requested read of the SMS inbox has ever run to completion.
      *
-     * The scan is a one-off catch-up, not something to repeat on every launch: it walks a year of
-     * messages, and re-running it would re-parse thousands of already-imported rows to discover
-     * nothing new.
+     * Informational only. Scans happen when the user asks for one and never on launch, so
+     * nothing gates on this any more; it is kept so settings written by older builds still load.
      */
     val hasScannedSmsInbox: Boolean = false,
 

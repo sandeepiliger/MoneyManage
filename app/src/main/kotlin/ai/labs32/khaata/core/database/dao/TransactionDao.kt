@@ -283,9 +283,16 @@ interface TransactionDao {
         WHERE deletedAt IS NULL AND isPending = 0
           AND (accountId = :accountId OR transferAccountId = :accountId)
           AND (:asOf IS NULL OR occurredOn <= :asOf)
+          AND (:since IS NULL OR occurredOn >= :since)
         """,
     )
-    suspend fun signedTotalForAccount(accountId: String, asOf: LocalDate? = null): Long
+    suspend fun signedTotalForAccount(
+        accountId: String,
+        asOf: LocalDate? = null,
+        // The account's opening-balance date. Anything earlier is already inside that balance;
+        // see Account.movesBalanceOn, which this must agree with exactly.
+        since: LocalDate? = null,
+    ): Long
 
     @Query(
         """
@@ -293,6 +300,11 @@ interface TransactionDao {
           CASE WHEN transferAccountId = accounts.id THEN accounts.id ELSE transactions.accountId END AS accountId,
           COALESCE(SUM(
             CASE
+              -- Before a stated opening balance, a transaction is already inside that balance.
+              -- It is excluded from the sum only, not from the count or last activity: it is
+              -- still history on the account. Mirrors Account.movesBalanceOn.
+              WHEN accounts.openingBalanceDate IS NOT NULL
+                AND transactions.occurredOn < accounts.openingBalanceDate THEN 0
               WHEN transferAccountId = accounts.id THEN amount_minor_units
               WHEN transactions.accountId = accounts.id AND transactions.type = 'INCOME' THEN amount_minor_units
               WHEN transactions.accountId = accounts.id THEN -amount_minor_units

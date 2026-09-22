@@ -95,6 +95,8 @@
     <string name="onboarding_sms_title">Read bank messages?</string>
     <string name="onboarding_sms_body">Khaata can read transaction SMS from your bank so you do not have to type them in. Messages are read on your phone and never sent anywhere. You confirm each one before it is saved.</string>
     <string name="onboarding_sms_optional">This is completely optional — everything works without it.</string>
+    <string name="onboarding_sms_history_title">Also bring in the last 90 days</string>
+    <string name="onboarding_sms_history_body">Reads bank messages from the past 90 days, once. What it finds waits for you to confirm, and never changes the balance you entered.</string>
     <string name="onboarding_finish_title">You are set up</string>
     <string name="onboarding_finish_body">Tap the + button any time you spend something. That is the whole thing.</string>
     <string name="onboarding_try_demo">Explore with sample data</string>
@@ -805,6 +807,12 @@
     <string name="privacy_sms_access">Read bank SMS</string>
     <string name="privacy_sms_help">Parsed on your phone, never uploaded. Off by default.</string>
     <string name="privacy_sms_permission_denied">SMS permission was denied. Enable it in your phone\'s app settings to turn this on.</string>
+    <string name="privacy_sms_import_recent">Import recent bank messages</string>
+    <string name="privacy_sms_import_recent_help">Reads the last 90 days, once. Nothing is saved until you confirm it, and it skips anything already here.</string>
+    <string name="privacy_sms_import_running">Reading your messages…</string>
+    <string name="privacy_sms_import_found">%1$d transaction(s) found. Confirm them from the dashboard.</string>
+    <string name="privacy_sms_import_nothing">No new transactions in the last 90 days.</string>
+    <string name="privacy_sms_import_unavailable">SMS reading is off or not permitted, so nothing was read.</string>
     <string name="action_open_settings">Open settings</string>
     <string name="privacy_export_data">Export everything</string>
     <string name="privacy_delete_data">Delete everything</string>

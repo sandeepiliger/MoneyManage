@@ -77,6 +77,8 @@ data class OnboardingUiState(
     /** True while the PIN-creation dialog is up. PIN mode is not selected until it succeeds. */
     val showPinSetup: Boolean = false,
     val smsImportEnabled: Boolean = false,
+    /** Whether to read the last 90 days of messages once setup finishes. Off unless chosen. */
+    val importRecentSms: Boolean = false,
     val notificationsRequested: Boolean = false,
 
     val isSaving: Boolean = false,
@@ -210,7 +212,13 @@ class OnboardingViewModel @Inject constructor(
         return true
     }
 
-    fun onSmsImportChange(enabled: Boolean) = _uiState.update { it.copy(smsImportEnabled = enabled) }
+    fun onSmsImportChange(enabled: Boolean) = _uiState.update {
+        it.copy(smsImportEnabled = enabled, importRecentSms = it.importRecentSms && enabled)
+    }
+
+    fun onImportRecentSmsChange(enabled: Boolean) = _uiState.update {
+        it.copy(importRecentSms = enabled && it.smsImportEnabled)
+    }
 
     fun onNotificationsRequested() = _uiState.update { it.copy(notificationsRequested = true) }
 
@@ -252,6 +260,12 @@ class OnboardingViewModel @Inject constructor(
                     name = state.accountName.trim(),
                     type = state.accountType,
                     openingBalance = openingBalance,
+                    // The question is "how much is in it right now?", so the answer is a snapshot
+                    // as of today, and the bank messages the inbox import brings in from before
+                    // today are already inside it. Without this date, accepting those imports
+                    // subtracted months of spending from a balance that already reflected it.
+                    openingBalanceDate = clock.today()
+                        .takeIf { state.openingBalanceText.isNotBlank() },
                     currency = state.currency,
                 )
 
@@ -297,12 +311,13 @@ class OnboardingViewModel @Inject constructor(
 
                 _uiState.update { it.copy(isSaving = false, isFinished = true) }
 
-                // After the UI is released, not before: the scan walks a year of messages, and
-                // holding the finish button through it would make setup feel broken. It stages
-                // into the pending queue, so whatever it finds is waiting by the time the user
-                // looks -- and if it is cut short, the next launch's catch-up finishes the job.
-                if (smsEnabled) {
-                    runCatching { smsInboxScanner.scanIfNeeded() }
+                // Only when the user asked for it on the SMS step. After the UI is released, not
+                // before: holding the finish button through a scan would make setup feel broken.
+                // It stages into the pending queue, and the account's balance was just stated
+                // with today's date, so confirming what it finds lists that history without
+                // counting it into the balance a second time.
+                if (smsEnabled && state.importRecentSms) {
+                    runCatching { smsInboxScanner.scanNow() }
                         .onFailure { KhaataLog.e(TAG, "Inbox scan after onboarding failed", it) }
                 }
             } catch (error: Exception) {

@@ -76,6 +76,8 @@ data class AccountEntity(
     val type: AccountType,
     val currency: String,
     @Embedded(prefix = "opening_") val openingBalance: MoneyColumns,
+    /** Epoch day the opening balance was true, or null when none was stated. Added in v2. */
+    val openingBalanceDate: LocalDate?,
     val institution: String?,
     /** Last four digits only. A full account or card number is never stored. */
     val maskedIdentifier: String?,

@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -43,6 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -113,7 +116,11 @@ fun OnboardingScreen(
                         OnboardingStep.BUDGET -> BudgetStep(state, viewModel)
                         OnboardingStep.NOTIFICATIONS -> NotificationsStep(viewModel)
                         OnboardingStep.LOCK -> LockStep(state, viewModel::onLockModeChange)
-                        OnboardingStep.SMS -> SmsStep(state, viewModel::onSmsImportChange)
+                        OnboardingStep.SMS -> SmsStep(
+                            state = state,
+                            onChange = viewModel::onSmsImportChange,
+                            onImportRecentChange = viewModel::onImportRecentSmsChange,
+                        )
                         OnboardingStep.FINISH -> FinishStep()
                     }
                 }
@@ -473,7 +480,11 @@ private fun LockStep(state: OnboardingUiState, onSelect: (AppLockMode) -> Unit) 
 }
 
 @Composable
-private fun SmsStep(state: OnboardingUiState, onChange: (Boolean) -> Unit) {
+private fun SmsStep(
+    state: OnboardingUiState,
+    onChange: (Boolean) -> Unit,
+    onImportRecentChange: (Boolean) -> Unit,
+) {
     // RECEIVE_SMS and READ_SMS are dangerous permissions. Recording the user's intent without
     // asking for them leaves the feature switched on in settings and silently dead in practice,
     // because Android never delivers the broadcast, so the answer here is what decides the flag.
@@ -490,6 +501,38 @@ private fun SmsStep(state: OnboardingUiState, onChange: (Boolean) -> Unit) {
         onAction = { launcher.launch(SmsPermission.REQUIRED) },
         isEnabled = state.smsImportEnabled,
     )
+
+    // Reading messages from before today is its own question, asked only once reading is on, and
+    // off unless the user says yes. New messages are the feature; old ones are a one-off
+    // catch-up the user should choose, knowing it lands in review rather than in their balance.
+    if (state.smsImportEnabled) {
+        Spacer(Modifier.height(KhaataTheme.spacing.large))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = state.importRecentSms,
+                    role = Role.Switch,
+                    onValueChange = onImportRecentChange,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.onboarding_sms_history_title),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = stringResource(R.string.onboarding_sms_history_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(KhaataTheme.spacing.medium))
+            // Null: the whole row is the toggle, so the switch must not take a second click.
+            Switch(checked = state.importRecentSms, onCheckedChange = null)
+        }
+    }
 }
 
 @Composable
