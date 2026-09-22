@@ -125,6 +125,8 @@ class PendingImportsViewModel @Inject constructor(
 @Composable
 fun PendingImportsScreen(
     onBack: () -> Unit,
+    /** Opens the editor on a row, so a wrong parse is corrected before it is saved, not after. */
+    onEdit: (String) -> Unit = {},
     viewModel: PendingImportsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -198,6 +200,7 @@ fun PendingImportsScreen(
                         transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
                         categoryColorSeed = category?.colorSeed ?: 0,
                         categoryIconKey = category?.iconKey,
+                        onClick = { onEdit(transaction.id) },
                     )
                     Row(
                         Modifier

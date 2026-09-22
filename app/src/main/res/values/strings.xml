@@ -674,7 +674,7 @@
     <!-- ==================== SMS import ==================== -->
     <string name="sms_import_title">Bank messages</string>
     <string name="sms_review_title">Confirm these transactions</string>
-    <string name="sms_review_body">We found these in your bank messages. Check them and save the ones that are right.</string>
+    <string name="sms_review_body">We found these in your bank messages. Tap one to fix it, then save the ones that are right.</string>
     <string name="sms_review_accept">Save</string>
     <string name="sms_review_reject">Discard</string>
     <string name="sms_review_check_fields">Check these details</string>

@@ -160,7 +160,10 @@ fun KhaataNavHost(
         }
 
         composable(Routes.PENDING_IMPORTS) {
-            PendingImportsScreen(onBack = { navController.popBackStack() })
+            PendingImportsScreen(
+                onBack = { navController.popBackStack() },
+                onEdit = { id -> navController.navigate(Routes.editTransaction(id)) },
+            )
         }
 
         composable(Routes.RECENTLY_DELETED) {

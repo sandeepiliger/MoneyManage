@@ -675,7 +675,7 @@
     <!-- SMS -->
     <string name="sms_import_title">बैंक मैसेज</string>
     <string name="sms_review_title">इन लेन-देन की पुष्टि करें</string>
-    <string name="sms_review_body">ये आपके बैंक मैसेज में मिले। जाँचकर सही वाले सेव करें।</string>
+    <string name="sms_review_body">ये आपके बैंक मैसेज में मिले। सुधारने के लिए किसी पर टैप करें, फिर सही वाले सेव करें।</string>
     <string name="sms_review_accept">सेव करें</string>
     <string name="sms_review_reject">हटाएँ</string>
     <string name="sms_review_check_fields">ये विवरण जाँच लें</string>
