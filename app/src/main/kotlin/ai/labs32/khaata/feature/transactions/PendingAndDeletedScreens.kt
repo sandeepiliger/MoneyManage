@@ -195,6 +195,7 @@ fun PendingImportsScreen(
                         transaction = transaction,
                         categoryName = category?.name,
                         accountName = accountsById[transaction.accountId]?.name,
+                        transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
                         categoryColorSeed = category?.colorSeed ?: 0,
                         categoryIconKey = category?.iconKey,
                     )
@@ -310,6 +311,7 @@ fun RecentlyDeletedScreen(
                         transaction = transaction,
                         categoryName = category?.name,
                         accountName = accountsById[transaction.accountId]?.name,
+                        transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
                         categoryColorSeed = category?.colorSeed ?: 0,
                         categoryIconKey = category?.iconKey,
                     )

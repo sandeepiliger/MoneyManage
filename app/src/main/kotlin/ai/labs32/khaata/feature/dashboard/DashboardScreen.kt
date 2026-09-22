@@ -865,6 +865,7 @@ private fun RecentTransactionsCard(
                 transaction = transaction,
                 categoryName = category?.name,
                 accountName = accountsById[transaction.accountId]?.account?.name,
+                transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.account?.name },
                 categoryColorSeed = category?.colorSeed ?: 0,
                 categoryIconKey = category?.iconKey,
                 onClick = { onOpenTransaction(transaction.id) },

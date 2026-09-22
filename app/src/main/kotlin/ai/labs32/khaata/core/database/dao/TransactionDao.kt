@@ -402,37 +402,96 @@ interface TransactionDao {
     suspend fun merchantSuggestions(prefix: String, limit: Int): List<String>
 
     /**
-     * True when a transaction with this bank reference already exists.
+     * True when this account already has a row for this bank reference moving money the same way.
      *
      * The duplicate guard for SMS import: the same message can be delivered twice, and a user
      * seeing their rent recorded twice loses trust in every other number.
+     *
+     * Scoped to the account and the direction rather than the reference alone. A UPI transfer
+     * between two of the user's own accounts quotes one reference in both banks' messages, and a
+     * refund quotes the purchase's; a global match dropped the second leg as a "duplicate" and
+     * left that account's balance short by the whole amount. A transfer row counts as an outflow
+     * for its source account and an inflow for its destination.
+     *
+     * Soft-deleted rows count only when they were themselves imported: a message the user
+     * discarded stays discarded when the inbox is read again, while a hand-entered row they
+     * deleted never blocks a genuine new message.
      */
     @Query(
         """
         SELECT EXISTS(
             SELECT 1 FROM transactions
-            WHERE referenceNumber = :reference AND referenceNumber IS NOT NULL AND deletedAt IS NULL
+            WHERE referenceNumber = :reference
+              AND (deletedAt IS NULL OR source = 'SMS_IMPORT')
+              AND (
+                (accountId = :accountId AND (CASE WHEN type = 'INCOME' THEN 0 ELSE 1 END) = :outflow)
+                OR (transferAccountId = :accountId AND :outflow = 0)
+              )
         )
         """,
     )
-    suspend fun existsWithReference(reference: String): Boolean
+    suspend fun existsWithReference(reference: String, accountId: String, outflow: Boolean): Boolean
 
     /**
-     * Fallback duplicate check for messages with no reference number: same amount, same account
-     * and same day.
+     * Fallback duplicate check: same amount, same account, same direction, same day.
+     *
+     * This is what recognises a hand-entered expense as the one the bank then messages about.
+     * Two rows that each carry a different bank reference are two different payments however
+     * alike they look -- two ₹20 teas on one day -- so a reference on both sides that disagrees
+     * rules a match out.
+     *
+     * A transfer's destination leg matches any inflow of the amount within [transferFrom]..
+     * [transferTo], whatever its reference: the credit SMS for a transfer the user logged, or one
+     * already paired from the debit SMS, often quotes its own bank's reference and posts a day
+     * later, and must be recognised rather than added again as income.
      */
     @Query(
         """
         SELECT EXISTS(
             SELECT 1 FROM transactions
             WHERE amount_minor_units = :minorUnits
-              AND accountId = :accountId
-              AND occurredOn = :occurredOn
-              AND deletedAt IS NULL
+              AND (deletedAt IS NULL OR source = 'SMS_IMPORT')
+              AND (
+                (
+                  accountId = :accountId
+                  AND occurredOn = :occurredOn
+                  AND (CASE WHEN type = 'INCOME' THEN 0 ELSE 1 END) = :outflow
+                  AND (referenceNumber IS NULL OR :reference IS NULL OR referenceNumber = :reference)
+                )
+                OR (
+                  transferAccountId = :accountId
+                  AND :outflow = 0
+                  AND occurredOn BETWEEN :transferFrom AND :transferTo
+                )
+              )
         )
         """,
     )
-    suspend fun existsSimilar(minorUnits: Long, accountId: String, occurredOn: LocalDate): Boolean
+    suspend fun existsSimilar(
+        minorUnits: Long,
+        accountId: String,
+        occurredOn: LocalDate,
+        outflow: Boolean,
+        reference: String?,
+        transferFrom: LocalDate,
+        transferTo: LocalDate,
+    ): Boolean
+
+    /**
+     * Imports still awaiting review that could be the other leg of a transfer: the same amount,
+     * within [from]..[to], not already paired. [TransferPairing][ai.labs32.khaata.core.sms.TransferPairing]
+     * makes the actual decision.
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE isPending = 1 AND deletedAt IS NULL AND source = 'SMS_IMPORT'
+          AND transferAccountId IS NULL
+          AND amount_minor_units = :minorUnits
+          AND occurredOn BETWEEN :from AND :to
+        """,
+    )
+    suspend fun pendingImportsForAmount(minorUnits: Long, from: LocalDate, to: LocalDate): List<TransactionEntity>
 
     @Transaction
     suspend fun replaceAll(transactions: List<TransactionEntity>) {

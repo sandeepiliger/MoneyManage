@@ -82,6 +82,7 @@ class SmsTransactionReceiver : BroadcastReceiver() {
                     SmsImportOutcome.NotEnabled -> KhaataLog.d(TAG, "SMS import is not enabled")
                     SmsImportOutcome.Duplicate -> KhaataLog.d(TAG, "Duplicate, skipped")
                     SmsImportOutcome.AlreadyInBalance -> KhaataLog.d(TAG, "Already in the balance, skipped")
+                    is SmsImportOutcome.PairedAsTransfer -> KhaataLog.d(TAG, "Paired with a staged import as a transfer")
 
                     // The one quiet outcome worth breaking silence for: a real payment was
                     // recognised and then dropped because no account claimed it. Rate-limited to

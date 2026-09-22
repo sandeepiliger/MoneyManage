@@ -12,6 +12,7 @@ import ai.labs32.khaata.core.sms.AccountSuffixKind
 import ai.labs32.khaata.core.sms.BankSenderRegistry
 import ai.labs32.khaata.core.sms.BankSmsParser
 import ai.labs32.khaata.core.sms.ParsedSms
+import ai.labs32.khaata.core.sms.TransferPairing
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
@@ -58,6 +59,12 @@ sealed interface SmsImportOutcome {
      * scan can see such a message; see [SmsTransactionImporter.import]'s `receivedAt`.
      */
     data object AlreadyInBalance : SmsImportOutcome
+
+    /**
+     * The other leg of a transfer already waiting for review, so that row became the transfer
+     * instead of a second row being staged. The first leg was already announced.
+     */
+    data class PairedAsTransfer(val transactionId: String) : SmsImportOutcome
 }
 
 /**
@@ -155,18 +162,59 @@ class SmsTransactionImporter @Inject constructor(
                 amount = parsed.amount,
                 accountId = account.id,
                 occurredOn = parsed.occurredOn,
+                type = parsed.type,
             )
         ) {
             return SmsImportOutcome.Duplicate
         }
 
-        val suggestion = categoryRepository.suggestFor(parsed.merchantDisplayName ?: parsed.merchantRaw)
-
-        val id = transactionRepository.create(
+        // The other leg of a transfer between the user's own accounts, already waiting for
+        // review: one transfer, not an expense plus an income. See [TransferPairing].
+        val counterpart = TransferPairing.counterpart(
             type = parsed.type,
             amount = parsed.amount,
             accountId = account.id,
+            occurredOn = parsed.occurredOn,
+            candidates = transactionRepository.pendingImportsNear(
+                parsed.amount,
+                parsed.occurredOn,
+                TransferPairing.WINDOW_DAYS,
+            ),
+            reference = parsed.referenceNumber,
+        )
+        if (counterpart != null) {
+            val merged = TransferPairing.merge(
+                pending = counterpart,
+                incomingAccountId = account.id,
+                incomingOccurredOn = parsed.occurredOn,
+                incomingReference = parsed.referenceNumber,
+            )
+            transactionRepository.update(merged, learnCategory = false)
+            KhaataLog.d(TAG, "Paired an SMS with a staged import as one transfer")
+            return SmsImportOutcome.PairedAsTransfer(merged.id)
+        }
+
+        // A card bill paid from a bank account moves money to the card; the card's purchases are
+        // the spending. Filed as a transfer when there is exactly one card it can be -- with
+        // several, a guess could post the payment against the wrong card's outstanding.
+        val billCard = if (parsed.isCardBillPayment && account.type != AccountType.CREDIT_CARD) {
+            accounts.filter { it.type == AccountType.CREDIT_CARD && it.id != account.id }.singleOrNull()
+        } else {
+            null
+        }
+
+        val suggestion = if (billCard == null) {
+            categoryRepository.suggestFor(parsed.merchantDisplayName ?: parsed.merchantRaw)
+        } else {
+            null
+        }
+
+        val id = transactionRepository.create(
+            type = if (billCard != null) TransactionType.TRANSFER else parsed.type,
+            amount = parsed.amount,
+            accountId = account.id,
             categoryId = suggestion?.categoryId,
+            transferAccountId = billCard?.id,
             merchant = parsed.merchantDisplayName ?: parsed.merchantRaw,
             // The note is deliberately not the message body. Storing the SMS would put bank text
             // into exports, backups and anything a future feature reads from a transaction.
@@ -185,7 +233,8 @@ class SmsTransactionImporter @Inject constructor(
 
         return SmsImportOutcome.Staged(
             transactionId = id,
-            parsed = parsed,
+            // The notification words itself from the type, so a bill payment says "transferred".
+            parsed = if (billCard != null) parsed.copy(type = TransactionType.TRANSFER) else parsed,
             categoryName = suggestion?.categoryId?.let { categoryRepository.findById(it)?.name },
             accountName = account.name,
             isNewAccount = isNewAccount,

@@ -77,6 +77,22 @@ object BankSmsParser {
         RegexOption.IGNORE_CASE,
     )
 
+    /**
+     * A debit that pays a credit card bill rather than buying anything.
+     *
+     * The purchases on the card are the spending; the bill that settles them is money moving
+     * between two of the user's own accounts. Filed as an expense it counts every card purchase a
+     * second time in the month it is paid. CRED is named because paying through it is how a large
+     * share of Indian card bills are settled, and its debit SMS says nothing else about a card.
+     */
+    private val CARD_BILL_PAYMENT = Regex(
+        """\b(?:credit\s*card|cc)\s*(?:bill|payment|pymt|dues?)\b""" +
+            """|\b(?:payment|paid|pymt)\b[^.]{0,40}?\b(?:to|towards|for)\b[^.]{0,30}?\bcredit\s*card\b""" +
+            """|\btowards\b[^.]{0,30}?\bcredit\s*card\b""" +
+            """|\bcred\s*club\b|\bcred\.club\b|@cred\b|\bto\s+cred\b""",
+        RegexOption.IGNORE_CASE,
+    )
+
     // ---- Structure ---------------------------------------------------------------------------
 
     /** Masked suffix from a bank-account reference: `A/c XX1234`. */
@@ -196,6 +212,11 @@ object BankSmsParser {
             },
             sender = sender,
             confidence = scoreConfidence(merchantKey, rail, body),
+            // Only money leaving a bank account can be a bill payment; a card's own "payment
+            // received" is the other leg, and a card purchase that mentions the card is a spend.
+            isCardBillPayment = direction == TransactionType.EXPENSE &&
+                suffixMatch?.kind != AccountSuffixKind.CARD &&
+                CARD_BILL_PAYMENT.containsMatchIn(body),
         )
     }
 
@@ -374,6 +395,11 @@ data class ParsedSms(
     val availableBalance: Money?,
     val sender: String?,
     val confidence: Int,
+    /**
+     * A bank debit that pays a credit card bill. The importer files it as a transfer to the card
+     * when it can tell which card, so card spending is not counted a second time as the bill.
+     */
+    val isCardBillPayment: Boolean = false,
 ) {
     val needsCloserReview: Boolean get() = confidence < REVIEW_THRESHOLD
 

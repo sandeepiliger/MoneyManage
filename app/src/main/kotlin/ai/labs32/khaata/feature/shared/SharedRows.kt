@@ -36,6 +36,7 @@ import ai.labs32.khaata.core.model.BudgetStatus
 import ai.labs32.khaata.core.model.OccurrenceKind
 import ai.labs32.khaata.core.model.ScheduledOccurrence
 import ai.labs32.khaata.core.model.Transaction
+import ai.labs32.khaata.core.model.TransactionType
 import ai.labs32.khaata.core.model.TransactionSource
 import ai.labs32.khaata.core.ui.components.CategoryIcons
 import ai.labs32.khaata.core.ui.components.ColorBadge
@@ -72,9 +73,20 @@ fun TransactionRow(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     showDate: Boolean = true,
+    /** Where a transfer went. Shown as "from → to" so a transfer reads as one, not as a spend. */
+    transferAccountName: String? = null,
 ) {
-    val fallbackTitle = stringResource(R.string.categories_uncategorised)
-    val subtitle = listOfNotNull(categoryName, accountName).joinToString(" • ")
+    // A transfer has no category by design, so "Uncategorised" would read as something the
+    // user forgot to fill in.
+    val fallbackTitle = stringResource(
+        if (transaction.type == TransactionType.TRANSFER) R.string.transaction_transfer else R.string.categories_uncategorised,
+    )
+    val accountLabel = if (accountName != null && transferAccountName != null) {
+        "$accountName → $transferAccountName"
+    } else {
+        accountName
+    }
+    val subtitle = listOfNotNull(categoryName, accountLabel).joinToString(" • ")
 
     Row(
         modifier = modifier

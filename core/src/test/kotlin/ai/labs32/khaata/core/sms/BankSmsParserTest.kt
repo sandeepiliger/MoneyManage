@@ -323,4 +323,34 @@ class BankSmsParserTest {
         assertThat(parsed.accountSuffix).isEqualTo("1234")
         assertThat(parsed.accountSuffixKind).isEqualTo(AccountSuffixKind.BANK)
     }
+
+    // ---- Card bill payments ------------------------------------------------------------------
+
+    @Test
+    fun `a bank debit that pays a credit card bill is recognised as one`() {
+        listOf(
+            "Rs.25,000.00 debited from A/c XX4321 on 05-03-26 towards your HDFC Credit Card. Avl Bal Rs.12,000.00",
+            "INR 18000 debited from A/c XX4321 for CC payment on 05-03-2026. Ref 556677889900",
+            "Rs 9,450.00 debited from a/c XX4321 on 05-03-26 to VPA cred.club@axisb UPI Ref 412345678901",
+            "Rs.3200 sent from A/c XX4321 to CRED Club on 05-03-26. UPI Ref 412345678902",
+        ).forEach { body ->
+            val parsed = parse(body)!!
+            assertThat(parsed.type).isEqualTo(TransactionType.EXPENSE)
+            assertThat(parsed.isCardBillPayment).isTrue()
+        }
+    }
+
+    @Test
+    fun `ordinary spending, card purchases and the card's own payment receipt are not bill payments`() {
+        listOf(
+            "Rs.850.00 debited from A/c XX4321 on 14-03-26 to VPA swiggy@hdfcbank UPI Ref 412345678901",
+            "Thank you for using your HDFC Bank Credit Card ending 1234 for Rs.500 at AMAZON on 14-03-26",
+            "Rs.1,299 spent on your ICICI Bank Credit Card XX9876 at FLIPKART on 14-03-2026",
+            "Payment of Rs.25,000.00 received towards your credit card XX1234 on 05-03-26. Thank you",
+            "INR 2,500.00 credited to A/c XX8899 from VPA rahul@okaxis on 15-03-2026. UPI Ref 998877665544",
+        ).forEach { body ->
+            val parsed = parse(body) ?: return@forEach
+            assertThat(parsed.isCardBillPayment).isFalse()
+        }
+    }
 }

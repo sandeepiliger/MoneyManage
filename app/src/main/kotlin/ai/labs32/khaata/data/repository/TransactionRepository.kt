@@ -18,6 +18,7 @@ import ai.labs32.khaata.core.database.toEntity
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.model.TransactionSource
 import ai.labs32.khaata.core.model.TransactionType
+import ai.labs32.khaata.core.sms.TransferPairing
 import ai.labs32.khaata.core.money.Money
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -236,20 +237,37 @@ class TransactionRepository @Inject constructor(
     /**
      * Whether an imported transaction is already recorded.
      *
-     * A bank reference is the reliable signal; without one, matching on amount, account and date
-     * catches the common case of the same SMS being delivered twice.
+     * A bank reference is the reliable signal; without one, matching on amount, account, direction
+     * and date catches the same SMS delivered twice and a transaction the user already typed in.
+     * See the two DAO queries for why both are scoped to the account and the direction.
      */
     suspend fun isLikelyDuplicate(
         referenceNumber: String?,
         amount: Money,
         accountId: String,
         occurredOn: LocalDate,
+        type: TransactionType,
     ): Boolean {
-        if (!referenceNumber.isNullOrBlank() && transactionDao.existsWithReference(referenceNumber)) {
+        val outflow = type != TransactionType.INCOME
+        val reference = referenceNumber?.takeIf { it.isNotBlank() }
+        if (reference != null && transactionDao.existsWithReference(reference, accountId, outflow)) {
             return true
         }
-        return transactionDao.existsSimilar(amount.minorUnits, accountId, occurredOn)
+        return transactionDao.existsSimilar(
+            minorUnits = amount.minorUnits,
+            accountId = accountId,
+            occurredOn = occurredOn,
+            outflow = outflow,
+            reference = reference,
+            transferFrom = occurredOn.minusDays(TransferPairing.WINDOW_DAYS),
+            transferTo = occurredOn.plusDays(TransferPairing.WINDOW_DAYS),
+        )
     }
+
+    /** Staged imports of exactly [amount] dated within [days] of [around]; candidates for pairing. */
+    suspend fun pendingImportsNear(amount: Money, around: LocalDate, days: Long): List<Transaction> =
+        transactionDao.pendingImportsForAmount(amount.minorUnits, around.minusDays(days), around.plusDays(days))
+            .toDomain()
 
     // ---- Aggregates --------------------------------------------------------------------------
 
