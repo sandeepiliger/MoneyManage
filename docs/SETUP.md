@@ -60,8 +60,9 @@ ADMOB_BANNER_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
 ADMOB_INTERSTITIAL_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
 ADMOB_REWARDED_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY
 
-CLOUD_AI_BASE_URL=https://your-own-backend.example/v1
+CLOUD_AI_ENDPOINT=https://your-own-backend.example/v1/chat/completions
 CLOUD_AI_MODEL=
+# CLOUD_AI_API_KEY=   (optional; leave unset when the endpoint is your own backend)
 
 PRIVACY_POLICY_URL=https://your-domain.example/khaata/privacy
 TERMS_URL=https://your-domain.example/khaata/terms
@@ -73,8 +74,9 @@ SUPPORT_EMAIL=support@your-domain.example
 | Key | Default | Behaviour when unset |
 | --- | --- | --- |
 | `ADMOB_APP_ID` and the three unit IDs | **Google's published test IDs** | Test ads render; no revenue, no policy risk |
-| `CLOUD_AI_BASE_URL` | empty | Cloud AI reports itself unconfigured; the local engine handles everything |
-| `CLOUD_AI_MODEL` | empty | Same |
+| `CLOUD_AI_ENDPOINT` | empty | Cloud AI reports itself unconfigured, AI Pro is not offered, and the local engine handles everything |
+| `CLOUD_AI_MODEL` | empty | No `model` is sent, which is right for an Azure deployment URL (it names the model already) |
+| `CLOUD_AI_API_KEY` | empty | No key is sent; the endpoint is expected to authorise the app itself |
 | `PRIVACY_POLICY_URL`, `TERMS_URL` | `example.invalid` placeholders | The About screen links to a URL that will not resolve. **Replace before any release.** |
 | `SUPPORT_EMAIL` | `support@example.invalid` | Same |
 
@@ -82,13 +84,13 @@ The AdMob defaults are the test unit IDs Google publishes for exactly this purpo
 in a release build would mean an app with non-functional ads, not a policy violation — but check
 `ADMOB.md` before releasing.
 
-### No API key is stored in the app
+### Keep the provider key out of the app
 
-There is deliberately no `CLOUD_AI_API_KEY`. An API key in an APK is extractable by anyone who
-downloads it; embedding one would mean shipping a credential that bills to your account and can be
-lifted with `unzip` and `strings`. `CLOUD_AI_BASE_URL` is expected to point at a backend **you**
-control, which holds the key and authorises requests itself. See
-[AI_PROVIDER.md](AI_PROVIDER.md).
+`CLOUD_AI_API_KEY` exists but should normally stay empty. Anything compiled into an APK is
+extractable by anyone who downloads it with `unzip` and `strings`, so a provider key placed there is
+a credential that bills to your account and can be lifted. Point `CLOUD_AI_ENDPOINT` at a backend
+**you** control, which holds the key and forwards the request. Setting the key directly is only
+reasonable for a private test build. See [AI_PROVIDER.md](AI_PROVIDER.md).
 
 ---
 

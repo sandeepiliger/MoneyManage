@@ -2,16 +2,20 @@ package ai.labs32.khaata.feature.ai
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ai.labs32.khaata.BuildConfig
 import ai.labs32.khaata.core.ai.AiAnswer
 import ai.labs32.khaata.core.ai.AiConsentState
 import ai.labs32.khaata.core.ai.AiContext
+import ai.labs32.khaata.core.ai.AnswerSource
+import ai.labs32.khaata.core.ai.CloudAiConfig
+import ai.labs32.khaata.core.ai.CloudAiTransport
+import ai.labs32.khaata.core.ai.CloudFinancialAiService
 import ai.labs32.khaata.core.ai.FinancialAiService
 import ai.labs32.khaata.core.analytics.AnalyticsEvent
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
 import ai.labs32.khaata.core.calc.BalanceCalculator
 import ai.labs32.khaata.core.common.DateRange
 import ai.labs32.khaata.core.common.KhaataClock
+import ai.labs32.khaata.core.di.CloudAiSetup
 import ai.labs32.khaata.core.di.LocalAi
 import ai.labs32.khaata.core.entitlement.Feature
 import ai.labs32.khaata.core.logging.KhaataLog
@@ -53,6 +57,9 @@ data class AiAssistantUiState(
 @HiltViewModel
 class AiAssistantViewModel @Inject constructor(
     @LocalAi private val localAi: FinancialAiService,
+    /** Holds no config when this build has no cloud endpoint; see AppModule.provideCloudAiSetup. */
+    cloudAiSetup: CloudAiSetup,
+    cloudAiTransport: CloudAiTransport,
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
     private val budgetRepository: BudgetRepository,
@@ -68,15 +75,26 @@ class AiAssistantViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AiAssistantUiState())
     val uiState: StateFlow<AiAssistantUiState> = _uiState.asStateFlow()
 
+    /**
+     * The cloud assistant when the build has one, else the on-device engine. The cloud service
+     * re-checks consent on every question and falls back to the device on its own, so this
+     * choice never has to be revisited when a setting changes.
+     */
+    private val cloudAiConfig: CloudAiConfig? = cloudAiSetup.config
+
+    private val assistant: FinancialAiService = cloudAiConfig
+        ?.let { config ->
+            CloudFinancialAiService(config, cloudAiTransport, localAi) { currentConsent().canUseCloud }
+        }
+        ?: localAi
+
     init {
         viewModelScope.launch {
             val consent = currentConsent()
             _uiState.update {
                 it.copy(
-                    providerName = localAi.providerName,
-                    // No cloud provider is wired up in this build, so the on-device service
-                    // answers everything. The flag reflects reality rather than intent.
-                    isUsingCloud = false,
+                    providerName = if (consent.canUseCloud) assistant.providerName else localAi.providerName,
+                    isUsingCloud = consent.canUseCloud,
                     cloudBlockedReason = consent.blockedReason(),
                     suggestions = localAi.suggestedQuestions(buildContext()),
                 )
@@ -100,10 +118,9 @@ class AiAssistantViewModel @Inject constructor(
 
         viewModelScope.launch {
             val answer = try {
-                // Only the on-device service is bound in this build. A cloud provider would be
-                // selected here, gated on `currentConsent().canUseCloud`, and would fall back to
-                // this same call on any failure.
-                localAi.ask(question.trim(), buildContext())
+                // Gated on consent inside the cloud service, which also falls back to the device
+                // on any failure, so this one call is right in every configuration.
+                assistant.ask(question.trim(), buildContext())
             } catch (error: Exception) {
                 KhaataLog.e(TAG, "Assistant query failed", error)
                 AiAnswer.Unavailable("The assistant could not answer that just now.")
@@ -111,7 +128,11 @@ class AiAssistantViewModel @Inject constructor(
 
             analytics.track(
                 AnalyticsEvent.AiAssistantUsed(
-                    provider = localAi.providerName,
+                    provider = if ((answer as? AiAnswer.Answered)?.source == AnswerSource.CLOUD_ASSISTED) {
+                        assistant.providerName
+                    } else {
+                        localAi.providerName
+                    },
                     wasAnswered = answer is AiAnswer.Answered,
                 ),
             )
@@ -159,8 +180,7 @@ class AiAssistantViewModel @Inject constructor(
     private suspend fun currentConsent(): AiConsentState = AiConsentState(
         cloudProcessingEnabled = settingsRepository.current().cloudAiEnabled,
         hasEntitlement = entitlementRepository.isUnlocked(Feature.CLOUD_AI_ASSISTANT),
-        isConfigured = BuildConfig.CLOUD_AI_ENDPOINT.isNotBlank() &&
-            BuildConfig.CLOUD_AI_API_KEY.isNotBlank(),
+        isConfigured = cloudAiConfig != null,
     )
 
     private companion object {

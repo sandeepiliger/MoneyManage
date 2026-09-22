@@ -64,10 +64,11 @@ rather than silently reviving a PIN set months ago and forgotten.
 
 ## Secrets
 
-**No API key ships in the APK.** There is deliberately no `CLOUD_AI_API_KEY`: a key in an APK is
-extractable with `unzip` and `strings` by anyone who downloads it, and would bill to the operator's
-account. `CLOUD_AI_BASE_URL` points at a backend the operator controls, which holds the key and
-authorises requests itself.
+**No API key should ship in the APK.** `CLOUD_AI_API_KEY` is optional and empty by default: a key
+in an APK is extractable with `unzip` and `strings` by anyone who downloads it, and would bill to
+the operator's account. For anything published, `CLOUD_AI_ENDPOINT` points at a backend the
+operator controls, which holds the key and authorises requests itself. The key field exists only
+for private test builds pointed straight at a provider.
 
 Build-time values come from `secrets.properties` (git-ignored) or environment variables, never from
 a committed file. `.gitignore` excludes `*.jks`, `*.keystore`, `keystore.properties`,

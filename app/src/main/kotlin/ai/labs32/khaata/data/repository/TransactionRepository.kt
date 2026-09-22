@@ -67,6 +67,14 @@ class TransactionRepository @Inject constructor(
 
     fun observePendingCount(): Flow<Int> = transactionDao.observePendingCount()
 
+    /** Every tag in use, alphabetically, ignoring case. */
+    fun observeAllTags(): Flow<List<String>> =
+        transactionDao.observeTagColumns().map { columns ->
+            columns.flatMap { Converters.stringToTags(it) }
+                .distinctBy { it.lowercase() }
+                .sortedBy { it.lowercase() }
+        }
+
     fun observeDeleted(limit: Int = 50): Flow<List<Transaction>> =
         transactionDao.observeDeleted(limit).map { it.toDomain() }
 

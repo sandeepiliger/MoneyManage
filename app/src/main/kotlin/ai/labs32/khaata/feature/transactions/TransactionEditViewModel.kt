@@ -64,6 +64,10 @@ data class TransactionEditUiState(
     val note: String = "",
     val occurredOn: LocalDate = LocalDate.now(),
     val tags: Set<String> = emptySet(),
+    /** What is typed in the tags field, kept as typed so a trailing comma survives recomposition. */
+    val tagsText: String = "",
+    /** Tags used before, offered as one-tap chips. */
+    val knownTags: List<String> = emptyList(),
     val accounts: List<Account> = emptyList(),
     val categories: List<Category> = emptyList(),
     val merchantSuggestions: List<String> = emptyList(),
@@ -157,6 +161,11 @@ class TransactionEditViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            val known = runCatching { transactionRepository.observeAllTags().first() }.getOrDefault(emptyList())
+            _uiState.update { it.copy(knownTags = known) }
+        }
+
+        viewModelScope.launch {
             // Read once rather than observed: the row should not reshuffle under the user's
             // finger because a transaction was saved on another screen mid-entry.
             val recent = runCatching { categoryRepository.mostUsedIds(clock.today()) }
@@ -208,6 +217,7 @@ class TransactionEditViewModel @Inject constructor(
                             note = transaction.note.orEmpty(),
                             occurredOn = transaction.occurredOn,
                             tags = transaction.tags,
+                            tagsText = transaction.tags.joinToString(", "),
                             accounts = accounts,
                             categories = categories,
                         )
@@ -349,7 +359,28 @@ class TransactionEditViewModel @Inject constructor(
 
     fun onDateChange(date: LocalDate) = _uiState.update { it.copy(occurredOn = date) }
 
-    fun onTagsChange(tags: Set<String>) = _uiState.update { it.copy(tags = tags) }
+    fun onTagsChange(tags: Set<String>) = _uiState.update {
+        it.copy(tags = tags, tagsText = tags.joinToString(", "))
+    }
+
+    /** Tags typed as a comma-separated list: "trip, goa". */
+    fun onTagsTextChange(text: String) = _uiState.update {
+        it.copy(tagsText = text, tags = parseTags(text))
+    }
+
+    /** Adds a previously used tag from its chip, or removes it if it is already there. */
+    fun onKnownTagToggle(tag: String) {
+        val current = _uiState.value.tags
+        val existing = current.firstOrNull { it.equals(tag, ignoreCase = true) }
+        onTagsChange(if (existing != null) current - existing else current + tag)
+    }
+
+    private fun parseTags(text: String): Set<String> =
+        text.split(',')
+            .map { raw -> raw.filterNot { it.isISOControl() }.trim().take(MAX_TAG_LENGTH) }
+            .filter { it.isNotEmpty() }
+            .distinctBy { it.lowercase() }
+            .toCollection(LinkedHashSet())
 
     // ---- Save --------------------------------------------------------------------------------
 
@@ -591,6 +622,9 @@ class TransactionEditViewModel @Inject constructor(
 
         /** Ten crore with paise is far beyond any personal transaction. */
         const val MAX_AMOUNT_LENGTH = 12
+
+        /** Long enough for "goa trip 2026", short enough to stay one chip wide. */
+        const val MAX_TAG_LENGTH = 30
     }
 }
 

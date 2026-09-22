@@ -182,6 +182,7 @@
     <string name="transaction_note">Note</string>
     <string name="transaction_date">Date</string>
     <string name="transaction_tags">Tags</string>
+    <string name="transaction_tags_hint">Comma-separated, e.g. goa trip, office</string>
     <string name="transaction_receipt">Receipt</string>
     <string name="transaction_reference">Reference</string>
     <string name="transaction_recorded_via">Recorded via</string>

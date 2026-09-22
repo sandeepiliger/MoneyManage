@@ -292,11 +292,11 @@ class AiConsentAndConfigTest {
         }
     }
 
+    /** A backend the operator runs holds the provider key itself, so the app needs none. */
     @Test
-    fun `a cloud config requires a key`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            CloudAiConfig(endpoint = "https://example.test/v1", apiKey = "", model = "m")
-        }
+    fun `a cloud config may omit the key`() {
+        val config = CloudAiConfig(endpoint = "https://example.test/v1")
+        assertThat(config.apiKey).isEmpty()
     }
 
     @Test

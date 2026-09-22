@@ -11,6 +11,8 @@ import ai.labs32.khaata.core.ads.AdMobAdProvider
 import ai.labs32.khaata.core.ads.NoOpAdProvider
 import ai.labs32.khaata.core.ads.StaticAdConfigProvider
 import ai.labs32.khaata.core.ai.CloudAiConfig
+import ai.labs32.khaata.core.ai.CloudAiTransport
+import ai.labs32.khaata.core.ai.HttpCloudAiTransport
 import ai.labs32.khaata.core.ai.FinancialAiService
 import ai.labs32.khaata.core.ai.LocalFinancialAiService
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
@@ -116,14 +118,12 @@ object AppModule {
     @Provides
     @Singleton
     fun provideEntitlementManager(): EntitlementManager = EntitlementManager(
-        // The cloud assistant is written and shipped, and without an endpoint compiled in it can
-        // only report that it is not configured. Declaring it unavailable here keeps it off the
-        // paywall and out of isUnlocked, so AI Pro is not sold on a feature this build cannot
-        // deliver. Configure the secrets and the plan reappears on its own.
+        // Without a usable endpoint compiled in, the cloud assistant can only report that it is
+        // not configured. Declaring it unavailable here keeps it off the paywall and out of
+        // isUnlocked, so AI Pro is not sold on a feature this build cannot deliver. Configure
+        // CLOUD_AI_ENDPOINT and the plan reappears on its own.
         unavailableInThisBuild = buildSet {
-            if (BuildConfig.CLOUD_AI_ENDPOINT.isBlank() || BuildConfig.CLOUD_AI_API_KEY.isBlank()) {
-                add(Feature.CLOUD_AI_ASSISTANT)
-            }
+            if (cloudAiConfigOrNull() == null) add(Feature.CLOUD_AI_ASSISTANT)
         },
     )
 
@@ -144,15 +144,16 @@ object AppModule {
     /**
      * Cloud AI configuration, or null when the build has none.
      *
-     * No endpoint or key ships with the app, so this is null in a default build and the cloud
-     * option stays disabled in settings.
+     * Only the endpoint is required. The key is optional and best left blank, with the endpoint
+     * pointing at a backend you run that holds the provider key; see docs/AI_PROVIDER.md. A
+     * malformed endpoint (not HTTPS) counts as none rather than crashing the app at startup.
      */
     @Provides
     @Singleton
-    fun provideCloudAiConfig(): CloudAiConfig? {
-        if (BuildConfig.CLOUD_AI_ENDPOINT.isBlank() || BuildConfig.CLOUD_AI_API_KEY.isBlank()) {
-            return null
-        }
+    fun provideCloudAiSetup(): CloudAiSetup = CloudAiSetup(cloudAiConfigOrNull())
+
+    private fun cloudAiConfigOrNull(): CloudAiConfig? {
+        if (BuildConfig.CLOUD_AI_ENDPOINT.isBlank()) return null
         return runCatching {
             CloudAiConfig(
                 endpoint = BuildConfig.CLOUD_AI_ENDPOINT,
@@ -161,6 +162,10 @@ object AppModule {
             )
         }.getOrNull()
     }
+
+    @Provides
+    @Singleton
+    fun provideCloudAiTransport(transport: HttpCloudAiTransport): CloudAiTransport = transport
 
     // ---- Pluggable services ------------------------------------------------------------------
 
@@ -198,6 +203,12 @@ object AppModule {
         adMob: dagger.Lazy<AdMobAdProvider>,
     ): AdProvider = if (BuildConfig.DEBUG) noOp else adMob.get()
 }
+
+/**
+ * The build's cloud AI configuration, or none. Wrapped so it is injected as an ordinary non-null
+ * binding rather than relying on nullable-binding support.
+ */
+data class CloudAiSetup(val config: CloudAiConfig?)
 
 /** Marks the on-device AI implementation, which is bound alongside the optional cloud one. */
 @Qualifier

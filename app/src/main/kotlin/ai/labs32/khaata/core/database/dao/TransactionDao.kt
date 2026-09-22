@@ -401,6 +401,10 @@ interface TransactionDao {
     )
     suspend fun merchantSuggestions(prefix: String, limit: Int): List<String>
 
+    /** Every distinct stored tag set, for tag suggestions and the tag filter. Decoded by the caller. */
+    @Query("SELECT DISTINCT tags FROM transactions WHERE deletedAt IS NULL AND tags != ''")
+    fun observeTagColumns(): Flow<List<String>>
+
     /**
      * True when this account already has a row for this bank reference moving money the same way.
      *

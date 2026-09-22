@@ -88,11 +88,14 @@ so an event added later cannot bypass the check by forgetting to ask.
 ### Cloud AI
 
 - **Off by default**, and additionally gated on the AI Pro entitlement and on
-  `CLOUD_AI_BASE_URL` being configured. All three must hold. The local engine handles everything on
+  `CLOUD_AI_ENDPOINT` being configured. All three must hold. The local engine handles everything on
   every plan.
 - When on, the request carries the question and the figures needed to answer it — not the ledger.
-- **No API key is embedded in the app.** `CLOUD_AI_BASE_URL` points at a backend the operator
-  controls. See [AI_PROVIDER.md](AI_PROVIDER.md).
+- **No provider key belongs in a published app.** `CLOUD_AI_ENDPOINT` should point at a backend
+  the operator controls, which holds the key. See [AI_PROVIDER.md](AI_PROVIDER.md).
+- What is sent: six months of spending and income totals, this and last month by category, budget
+  progress, subscription names, and the question. Never transaction rows, merchants or account
+  names. Every answer's figures are computed on the phone.
 
 ---
 

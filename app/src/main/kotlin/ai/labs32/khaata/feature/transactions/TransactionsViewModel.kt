@@ -44,6 +44,8 @@ data class TransactionsUiState(
     val searchText: String = "",
     val accounts: List<Account> = emptyList(),
     val categories: List<Category> = emptyList(),
+    /** Every tag in use, for the filter sheet. */
+    val tags: List<String> = emptyList(),
     val currency: CurrencyCode = CurrencyCode.DEFAULT,
     val filteredTotal: Money? = null,
     val filteredCount: Int = 0,
@@ -97,6 +99,10 @@ class TransactionsViewModel @Inject constructor(
                     it.copy(accounts = accounts, categories = categories, currency = currency)
                 }
             }
+            .launchIn(viewModelScope)
+
+        transactionRepository.observeAllTags()
+            .onEach { tags -> _uiState.update { it.copy(tags = tags) } }
             .launchIn(viewModelScope)
 
         // The filtered total is a separate, non-paged query: the paged list only knows about the

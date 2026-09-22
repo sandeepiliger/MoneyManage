@@ -118,11 +118,13 @@ enum class AnswerSource {
 data class CloudAiConfig(
     val endpoint: String,
     /**
-     * Supplied at runtime from secure storage or a build-time secret, never checked into the
-     * repository and never written to logs.
+     * Optional. Leave it blank when [endpoint] is a backend you run, which holds the provider key
+     * itself -- the recommended setup, because anything compiled into an APK can be extracted
+     * from it. Never checked into the repository and never written to logs.
      */
-    val apiKey: String,
-    val model: String,
+    val apiKey: String = "",
+    /** Sent as the request's `model`. Blank for an Azure deployment URL, which names it already. */
+    val model: String = "",
     val timeoutMillis: Long = 20_000,
 ) {
     init {
@@ -130,7 +132,6 @@ data class CloudAiConfig(
             // Financial data must never travel in the clear.
             "Cloud AI endpoint must use HTTPS"
         }
-        require(apiKey.isNotBlank()) { "Cloud AI requires an API key" }
     }
 
     /** Redacted so a config can be logged or shown in diagnostics without leaking the key. */

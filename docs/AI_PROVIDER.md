@@ -83,46 +83,54 @@ list, not merchant history.
 `AiContext` is passed to `ask()` explicitly rather than being fetched by the service, precisely so
 that a cloud implementation must decide, visibly and reviewably, what it puts in a request body.
 
-### `CloudAiConfig` enforces two things at construction
+### `CloudAiConfig` enforces HTTPS at construction
 
 ```kotlin
 require(endpoint.startsWith("https://"))   // financial data never travels in the clear
-require(apiKey.isNotBlank())
 ```
 
-and `toString()` redacts the key, so a config can appear in a diagnostic without leaking it.
+and `toString()` redacts the key, so a config can appear in a diagnostic without leaking it. A
+build whose endpoint is not HTTPS treats cloud AI as unconfigured rather than crashing.
 
-### The key does not live in the app
+### Configuration
 
-`CLOUD_AI_BASE_URL` is expected to point at **a backend you run**. That backend holds the provider
-key and authorises requests itself.
+| Key | Meaning |
+| --- | --- |
+| `CLOUD_AI_ENDPOINT` | The full URL the app POSTs an OpenAI-style chat-completions request to. Required. |
+| `CLOUD_AI_MODEL` | Sent as `model`. Leave empty for an Azure OpenAI deployment URL, which names the model already. |
+| `CLOUD_AI_API_KEY` | Optional. When set it is sent as both `api-key` (Azure) and `Authorization: Bearer` (OpenAI). |
+
+Examples of `CLOUD_AI_ENDPOINT`:
+
+- Your own backend (recommended): `https://api.your-domain.example/khaata/chat`
+- Azure OpenAI deployment: `https://<resource>.openai.azure.com/openai/deployments/<deployment>/chat/completions?api-version=2024-10-21`
+- Azure AI Foundry models endpoint: `https://<resource>.services.ai.azure.com/models/chat/completions?api-version=2024-05-01-preview` (set `CLOUD_AI_MODEL` to the deployment name)
+
+### The key should not live in the app
+
+`CLOUD_AI_ENDPOINT` is expected to point at **a backend you run**. That backend holds the provider
+key, authorises requests itself (Play Integrity, a per-install token, rate limits), and forwards
+the body unchanged to Azure or OpenAI.
 
 An API key shipped in an APK is extractable by anyone who downloads the app, using `unzip` and
 `strings`. It would bill to your account, and there is no obfuscation that fixes this — only not
-shipping it does. This is why there is deliberately no `CLOUD_AI_API_KEY` build config field.
+shipping it does. `CLOUD_AI_API_KEY` exists for private test builds pointed straight at a provider;
+leave it empty in anything you publish.
 
-### Implementation sketch
+### How it works
 
-```kotlin
-class CloudFinancialAiService @Inject constructor(
-    private val config: CloudAiConfig,
-    private val consent: AiConsentProvider,
-    private val local: LocalFinancialAiService,
-) : FinancialAiService {
+`CloudFinancialAiService` (in `:core`, with tests) wraps the on-device engine:
 
-    override suspend fun ask(question: String, context: AiContext): AiAnswer {
-        // The gate is checked here, not only in the UI, so a new call site cannot bypass it.
-        if (!consent.state().canUseCloud) return local.ask(question, context)
+1. The on-device engine answers first. Its figures are always what is shown under the answer.
+2. If consent, entitlement and configuration all hold — re-checked on every question — the app
+   sends the question plus `CloudAiPrompt.summarise`: six months of spending and income totals,
+   this and last month by top-level category, budget progress, subscription names, and the
+   on-device answer. Never transaction rows, merchants or account names.
+3. The model's reply is shown as the answer, marked "Phrased using cloud AI".
+4. Any failure — offline, a non-2xx status, an empty or malformed reply — shows the on-device
+   answer instead.
 
-        return runCatching { post(question, summarise(context)) }
-            // A network failure falls back to the local engine rather than to an error: the user
-            // asked a question about their own data and the answer is available on the device.
-            .getOrElse { local.ask(question, context) }
-    }
-}
-```
-
-Bind it in `AppModule` alongside `@LocalAi`. Nothing else changes.
+The HTTP call is `HttpCloudAiTransport` in `:app`, over the platform's HttpURLConnection.
 
 ---
 

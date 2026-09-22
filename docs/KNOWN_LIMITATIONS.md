@@ -4,25 +4,25 @@ Everything here is a real gap, stated plainly rather than left to be discovered.
 
 ## The big one
 
-**No screen has ever rendered.**
+**Nothing is tested on a device automatically.**
 
-The app now **compiles**. A GitHub Actions workflow (`.github/workflows/android-build.yml`)
-builds `:app:assembleDebug` and the R8-minified `:app:assembleRelease` on every push, against
-API 36, and both succeed. The development sandbox still has `dl.google.com` blocked by egress
-policy, so `:app` cannot be compiled there — CI is the only compiler, and it is the gate that
-matters.
+A GitHub Actions workflow (`.github/workflows/android-build.yml`) builds `:app:assembleDebug` and
+the R8-minified `:app:assembleRelease` on every push, against API 36, runs the `:core` and `:app`
+unit tests, and publishes both APKs to the rolling `latest-build` release. The debug build has been
+installed and used on a real phone by the owner, so screens do render — but only by hand. The
+development sandbox has `dl.google.com` blocked, so `:app` compiles only in CI.
 
 What that leaves:
 
-- **Nobody has looked at this app.** Layouts, spacing, theming and every interaction are
-  unverified by eye. Compiling is not running.
+- **No systematic look at every screen.** Layouts, spacing, dark mode and every interaction have
+  been checked only where someone happened to use them.
 - Android **lint has never actually gated a build**. `abortOnError = true` and a `lint-baseline.xml`
   is configured, but no baseline is committed; CI passes `-Dlint.baselines.continue=true`, which
   generates one and continues instead of failing. Someone must commit a real baseline, or run lint
   and fix what it finds, before the first release.
 - The **instrumentation** tests are written but have **never executed** — CI has no emulator, so
-  `connectedAndroidTest` has never run. The app-module *unit* tests now do run on every push
-  (`:app:testDebugUnitTest`); they were in the same never-executed state until then.
+  `connectedAndroidTest` has never run. That includes `TransactionAggregateParityTest`, which checks
+  the SQL balance queries (now including opening-balance dates) against the Kotlin reference.
 - Play Billing has never connected and AdMob has never rendered; both need an internal-testing
   track run.
 
@@ -40,8 +40,9 @@ the half where a bug is most expensive — see [TESTING.md](TESTING.md).
 | **No Compose UI tests** | Semantics are written for them; nothing asserts a screen renders or that a tap works. |
 | **No UMP consent flow** | Blocks an EEA/UK release with ads. Not required for India. |
 | **Family sharing** | The FAMILY tier's three features are named in `Feature` but **nothing implements them.** They are listed in `Feature.UNSHIPPED`, so `isUnlocked` refuses them and `PaywallViewModel` drops any tier whose every feature is unshipped — the tier does not appear on the paywall and cannot be bought. Sharing a household ledger needs a server this app deliberately does not have, so this is not close. |
-| **Notification-based import** | `notificationImportEnabled` exists in settings and nothing reads it; no `NotificationListenerService` is implemented. Needs a Play policy declaration as well as code. |
-| **AI insights and categorisation** | `AI_ENHANCED_INSIGHTS` and `AI_SMART_CATEGORISATION` are AI Pro features with no implementation. `LocalFinancialAiService` answers the assistant on-device; the cloud path needs `CLOUD_AI_ENDPOINT` configured before anything can be built against it. |
+| **Notification-based import** | `notificationImportEnabled` exists in settings and nothing reads it; no `NotificationListenerService` is implemented and no screen offers it. Needs a Play policy declaration as well as code. |
+| **AI insights and categorisation** | `AI_ENHANCED_INSIGHTS` and `AI_SMART_CATEGORISATION` are AI Pro features with no implementation; they are in `Feature.UNSHIPPED`, so they are neither shown nor sold. The cloud **assistant** is implemented (`CloudFinancialAiService`) and is offered once `CLOUD_AI_ENDPOINT` is configured; see [AI_PROVIDER.md](AI_PROVIDER.md). |
+| **Transaction tags** | `Transaction.tags` is stored, backed up, exported and filterable, but no screen lets anyone add a tag. |
 | **Multi-currency** | `Money` is currency-typed and mixed arithmetic throws, but there are no exchange rates, so an account in a second currency cannot be summed into net worth. Single-currency in practice. |
 
 Goals creation, scheduled backups, dashboard customisation and custom report ranges were all in
@@ -55,17 +56,17 @@ which is the right holding position and not a substitute for deciding whether to
 
 ## Partially done
 
-- **Migration testing** — no migration exists yet, so there is nothing to test. The pattern is in
-  [SCHEMA.md](SCHEMA.md) and `MigrationExample` is kept in the source as a worked reference.
-  One thing to do before v2, though: `app/schemas/` is **not committed**. Room exports the schema
-  JSON at build time and the only builds that have ever run are in CI, which does not commit its
-  output — so there is no v1 schema on record to diff a v2 against or to hand
-  `MigrationTestHelper`. Commit the generated `app/schemas/` from a local build before changing
-  any entity, or the first migration has to be written and verified blind.
+- **Migration testing** — the first migration exists (v1 → v2: `accounts.openingBalanceDate`, a
+  single nullable `ALTER TABLE ... ADD COLUMN`). It has no `MigrationTestHelper` test because
+  `app/schemas/` has never been committed: Room exports the schema JSON at build time, and the only
+  builds that run are in CI, which does not commit its output. Room still validates the migrated
+  table against the entity when the database opens and refuses to open on a mismatch rather than
+  corrupting anything. Commit the generated `app/schemas/` from a local build before the next
+  entity change.
 - **CSV import** matches accounts and categories by name and rejects rows whose account does not
   exist. There is no mapping UI to resolve them instead — a rejected row is reported, not fixable
   in-app.
-- **Hindi is complete** — all 791 string resources are translated, with matching format
+- **Hindi is complete** — every string resource is translated, with matching format
   specifiers (verified by name-diff against `values/strings.xml`). It has not been reviewed by a native speaker in the running app, so
   register and truncation on real screens are unverified.
 
@@ -84,6 +85,15 @@ which is the right holding position and not a substitute for deciding whether to
   It has not been run against a real inbox, and banks change their formats without notice. Expect
   to iterate. This is also why every import lands as pending: the design assumes the parser will
   sometimes be wrong.
+- **SMS transfer pairing is a heuristic.** A debit and a credit of the same amount on two of the
+  user's accounts within two days, both still pending and without conflicting references, become
+  one transfer. Two unrelated payments that happen to match are merged too: balances stay right,
+  but that spend and that income drop out of the reports. Card bill payments become a transfer
+  only when exactly one credit card account exists.
+- **Opening balances are dated by day.** Transactions dated before an account's opening-balance
+  date never move it. A transaction on that same day that happened before the balance was entered
+  still counts once confirmed, unless it came from an inbox scan, which can tell by the message's
+  timestamp and skips it.
 
 ## Deliberately not done
 
@@ -108,7 +118,8 @@ Distinct from the above — these are decisions, not gaps.
 
 In order:
 
-1. **Run the app. Look at every screen.** Nobody has. This is the single largest unknown left.
+1. **Walk every screen on a real device**, light and dark, English and Hindi. Only the paths the
+   owner has used have been looked at.
 2. Commit a real lint baseline (or run lint and fix what it finds) so `abortOnError` actually
    gates something.
 3. Run the instrumentation tests — particularly `TransactionAggregateParityTest`, which checks the

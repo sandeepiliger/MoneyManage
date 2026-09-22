@@ -207,7 +207,7 @@ android {
  */
 val verifyReleaseConfig = tasks.register("verifyReleaseConfig") {
     group = "verification"
-    description = "Fails if a release build would ship placeholder URLs or test ad unit IDs."
+    description = "Fails if a release build would ship placeholder URLs, test ad unit IDs or an AI provider key."
 
     // Captured as plain values rather than read from `project` inside the action, so the task
     // stays compatible with the configuration cache.
@@ -223,7 +223,30 @@ val verifyReleaseConfig = tasks.register("verifyReleaseConfig") {
         "ADMOB_REWARDED_UNIT_ID" to secret("ADMOB_REWARDED_UNIT_ID", "ca-app-pub-3940256099942544/5224354917"),
     )
 
+    // A provider key compiled into the APK can be pulled out of it by anyone; see
+    // docs/AI_PROVIDER.md. Allowed only for a private test build that says so explicitly.
+    val embeddedAiKey = secret("CLOUD_AI_API_KEY").isNotBlank()
+    val allowEmbeddedAiKey =
+        providers.gradleProperty("khaata.allowEmbeddedAiKey").orNull == "true"
+    val aiEndpoint = secret("CLOUD_AI_ENDPOINT")
+
     doLast {
+        // Not a placeholder, but just as silent: CloudAiConfig refuses anything but HTTPS, so the
+        // app would quietly treat cloud AI as unconfigured and AI Pro would vanish from the paywall.
+        if (aiEndpoint.isNotBlank() && !aiEndpoint.startsWith("https://")) {
+            throw GradleException("CLOUD_AI_ENDPOINT must start with https:// (got a non-HTTPS URL).")
+        }
+        if (embeddedAiKey && !allowEmbeddedAiKey) {
+            throw GradleException(
+                buildString {
+                    appendLine("Release build blocked: CLOUD_AI_API_KEY is set, so the provider key would")
+                    appendLine("ship inside the APK, where anyone can extract it and bill your account.")
+                    appendLine("Point CLOUD_AI_ENDPOINT at your own backend and leave the key empty, or pass")
+                    appendLine("-Pkhaata.allowEmbeddedAiKey=true for a private test build only.")
+                },
+            )
+        }
+
         if (allowPlaceholders) {
             logger.warn(
                 "khaata: placeholder check skipped. This artifact is NOT fit to upload to Play.",

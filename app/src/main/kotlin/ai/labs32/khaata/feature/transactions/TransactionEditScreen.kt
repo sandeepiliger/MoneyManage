@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
@@ -659,6 +660,34 @@ private fun OptionalFields(
 
         Spacer(Modifier.height(spacing.medium))
 
+        OutlinedTextField(
+            value = state.tagsText,
+            onValueChange = viewModel::onTagsTextChange,
+            label = { Text(stringResource(R.string.transaction_tags)) },
+            placeholder = { Text(stringResource(R.string.transaction_tags_hint)) },
+            leadingIcon = { Icon(Icons.Default.Sell, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+        )
+        // Tags only help if they are spelled the same every time, so the ones already in use are
+        // a tap away rather than retyped.
+        if (state.knownTags.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = spacing.small),
+            ) {
+                items(state.knownTags.take(MAX_TAG_SUGGESTIONS)) { tag ->
+                    FilterChip(
+                        selected = state.tags.any { it.equals(tag, ignoreCase = true) },
+                        onClick = { viewModel.onKnownTagToggle(tag) },
+                        label = { Text(tag, maxLines = 1) },
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(spacing.medium))
+
         DateRow(
             date = state.occurredOn,
             error = state.errorFor("date")?.message,
@@ -854,3 +883,6 @@ private fun KeypadButton(
         }
     }
 }
+
+/** Enough chips to cover the tags someone actually reuses without turning into a list. */
+private const val MAX_TAG_SUGGESTIONS = 12

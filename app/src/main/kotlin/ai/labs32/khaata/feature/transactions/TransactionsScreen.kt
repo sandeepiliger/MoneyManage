@@ -444,6 +444,23 @@ private fun FilterSheet(
             }
         }
 
+        // One tag at a time: see TransactionFilter.tagPattern. Tapping the selected one clears it.
+        if (state.tags.isNotEmpty()) {
+            Spacer(Modifier.height(spacing.default))
+            FilterSection(stringResource(R.string.transaction_tags)) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(state.tags, key = { it }) { tag ->
+                        val selected = tag in state.filter.tags
+                        FilterChip(
+                            selected = selected,
+                            onClick = { viewModel.onTagFilterChange(if (selected) null else tag) },
+                            label = { Text(tag, maxLines = 1) },
+                        )
+                    }
+                }
+            }
+        }
+
         Spacer(Modifier.height(spacing.large))
 
         Row(Modifier.fillMaxWidth()) {

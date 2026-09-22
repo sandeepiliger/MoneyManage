@@ -183,6 +183,7 @@
     <string name="transaction_note">नोट</string>
     <string name="transaction_date">तारीख़</string>
     <string name="transaction_tags">टैग</string>
+    <string name="transaction_tags_hint">अल्पविराम से अलग करें, जैसे गोवा यात्रा, ऑफ़िस</string>
     <string name="transaction_receipt">रसीद</string>
     <string name="transaction_reference">रेफ़रेंस</string>
     <string name="transaction_recorded_via">इसके ज़रिए दर्ज हुआ</string>
