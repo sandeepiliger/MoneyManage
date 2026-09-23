@@ -271,4 +271,19 @@ class GoalCalculatorTest {
         assertThat(GoalCalculator.progressOf(goal, LocalDate.of(2026, 5, 1)).projectedCompletionDate)
             .isEqualTo(LocalDate.of(2026, 11, 1))
     }
+
+    /** ₹6,000 by the 5th is ₹1,200 a day; dividing by all 31 days reported ₹194. */
+    @Test
+    fun `the daily average of a month in progress counts only the days so far`() {
+        val march = ai.labs32.khaata.core.common.DateRange.ofMonth(java.time.LocalDate.of(2026, 3, 1))
+        val spend = listOf(
+            ai.labs32.khaata.core.testing.Fixtures.expense(amount = "6000", on = java.time.LocalDate.of(2026, 3, 2)),
+        )
+        val soFar = CashflowAnalyzer.summarise(spend, march, asOf = java.time.LocalDate.of(2026, 3, 5))
+        val whole = CashflowAnalyzer.summarise(spend, march)
+        com.google.common.truth.Truth.assertThat(soFar.averageDailySpend)
+            .isEqualTo(ai.labs32.khaata.core.money.Money.of("1200"))
+        com.google.common.truth.Truth.assertThat(whole.averageDailySpend)
+            .isEqualTo(ai.labs32.khaata.core.money.Money.of("6000") / 31)
+    }
 }

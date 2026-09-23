@@ -402,6 +402,42 @@ interface TransactionDao {
     )
     suspend fun merchantSuggestions(prefix: String, limit: Int): List<String>
 
+    /**
+     * Whether a recurring rule's occurrence on [date] is already in the ledger.
+     *
+     * Either this rule already posted that date (a retry after the process died between writing
+     * the row and advancing the rule), or the same payment arrived another way -- the bank's
+     * NACH SMS for the EMI, the rent typed in by hand -- within [from]..[to]. Auto-posting on top
+     * of those counted the payment twice. Other postings of the same rule on other dates are not
+     * matches, or a daily rule would block itself.
+     */
+    @Query(
+        """
+        SELECT EXISTS(
+            SELECT 1 FROM transactions
+            WHERE deletedAt IS NULL
+              AND amount_minor_units = :minorUnits
+              AND (
+                (accountId = :accountId AND (CASE WHEN type = 'INCOME' THEN 0 ELSE 1 END) = :outflow)
+                OR (transferAccountId = :accountId AND :outflow = 0)
+              )
+              AND (
+                (recurringRuleId = :ruleId AND occurredOn = :date)
+                OR ((recurringRuleId IS NULL OR recurringRuleId != :ruleId) AND occurredOn BETWEEN :from AND :to)
+              )
+        )
+        """,
+    )
+    suspend fun occurrenceAlreadyRecorded(
+        ruleId: String,
+        minorUnits: Long,
+        accountId: String,
+        outflow: Boolean,
+        date: LocalDate,
+        from: LocalDate,
+        to: LocalDate,
+    ): Boolean
+
     /** Every distinct stored tag set, for tag suggestions and the tag filter. Decoded by the caller. */
     @Query("SELECT DISTINCT tags FROM transactions WHERE deletedAt IS NULL AND tags != ''")
     fun observeTagColumns(): Flow<List<String>>
@@ -466,6 +502,14 @@ interface TransactionDao {
                 OR (
                   transferAccountId = :accountId
                   AND :outflow = 0
+                  AND occurredOn BETWEEN :transferFrom AND :transferTo
+                )
+                OR (
+                  -- An EMI or rent a recurring rule already posted; the bank's own message
+                  -- usually lands a day or two off the due date.
+                  source = 'RECURRING'
+                  AND accountId = :accountId
+                  AND (CASE WHEN type = 'INCOME' THEN 0 ELSE 1 END) = :outflow
                   AND occurredOn BETWEEN :transferFrom AND :transferTo
                 )
               )

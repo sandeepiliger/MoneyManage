@@ -181,4 +181,26 @@ class NaturalLanguageParserTest {
         assertThat(entries[0].sourceText).ignoringCase().contains("petrol")
         assertThat(entries[1].sourceText).ignoringCase().contains("groceries")
     }
+
+    /** Indian grouping starts with one digit: "1,20,000" used to be read as ₹20,000. */
+    @Test
+    fun `an Indian-grouped amount is read whole`() {
+        val entry = parser.parse("earned 1,20,000", today).single()
+        assertThat(entry.amount).isEqualTo(Money.of("120000"))
+        assertThat(parser.parse("rent 1,05,500.50", today).single().amount).isEqualTo(Money.of("105500.50"))
+    }
+
+    @Test
+    fun `a spelled-out magnitude is not left behind in the description`() {
+        val entry = parser.parse("2 lakh bonus", today).single()
+        assertThat(entry.amount).isEqualTo(Money.of("200000"))
+        assertThat(entry.merchantDisplayName).isEqualTo("Bonus")
+    }
+
+    @Test
+    fun `selling something and borrowing both bring money in`() {
+        assertThat(parser.parse("sold old phone 8000", today).single().type).isEqualTo(TransactionType.INCOME)
+        assertThat(parser.parse("borrowed 2000 from amit", today).single().type).isEqualTo(TransactionType.INCOME)
+        assertThat(parser.parse("lent 1000 to ravi", today).single().type).isEqualTo(TransactionType.EXPENSE)
+    }
 }

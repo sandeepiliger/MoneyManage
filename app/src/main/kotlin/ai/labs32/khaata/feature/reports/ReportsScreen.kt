@@ -199,11 +199,12 @@ class ReportsViewModel @Inject constructor(
                         period = selected,
                         range = range,
                         customRange = chosen.customRange,
-                        summary = CashflowAnalyzer.summarise(transactions, range, currency),
+                        summary = CashflowAnalyzer.summarise(transactions, range, currency, asOf = today),
                         previousSummary = CashflowAnalyzer.summarise(
                             transactions,
                             range.previousPeriod(),
                             currency,
+                            asOf = today,
                         ),
                         categories = CashflowAnalyzer.categoryBreakdown(
                             transactions,

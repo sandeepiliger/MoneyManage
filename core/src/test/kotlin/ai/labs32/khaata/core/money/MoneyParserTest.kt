@@ -57,4 +57,19 @@ class MoneyParserTest {
     fun `absurdly large values are rejected`() {
         assertThat(MoneyParser.parse("99999999999999999999")).isNull()
     }
+
+    @Test
+    fun `the Indian receipt suffix slash-dash is read`() {
+        assertThat(MoneyParser.parse("500/-")).isEqualTo(ai.labs32.khaata.core.money.Money.of("500"))
+        assertThat(MoneyParser.parse("Rs. 1,250/-")).isEqualTo(ai.labs32.khaata.core.money.Money.of("1250"))
+    }
+
+    /** "1.234,56" is European; reading it as ₹1.23 would be a silent, wrong amount. */
+    @Test
+    fun `a comma after the decimal point is refused rather than misread`() {
+        assertThat(MoneyParser.parse("1.234,56")).isNull()
+        assertThat(MoneyParser.parse("1,23,456.78")).isEqualTo(ai.labs32.khaata.core.money.Money.of("123456.78"))
+        // The dot in a "Rs." prefix is not a decimal point.
+        assertThat(MoneyParser.parse("Rs.1,200")).isEqualTo(ai.labs32.khaata.core.money.Money.of("1200"))
+    }
 }

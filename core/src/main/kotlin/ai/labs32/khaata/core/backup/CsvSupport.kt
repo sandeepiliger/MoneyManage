@@ -109,9 +109,10 @@ class CsvImporter(
             return CsvImportResult(emptyList(), listOf(RejectedRecord("csv", null, "The file is empty.")))
         }
 
-        val header = parseLine(lines.first()).map { it.trim().lowercase() }
+        val header = parseLine(lines.first()).map { normaliseHeader(it) }
         val columns = resolveColumns(header)
-        if (columns.date == null || columns.amount == null) {
+        val hasAmount = columns.amount != null || columns.debit != null || columns.credit != null
+        if (columns.date == null || !hasAmount) {
             return CsvImportResult(
                 emptyList(),
                 listOf(
@@ -127,6 +128,16 @@ class CsvImporter(
         val rows = mutableListOf<CsvTransactionRow>()
         val rejected = mutableListOf<RejectedRecord>()
 
+        // With one unsigned amount column and no type column, the sign is the only direction
+        // there is. A file that never uses a minus sign or a Dr/Cr marker is a list of expenses
+        // (the shape spending trackers export), not a statement of money received -- read the
+        // bank-statement way, every expense in it was imported as income.
+        val signedAmounts = columns.type == null && columns.amount != null &&
+            lines.drop(1).any { line ->
+                val text = parseLine(line).getOrNull(columns.amount)?.trim().orEmpty()
+                text.startsWith("-") || text.startsWith("(") || DR_CR_SUFFIX.containsMatchIn(text)
+            }
+
         for ((index, line) in lines.drop(1).withIndex()) {
             val lineNumber = index + 2 // 1-based, and the header took line 1.
             val fields = parseLine(line)
@@ -138,8 +149,9 @@ class CsvImporter(
                 continue
             }
 
-            val amountText = fields.getOrNull(columns.amount)?.trim()
-            val amountDecimal = MoneyParser.parseDecimal(amountText?.removePrefix("-"))
+            val reading = readAmount(fields, columns, signedAmounts)
+            val amountText = reading.text
+            val amountDecimal = reading.value
             if (amountDecimal == null || amountDecimal.signum() <= 0) {
                 rejected += RejectedRecord("transaction", "line $lineNumber", "Unreadable amount '$amountText'.")
                 continue
@@ -154,11 +166,10 @@ class CsvImporter(
                 continue
             }
 
-            // Direction comes from an explicit type column when present, otherwise from the sign
-            // of the amount — the convention bank statement exports use.
+            // Direction comes from an explicit type column when present, otherwise from which
+            // column the amount was in, its Dr/Cr marker, or its sign.
             val declaredType = columns.type?.let { parseType(fields.getOrNull(it)) }
-            val type = declaredType
-                ?: if (amountText?.startsWith("-") == true) TransactionType.EXPENSE else TransactionType.INCOME
+            val type = declaredType ?: reading.direction
 
             rows += CsvTransactionRow(
                 lineNumber = lineNumber,
@@ -216,22 +227,83 @@ class CsvImporter(
         return fields.map { it.removePrefix("'") }
     }
 
+    /** What one row's amount columns say: the number, and which way the money moved. */
+    private class AmountReading(val text: String?, val value: java.math.BigDecimal?, val direction: TransactionType)
+
+    /**
+     * Reads the amount from whichever shape the file uses.
+     *
+     *  - Separate withdrawal and deposit columns, as HDFC, SBI, ICICI and most Indian bank
+     *    statements export. The file used to be rejected outright for having no "amount" column.
+     *  - One column with a "Dr"/"Cr" marker: "450.00 Dr". The marker is taken off before the
+     *    number is parsed, because to the amount parser "cr" means crore -- "85,000.00 Cr" was
+     *    read as ₹8,50,00,00,00,000.
+     *  - One signed column, or (see [parse]) an all-positive list of expenses.
+     */
+    private fun readAmount(fields: List<String>, columns: ColumnMap, signedAmounts: Boolean): AmountReading {
+        if (columns.amount == null) {
+            val debitText = columns.debit?.let { fields.getOrNull(it)?.trim() }.orEmpty()
+            val creditText = columns.credit?.let { fields.getOrNull(it)?.trim() }.orEmpty()
+            val debit = MoneyParser.parseDecimal(debitText)?.takeIf { it.signum() > 0 }
+            val credit = MoneyParser.parseDecimal(creditText)?.takeIf { it.signum() > 0 }
+            return when {
+                debit != null -> AmountReading(debitText, debit, TransactionType.EXPENSE)
+                credit != null -> AmountReading(creditText, credit, TransactionType.INCOME)
+                else -> AmountReading(debitText.ifEmpty { creditText }, null, TransactionType.EXPENSE)
+            }
+        }
+
+        val raw = fields.getOrNull(columns.amount)?.trim().orEmpty()
+        val marker = DR_CR_SUFFIX.find(raw)
+        var number = if (marker != null) raw.substring(0, marker.range.first).trim() else raw
+        val parenthesised = number.startsWith("(") && number.endsWith(")")
+        if (parenthesised) number = number.removePrefix("(").removeSuffix(")").trim()
+        val negative = number.startsWith("-")
+        val value = MoneyParser.parseDecimal(number.removePrefix("-"))
+        val direction = when {
+            marker != null && marker.groupValues[1].lowercase() == "dr" -> TransactionType.EXPENSE
+            marker != null -> TransactionType.INCOME
+            negative || parenthesised -> TransactionType.EXPENSE
+            signedAmounts -> TransactionType.INCOME
+            else -> TransactionType.EXPENSE
+        }
+        return AmountReading(raw, value, direction)
+    }
+
+    /** "Withdrawal Amt." and "withdrawal amt" are the same column; punctuation varies by bank. */
+    private fun normaliseHeader(raw: String): String =
+        raw.trim().lowercase()
+            .replace(Regex("""[^a-z0-9/ ]"""), "")
+            .replace(Regex("""\s+"""), " ")
+            .trim()
+
     private fun resolveColumns(header: List<String>): ColumnMap {
         fun find(vararg names: String): Int? =
             header.indexOfFirst { column -> names.any { column == it } }.takeIf { it >= 0 }
 
         return ColumnMap(
-            date = find("date", "transaction date", "value date", "txn date"),
-            type = find("type", "transaction type", "dr/cr"),
-            amount = find("amount", "value", "transaction amount", "debit/credit"),
+            date = find("date", "transaction date", "txn date", "tran date", "value date", "value dt"),
+            type = find("type", "transaction type", "dr/cr", "cr/dr"),
+            amount = find("amount", "value", "transaction amount", "debit/credit", "amount inr", "amount rs"),
+            debit = find(
+                "withdrawal amt", "withdrawal amount", "withdrawals", "withdrawal", "debit", "debits",
+                "debit amount", "debit amt", "dr amount", "amount debited", "paid out",
+            ),
+            credit = find(
+                "deposit amt", "deposit amount", "deposits", "deposit", "credit", "credits",
+                "credit amount", "credit amt", "cr amount", "amount credited", "paid in",
+            ),
             currency = find("currency", "ccy"),
             account = find("account", "from account", "wallet", "account name"),
             toAccount = find("to account", "destination", "transfer to"),
             category = find("category", "categories"),
-            merchant = find("merchant", "payee", "description", "narration", "particulars"),
+            merchant = find("merchant", "payee", "description", "narration", "particulars", "transaction remarks"),
             note = find("note", "notes", "remarks", "comment"),
             tags = find("tags", "labels"),
-            reference = find("reference", "ref", "ref no", "utr", "cheque no"),
+            reference = find(
+                "reference", "ref", "ref no", "utr", "cheque no", "chq/refno", "ref no/cheque no",
+                "chq no", "chqref no",
+            ),
         )
     }
 
@@ -250,7 +322,12 @@ class CsvImporter(
 
     private fun parseDate(raw: String?): LocalDate? {
         if (raw.isNullOrBlank()) return null
+        // Exports often carry a time ("06/03/2026 10:15", "2026-03-06T10:15:00"); the date is
+        // what matters, and a time on the end made the whole row unreadable.
         val cleaned = raw.trim()
+            .replace(TRAILING_TIME, "")
+            .substringBefore('T')
+            .trim()
         for (formatter in DATE_FORMATS) {
             try {
                 return LocalDate.parse(cleaned, formatter)
@@ -265,6 +342,8 @@ class CsvImporter(
         val date: Int?,
         val type: Int?,
         val amount: Int?,
+        val debit: Int?,
+        val credit: Int?,
         val currency: Int?,
         val account: Int?,
         val toAccount: Int?,
@@ -277,16 +356,28 @@ class CsvImporter(
 
     private companion object {
         /** ISO first, then the day-first formats common in Indian bank exports. */
+        // Single-letter d and M accept "5/3/2026" as well as "05/03/2026" -- spreadsheets drop the
+        // leading zero, and every such row used to be rejected. Case-insensitive so a bank's
+        // "05-MAR-26" parses like "05-Mar-26". Day-first throughout, as Indian exports are.
         val DATE_FORMATS: List<DateTimeFormatter> = listOf(
-            DateTimeFormatter.ISO_LOCAL_DATE,
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"),
-            DateTimeFormatter.ofPattern("dd-MM-yyyy"),
-            DateTimeFormatter.ofPattern("dd/MM/yy"),
-            DateTimeFormatter.ofPattern("dd-MM-yy"),
-            DateTimeFormatter.ofPattern("dd-MMM-yyyy"),
-            DateTimeFormatter.ofPattern("dd MMM yyyy"),
-            DateTimeFormatter.ofPattern("MM/dd/yyyy"),
-        )
+            "yyyy-MM-dd",
+            "d/M/yyyy", "d-M-yyyy", "d.M.yyyy",
+            "d/M/yy", "d-M-yy", "d.M.yy",
+            "d-MMM-yyyy", "d MMM yyyy", "d-MMM-yy", "d MMM yy", "d/MMM/yyyy", "d/MMM/yy",
+            "d MMMM yyyy", "MMM d, yyyy",
+            // Last, for files a day-first reading cannot parse at all ("03/25/2026").
+            "M/d/yyyy",
+        ).map { pattern ->
+            java.time.format.DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .appendPattern(pattern)
+                .toFormatter(java.util.Locale.ENGLISH)
+        }
+
+        val TRAILING_TIME = Regex("""\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[ap]m)?$""", RegexOption.IGNORE_CASE)
+
+        /** "450.00 Dr", "85,000.00 Cr", "1,200 CR." */
+        val DR_CR_SUFFIX = Regex("""\s*\b(dr|cr)\.?$""", RegexOption.IGNORE_CASE)
     }
 }
 

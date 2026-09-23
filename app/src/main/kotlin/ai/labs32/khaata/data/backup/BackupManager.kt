@@ -23,8 +23,10 @@ import ai.labs32.khaata.core.database.dao.TagDao
 import ai.labs32.khaata.core.database.toDomain
 import ai.labs32.khaata.core.database.toEntity
 import ai.labs32.khaata.core.logging.KhaataLog
+import ai.labs32.khaata.core.model.Account
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.model.TransactionSource
+import ai.labs32.khaata.core.model.TransactionType
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.BudgetRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
@@ -407,15 +409,31 @@ class BackupManager @Inject constructor(
      * carries. An unmatched account is a rejection rather than a guess: filing a row against the
      * wrong account silently corrupts a balance, and the user cannot tell that it happened.
      */
-    suspend fun importCsvRows(rows: List<CsvTransactionRow>): Result<ImportResult> = runCatchingIo {
-        val accountsByName = accountRepository.getAll().associateBy { it.name.lowercase() }
+    /** Accounts a CSV's rows can be filed under when the file names none. */
+    suspend fun csvTargetAccounts(): List<Account> = accountRepository.getAll().filterNot { it.isArchived }
+
+    /**
+     * Writes parsed CSV rows as transactions.
+     *
+     * @param fallbackAccountId where rows go that name no account, or one that does not exist
+     *   here. A bank statement is one account's history and never has an account column, so
+     *   without this every row of one was rejected.
+     */
+    suspend fun importCsvRows(
+        rows: List<CsvTransactionRow>,
+        fallbackAccountId: String? = null,
+    ): Result<ImportResult> = runCatchingIo {
+        val accounts = accountRepository.getAll()
+        val accountsByName = accounts.associateBy { it.name.lowercase() }
+        val fallbackAccount = fallbackAccountId?.let { id -> accounts.firstOrNull { it.id == id } }
         val categoriesByName = categoryRepository.getAll().associateBy { it.name.lowercase() }
 
         val rejected = ArrayList<RejectedRecord>()
         val transactions = ArrayList<Transaction>()
+        var duplicates = 0
 
         for (row in rows) {
-            val account = row.accountName?.lowercase()?.let { accountsByName[it] }
+            val account = row.accountName?.lowercase()?.let { accountsByName[it] } ?: fallbackAccount
             if (account == null) {
                 rejected += RejectedRecord(
                     recordType = "transaction",
@@ -442,12 +460,38 @@ class BackupManager @Inject constructor(
             val transferAccount = row.transferAccountName?.lowercase()?.let { accountsByName[it] }
             val category = row.categoryName?.lowercase()?.let { categoriesByName[it] }
 
+            // A transfer needs a real, different destination. Building one without it throws, and
+            // a single such row used to abort the whole file with nothing imported.
+            if (row.type == TransactionType.TRANSFER && (transferAccount == null || transferAccount.id == account.id)) {
+                rejected += RejectedRecord(
+                    recordType = "transaction",
+                    recordId = "line ${row.lineNumber}",
+                    reason = "Transfer to \"${row.transferAccountName.orEmpty()}\" has no other account here to go to.",
+                )
+                continue
+            }
+
+            // Already recorded -- the same file imported twice, a statement overlapping what SMS
+            // import or hand entry already holds -- and it would count twice in every balance.
+            if (
+                transactionRepository.isLikelyDuplicate(
+                    referenceNumber = row.referenceNumber,
+                    amount = row.amount,
+                    accountId = account.id,
+                    occurredOn = row.occurredOn,
+                    type = row.type,
+                )
+            ) {
+                duplicates++
+                continue
+            }
+
             transactions += Transaction(
                 id = UUID.randomUUID().toString(),
                 type = row.type,
                 amount = row.amount,
                 accountId = account.id,
-                transferAccountId = transferAccount?.id,
+                transferAccountId = if (row.type == TransactionType.TRANSFER) transferAccount?.id else null,
                 categoryId = category?.id,
                 merchant = row.merchant,
                 note = row.note,
@@ -465,7 +509,7 @@ class BackupManager @Inject constructor(
         ImportResult(
             mode = ImportMode.MERGE_SKIP_EXISTING,
             imported = mapOf("transactions" to transactions.size),
-            skipped = emptyMap(),
+            skipped = if (duplicates > 0) mapOf("transactions" to duplicates) else emptyMap(),
             rejected = rejected,
         )
     }

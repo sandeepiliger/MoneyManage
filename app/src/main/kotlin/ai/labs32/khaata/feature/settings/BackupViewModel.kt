@@ -35,7 +35,19 @@ data class PendingRestore(
 )
 
 /** A parsed CSV, held for confirmation. */
-data class PendingCsv(val result: CsvImportResult)
+data class PendingCsv(
+    val result: CsvImportResult,
+    /** Where rows that name no account (every row of a bank statement) will be filed. */
+    val accounts: List<ai.labs32.khaata.core.model.Account> = emptyList(),
+    val fallbackAccountId: String? = null,
+) {
+    /** True when some row needs [fallbackAccountId] because it names no account that exists. */
+    val needsAccount: Boolean
+        get() {
+            val names = accounts.map { it.name.lowercase() }.toSet()
+            return result.rows.any { row -> row.accountName?.lowercase() !in names }
+        }
+}
 
 sealed interface BackupMessage {
     data class Exported(val fileName: String) : BackupMessage
@@ -272,10 +284,14 @@ class BackupViewModel @Inject constructor(
         _uiState.update { it.copy(isBusy = true) }
         viewModelScope.launch {
             val result = backupManager.readCsv(uri)
+            val accounts = runCatching { backupManager.csvTargetAccounts() }.getOrDefault(emptyList())
             _uiState.update { state ->
                 result.fold(
                     onSuccess = { parsed ->
-                        state.copy(isBusy = false, pendingCsv = PendingCsv(parsed))
+                        state.copy(
+                            isBusy = false,
+                            pendingCsv = PendingCsv(parsed, accounts, accounts.firstOrNull()?.id),
+                        )
                     },
                     onFailure = { state.copy(isBusy = false, message = BackupMessage.InvalidFile) },
                 )
@@ -285,12 +301,19 @@ class BackupViewModel @Inject constructor(
 
     fun dismissCsv() = _uiState.update { it.copy(pendingCsv = null) }
 
+    fun selectCsvAccount(accountId: String) = _uiState.update { state ->
+        state.copy(pendingCsv = state.pendingCsv?.copy(fallbackAccountId = accountId))
+    }
+
     fun confirmCsvImport() {
         val pending = _uiState.value.pendingCsv ?: return
         _uiState.update { it.copy(isBusy = true, pendingCsv = null) }
 
         viewModelScope.launch {
-            val result = backupManager.importCsvRows(pending.result.rows)
+            val result = backupManager.importCsvRows(
+                pending.result.rows,
+                fallbackAccountId = pending.fallbackAccountId.takeIf { pending.needsAccount },
+            )
             val outcome = result.getOrNull()
 
             _uiState.update {

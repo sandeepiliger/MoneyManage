@@ -131,6 +131,23 @@ class RecurringRepository @Inject constructor(
         for (rule in getAll().filter { it.isActive && it.autoPost }) {
             val due = RecurrenceCalculator.duePostings(rule, today)
             for (date in due) {
+                // Banks post a few days either side of the due date, so a monthly or longer rule
+                // matches within that; anything more frequent must match the day exactly or its
+                // own neighbouring occurrences would look like the same payment.
+                val window = if (rule.frequency.approximateMonthsPerOccurrence >= 1.0) AUTO_POST_MATCH_DAYS else 0L
+                if (
+                    transactionRepository.occurrenceAlreadyRecorded(
+                        ruleId = rule.id,
+                        amount = rule.amount,
+                        accountId = rule.accountId,
+                        type = rule.type,
+                        date = date,
+                        windowDays = window,
+                    )
+                ) {
+                    recurringDao.markPosted(rule.id, date)
+                    continue
+                }
                 transactionRepository.create(
                     type = rule.type,
                     amount = rule.amount,
@@ -144,9 +161,11 @@ class RecurringRepository @Inject constructor(
                     recurringRuleId = rule.id,
                     learnCategory = false,
                 )
+                // Advanced after each date rather than once at the end, so a run that dies partway
+                // resumes from where it stopped instead of re-posting what it already wrote.
+                recurringDao.markPosted(rule.id, date)
                 posted++
             }
-            due.maxOrNull()?.let { recurringDao.markPosted(rule.id, it) }
         }
         return posted
     }
@@ -178,6 +197,9 @@ class RecurringRepository @Inject constructor(
 
     suspend fun deleteDemoData() = recurringDao.deleteDemoData()
 }
+
+/** How far either side of its due date an already-recorded payment counts as the occurrence. */
+private const val AUTO_POST_MATCH_DAYS = 2L
 
 /** A recurring occurrence that has come due and is waiting for the user to confirm it. */
 data class DueOccurrence(val rule: RecurringRule, val dueOn: LocalDate)

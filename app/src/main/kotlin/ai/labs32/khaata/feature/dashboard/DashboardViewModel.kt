@@ -8,6 +8,7 @@ import ai.labs32.khaata.core.calc.CashflowSummary
 import ai.labs32.khaata.core.calc.CategorySpend
 import ai.labs32.khaata.core.calc.GoalProgress
 import ai.labs32.khaata.core.calc.NetWorthSummary
+import ai.labs32.khaata.core.calc.OffLedgerHoldings
 import ai.labs32.khaata.core.common.DateRange
 import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.database.dao.InsightStateDao
@@ -27,6 +28,7 @@ import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.BudgetRepository
 import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.GoalRepository
+import ai.labs32.khaata.data.repository.InvestmentRepository
 import ai.labs32.khaata.data.repository.LoanRepository
 import ai.labs32.khaata.data.repository.ProfileRepository
 import ai.labs32.khaata.data.repository.RecurringRepository
@@ -118,6 +120,7 @@ class DashboardViewModel @Inject constructor(
     private val recurringRepository: RecurringRepository,
     private val subscriptionRepository: SubscriptionRepository,
     private val loanRepository: LoanRepository,
+    private val investmentRepository: InvestmentRepository,
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
     private val insightEngine: InsightEngine,
@@ -167,13 +170,21 @@ class DashboardViewModel @Inject constructor(
     private fun observeCore() {
         val thisMonth = DateRange.ofMonth(clock.today())
 
-        combine(
+        // Investments and loans kept on their own screens belong in net worth too; see
+        // OffLedgerHoldings. Paired with the balances so the combine below stays at five inputs.
+        val balancesAndHoldings = combine(
             accountRepository.observeBalances(),
+            investmentRepository.observeOpen(),
+            loanRepository.observeOpen(),
+        ) { balances, investments, loans -> balances to OffLedgerHoldings(investments, loans) }
+
+        combine(
+            balancesAndHoldings,
             transactionRepository.observeInRange(thisMonth),
             profileRepository.observe(),
             settingsRepository.settings,
             amountsHidden,
-        ) { balances, transactions, profile, settings, hidden ->
+        ) { (balances, holdings), transactions, profile, settings, hidden ->
             val currency = profile?.currency ?: CurrencyCode.DEFAULT
             CoreData(
                 greetingKey = greetingFor(clock.nowLocal().hour),
@@ -183,8 +194,13 @@ class DashboardViewModel @Inject constructor(
                 isDemoMode = profile?.isDemoMode == true,
                 availableToSpend = ai.labs32.khaata.core.calc.BalanceCalculator
                     .availableToSpend(balances, currency),
-                netWorth = ai.labs32.khaata.core.calc.BalanceCalculator.netWorth(balances, currency),
-                monthSummary = CashflowAnalyzer.summarise(transactions, thisMonth, currency),
+                netWorth = ai.labs32.khaata.core.calc.BalanceCalculator.netWorth(
+                    balances,
+                    currency,
+                    holdings,
+                    asOf = clock.today(),
+                ),
+                monthSummary = CashflowAnalyzer.summarise(transactions, thisMonth, currency, asOf = clock.today()),
                 accounts = balances.filter { !it.account.isArchived },
                 cardOrder = settings.dashboardCardOrder,
                 hiddenCards = settings.hiddenDashboardCards,
@@ -377,14 +393,18 @@ class DashboardViewModel @Inject constructor(
                 val today = clock.today()
                 val months = DateRange.trailingMonths(today, TREND_MONTHS)
                 val accounts = accountRepository.getAll()
+                // The whole history, not just the charted months: each point is the opening
+                // balances plus everything up to that date, so leaving out older transactions put
+                // every point -- and the "% change" between them -- off by all of them.
                 val transactions = transactionRepository.getInRange(
-                    DateRange(months.first().start, today),
+                    DateRange(HISTORY_START, today),
                 )
                 val points = ai.labs32.khaata.core.calc.BalanceCalculator.netWorthTrend(
                     accounts = accounts,
                     transactions = transactions,
                     dates = months.map { it.endInclusive.coerceAtMost(today) },
                     currency = _uiState.value.currency,
+                    holdings = OffLedgerHoldings(investmentRepository.getAll(), loanRepository.getAll()),
                 )
                 val change = if (points.size >= 2) {
                     ai.labs32.khaata.core.calc.BalanceCalculator.percentChange(
@@ -460,6 +480,9 @@ class DashboardViewModel @Inject constructor(
         const val BREAKDOWN_LIMIT = 6
         const val GOAL_LIMIT = 3
         const val UPCOMING_DAYS = 30
+
+        /** Earlier than any transaction anyone will have: "the whole history" as a range. */
+        val HISTORY_START: java.time.LocalDate = java.time.LocalDate.of(1970, 1, 1)
         const val UPCOMING_LIMIT = 5
         const val TREND_MONTHS = 6
         const val INSIGHT_CANDIDATE_LIMIT = 5

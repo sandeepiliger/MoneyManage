@@ -240,7 +240,17 @@ class TransactionEditViewModel @Inject constructor(
                 type = type,
                 // A category carried over from an expense makes no sense on a transfer, and an
                 // expense category on an income row would corrupt the reports.
-                categoryId = if (type == TransactionType.TRANSFER) null else state.categoryId,
+                categoryId = when (type) {
+                    TransactionType.TRANSFER -> null
+                    // Kept only if it is a category of the new kind: "Groceries" carried onto an
+                    // income row put spending categories into the income report.
+                    else -> state.categoryId?.takeIf { id ->
+                        val kind = state.categories.firstOrNull { it.id == id }?.kind
+                        kind == null ||
+                            kind == ai.labs32.khaata.core.model.CategoryKind.BOTH ||
+                            kind.name == type.name
+                    }
+                },
                 transferAccountId = if (type == TransactionType.TRANSFER) state.transferAccountId else null,
                 errors = emptyList(),
             )

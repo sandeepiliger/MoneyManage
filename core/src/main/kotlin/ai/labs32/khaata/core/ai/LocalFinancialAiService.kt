@@ -185,7 +185,7 @@ class LocalFinancialAiService : FinancialAiService {
     }
 
     private fun answerTotalSpend(period: ResolvedPeriod, context: AiContext): AiAnswer {
-        val summary = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency)
+        val summary = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency, context.today)
         if (summary.expenseCount == 0) {
             return AiAnswer.NoData("No spending recorded ${period.label}.")
         }
@@ -207,7 +207,7 @@ class LocalFinancialAiService : FinancialAiService {
     }
 
     private fun answerTotalIncome(period: ResolvedPeriod, context: AiContext): AiAnswer {
-        val summary = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency)
+        val summary = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency, context.today)
         if (summary.incomeCount == 0) {
             return AiAnswer.NoData("No income recorded ${period.label}.")
         }
@@ -292,9 +292,9 @@ class LocalFinancialAiService : FinancialAiService {
     }
 
     private fun answerComparison(period: ResolvedPeriod, context: AiContext): AiAnswer {
-        val current = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency)
+        val current = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency, context.today)
         val previousRange = period.range.previousPeriod()
-        val previous = CashflowAnalyzer.summarise(context.transactions, previousRange, context.currency)
+        val previous = CashflowAnalyzer.summarise(context.transactions, previousRange, context.currency, context.today)
 
         if (!previous.hasActivity) {
             return AiAnswer.NoData("There is not enough history yet to compare periods.")
@@ -360,7 +360,7 @@ class LocalFinancialAiService : FinancialAiService {
     }
 
     private fun answerSavings(period: ResolvedPeriod, context: AiContext): AiAnswer {
-        val summary = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency)
+        val summary = CashflowAnalyzer.summarise(context.transactions, period.range, context.currency, context.today)
         val rate = summary.savingsRatePercent
             ?: return AiAnswer.NoData("No income was recorded ${period.label}, so a savings rate cannot be worked out.")
 

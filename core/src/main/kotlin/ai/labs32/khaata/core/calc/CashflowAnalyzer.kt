@@ -24,6 +24,8 @@ object CashflowAnalyzer {
         transactions: List<Transaction>,
         period: DateRange,
         currency: CurrencyCode = CurrencyCode.DEFAULT,
+        /** Today, when [period] may still be running; see [averageDailySpend]. */
+        asOf: java.time.LocalDate? = null,
     ): CashflowSummary {
         val inPeriod = transactions.filter { it.isEffective && it.occurredOn in period }
         val income = inPeriod.filter { it.countsAsIncome }.sumOfMoney(currency) { it.amount }
@@ -38,7 +40,7 @@ object CashflowAnalyzer {
             savingsRatePercent = savingsRate(income, net),
             incomeCount = inPeriod.count { it.countsAsIncome },
             expenseCount = inPeriod.count { it.countsAsSpending },
-            averageDailySpend = averageDailySpend(expense, period, currency),
+            averageDailySpend = averageDailySpend(expense, period, currency, asOf),
             largestExpense = inPeriod.filter { it.countsAsSpending }.maxByOrNull { it.amount.amount },
         )
     }
@@ -56,13 +58,22 @@ object CashflowAnalyzer {
             .divide(income.amount, ai.labs32.khaata.core.money.MoneyMath.RATIO_SCALE, RoundingMode.HALF_EVEN)
     }
 
+    /**
+     * Spend per day over the days of [period] that have happened.
+     *
+     * For the month in progress that is the days so far, not the whole month: ₹6,000 spent by
+     * the 5th is ₹1,200 a day, and dividing by all 31 days reported ₹194 -- a figure six times
+     * too low, at exactly the point in the month someone checks it to decide how to pace.
+     */
     private fun averageDailySpend(
         expense: Money,
         period: DateRange,
         currency: CurrencyCode,
+        asOf: java.time.LocalDate?,
     ): Money {
-        if (period.dayCount <= 0) return Money.zero(currency)
-        return expense / period.dayCount
+        val days = asOf?.let { period.elapsedDays(it) } ?: period.dayCount
+        if (days <= 0) return Money.zero(currency)
+        return expense / days
     }
 
     /**

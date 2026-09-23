@@ -50,13 +50,21 @@ class InsightEngine(
     ): List<Insight> {
         val thisMonth = DateRange.ofMonth(asOf)
         val lastMonth = thisMonth.previousPeriod()
+        // This month so far is compared with the same stretch of last month. Against the whole of
+        // last month, the 3rd of any month reported "spending is down ₹40,000" -- three days
+        // against thirty -- and every category trend read as a fall until the month was over.
+        val elapsed = thisMonth.elapsedDays(asOf).toLong()
+        val lastMonthToDate = DateRange(
+            lastMonth.start,
+            minOf(lastMonth.start.plusDays((elapsed - 1).coerceAtLeast(0)), lastMonth.endInclusive),
+        )
         val rollup = BudgetCalculator.buildCategoryRollup(categories)
 
         val insights = buildList {
-            addAll(categoryTrends(transactions, categories, thisMonth, lastMonth))
+            addAll(categoryTrends(transactions, categories, thisMonth, lastMonthToDate))
             addAll(budgetInsights(budgets, transactions, rollup, asOf))
             addAll(subscriptionInsights(subscriptions, asOf))
-            addAll(cashflowInsights(transactions, thisMonth, lastMonth))
+            addAll(cashflowInsights(transactions, thisMonth, lastMonthToDate))
             addAll(spendingPatternInsights(transactions, thisMonth))
         }
 
@@ -113,11 +121,11 @@ class InsightEngine(
                     append(name)
                     append(if (rose) " rose " else " fell ")
                     append(changePercent.abs().toPlainString())
-                    append("% versus last month")
+                    append("% versus the same days last month")
                 },
                 evidence = listOf(
                     Evidence("This month", row.amount),
-                    Evidence("Last month", before.amount),
+                    Evidence("Same days last month", before.amount),
                     Evidence(if (rose) "Increase" else "Decrease", change.abs()),
                 ),
                 categoryId = categoryId,
@@ -296,10 +304,10 @@ class InsightEngine(
                     relevance = change.abs().amount.toDouble(),
                     title = if (change.isPositive) "Spending is up on last month" else "Spending is down on last month",
                     detail = "You have spent ${MoneyFormatter.plain(change.abs())} " +
-                        (if (change.isPositive) "more" else "less") + " than last month",
+                        (if (change.isPositive) "more" else "less") + " than by this point last month",
                     evidence = listOf(
                         Evidence("This month", current.expense),
-                        Evidence("Last month", previous.expense),
+                        Evidence("Same days last month", previous.expense),
                     ),
                 )
             }

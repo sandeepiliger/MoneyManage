@@ -338,5 +338,77 @@ class CsvTest {
 
         assertThat(restored.accounts.map { it.openingBalanceDate }).containsExactly(null, null)
     }
+}
 
+class CsvStatementImportTest {
+
+    private val importer = CsvImporter()
+
+    private fun rowsOf(csv: String) = importer.parse(csv).also {
+        assertThat(it.rejected).isEmpty()
+    }.rows.map { Triple(it.occurredOn, it.type, it.amount) }
+
+    /** HDFC's statement export: separate withdrawal and deposit columns, two-digit years. */
+    @Test
+    fun `an HDFC statement with withdrawal and deposit columns imports`() {
+        val rows = rowsOf(
+            "Date,Narration,Chq./Ref.No.,Value Dt,Withdrawal Amt.,Deposit Amt.,Closing Balance\n" +
+                "05/03/26,UPI-SWIGGY,412345678901,05/03/26,450.00,,9550.00\n" +
+                "06/03/26,NEFT SALARY,N12345,06/03/26,,\"85,000.00\",94550.00",
+        )
+        assertThat(rows).containsExactly(
+            Triple(LocalDate.of(2026, 3, 5), TransactionType.EXPENSE, Money.of("450")),
+            Triple(LocalDate.of(2026, 3, 6), TransactionType.INCOME, Money.of("85000")),
+        ).inOrder()
+    }
+
+    @Test
+    fun `an SBI statement with debit and credit columns and month names imports`() {
+        val rows = rowsOf(
+            "Txn Date,Value Date,Description,Ref No./Cheque No.,Debit,Credit,Balance\n" +
+                "5 Mar 2026,5 Mar 2026,TO TRANSFER-UPI,412345678901,250.00,,1000.00\n" +
+                "6 MAR 2026,6 MAR 2026,BY TRANSFER-NEFT,,,5000.00,6000.00",
+        )
+        assertThat(rows.map { it.second }).containsExactly(TransactionType.EXPENSE, TransactionType.INCOME).inOrder()
+        assertThat(rows.map { it.third }).containsExactly(Money.of("250"), Money.of("5000")).inOrder()
+    }
+
+    /** "Cr" here means credit. Read as crore, "85,000.00 Cr" became ₹8,50,00,00,00,000. */
+    @Test
+    fun `Dr and Cr markers give the direction and never multiply the amount`() {
+        val rows = rowsOf(
+            "Date,Description,Amount\n05/03/2026,Swiggy,450.00 Dr\n06/03/2026,Salary,\"85,000.00 Cr\"",
+        )
+        assertThat(rows).containsExactly(
+            Triple(LocalDate.of(2026, 3, 5), TransactionType.EXPENSE, Money.of("450")),
+            Triple(LocalDate.of(2026, 3, 6), TransactionType.INCOME, Money.of("85000")),
+        ).inOrder()
+    }
+
+    /** An expense list exported without signs used to arrive as income. */
+    @Test
+    fun `a file of unsigned amounts with no type column is spending`() {
+        val rows = rowsOf("Date,Description,Amount\n2026-03-05,Swiggy,450\n2026-03-06,Uber,250")
+        assertThat(rows.map { it.second }).containsExactly(TransactionType.EXPENSE, TransactionType.EXPENSE)
+    }
+
+    @Test
+    fun `a signed file keeps the bank convention`() {
+        val rows = rowsOf("Date,Description,Amount\n2026-03-05,Swiggy,-450\n2026-03-06,Salary,85000\n2026-03-07,Fee,(20.00)")
+        assertThat(rows.map { it.second })
+            .containsExactly(TransactionType.EXPENSE, TransactionType.INCOME, TransactionType.EXPENSE).inOrder()
+    }
+
+    @Test
+    fun `dates without leading zeros, with a time, or month-first are read`() {
+        val rows = rowsOf(
+            "Date,Description,Amount\n5/3/2026,A,-1\n6/3/2026 10:15,B,-1\n2026-03-07T09:00:00,C,-1\n03/25/2026,D,-1",
+        )
+        assertThat(rows.map { it.first }).containsExactly(
+            LocalDate.of(2026, 3, 5),
+            LocalDate.of(2026, 3, 6),
+            LocalDate.of(2026, 3, 7),
+            LocalDate.of(2026, 3, 25),
+        ).inOrder()
+    }
 }

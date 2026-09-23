@@ -719,7 +719,8 @@
     <string name="backup_failed">That did not work. Nothing was changed.</string>
     <string name="backup_csv_ready">%1$d rows are ready to import.</string>
     <string name="backup_csv_rejected">%1$d rows could not be read and will be skipped.</string>
-    <string name="backup_csv_account_matching">Rows naming an account that does not exist here are skipped rather than filed against the wrong one.</string>
+    <string name="backup_csv_choose_account">Rows that name no account here go into:</string>
+    <string name="backup_csv_duplicates_skipped">Anything already recorded here, from SMS, typing or an earlier import, is skipped so nothing counts twice.</string>
     <string name="backup_section_scheduled">Automatic backups</string>
     <string name="backup_scheduled">Back up automatically</string>
     <string name="backup_scheduled_help">Pick a folder and a copy is written there every week.</string>

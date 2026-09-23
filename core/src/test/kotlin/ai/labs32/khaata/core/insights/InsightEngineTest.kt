@@ -41,11 +41,33 @@ class InsightEngineTest {
         assertThat(insight.detail).contains("50")
         // Every claim must show the numbers behind it.
         assertThat(insight.evidence.map { it.label })
-            .containsExactly("This month", "Last month", "Increase")
+            .containsExactly("This month", "Same days last month", "Increase")
         assertThat(insight.evidence.first { it.label == "This month" }.amount)
             .isEqualTo(Money.of("9000"))
-        assertThat(insight.evidence.first { it.label == "Last month" }.amount)
+        assertThat(insight.evidence.first { it.label == "Same days last month" }.amount)
             .isEqualTo(Money.of("6000"))
+    }
+
+    /**
+     * Part-way through a month, what was spent so far is compared with the same days of last
+     * month. Against the whole of last month it always read as a fall until the month ended.
+     */
+    @Test
+    fun `month to date is compared with the same days of last month, not all of it`() {
+        // asOf is mid-March; the February spend after the same day must not count.
+        val sameDay = asOf.minusMonths(1)
+        val transactions = listOf(
+            Fixtures.expense(amount = "4000", categoryId = "cat-food", on = sameDay.minusDays(1)),
+            Fixtures.expense(amount = "30000", categoryId = "cat-food", on = sameDay.plusDays(3)),
+            Fixtures.expense(amount = "6000", categoryId = "cat-food", on = asOf.minusDays(1)),
+        )
+        val trend = generate(transactions)
+            .single { it.kind == InsightKind.CATEGORY_TREND && it.categoryId == "cat-food" }
+        assertThat(trend.title).contains("up")
+        assertThat(trend.evidence.first { it.label == "Same days last month" }.amount).isEqualTo(Money.of("4000"))
+
+        val total = generate(transactions).single { it.id == "spend_vs_last_month" }
+        assertThat(total.title).isEqualTo("Spending is up on last month")
     }
 
     @Test

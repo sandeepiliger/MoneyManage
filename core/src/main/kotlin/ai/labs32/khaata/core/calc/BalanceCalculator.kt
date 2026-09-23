@@ -2,6 +2,8 @@ package ai.labs32.khaata.core.calc
 
 import ai.labs32.khaata.core.model.Account
 import ai.labs32.khaata.core.model.AccountBalance
+import ai.labs32.khaata.core.model.Investment
+import ai.labs32.khaata.core.model.Loan
 import ai.labs32.khaata.core.model.Transaction
 import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
@@ -97,19 +99,29 @@ object BalanceCalculator {
     fun netWorth(
         balances: List<AccountBalance>,
         currency: CurrencyCode = CurrencyCode.DEFAULT,
+        /** Investments and loans kept on their own screens; see [OffLedgerHoldings]. */
+        holdings: OffLedgerHoldings = OffLedgerHoldings.NONE,
+        asOf: LocalDate = LocalDate.now(),
     ): NetWorthSummary {
-        val included = balances.filter { it.account.includeInNetWorth && !it.account.isArchived }
-        val assets = included
+        val included = balances.filter {
+            it.account.includeInNetWorth && !it.account.isArchived && it.currentBalance.currency == currency
+        }
+        val accountAssets = included
             .filter { !it.account.isLiability }
             .sumOfMoney(currency) { it.currentBalance }
-        val liabilities = included
+        val accountLiabilities = included
             .filter { it.account.isLiability }
             .sumOfMoney(currency) { it.currentBalance }
+        val investments = holdings.investmentValueAt(asOf, currency)
+        val loans = holdings.loanOutstandingAt(asOf, currency)
+        val assets = accountAssets + investments
         return NetWorthSummary(
             assets = assets,
             // Reported as a positive magnitude; the subtraction happens in `netWorth`.
-            liabilities = liabilities.abs(),
-            netWorth = assets + liabilities,
+            liabilities = (-accountLiabilities) + loans,
+            netWorth = assets + accountLiabilities - loans,
+            investments = investments,
+            loans = loans,
         )
     }
 
@@ -133,9 +145,12 @@ object BalanceCalculator {
         transactions: List<Transaction>,
         dates: List<LocalDate>,
         currency: CurrencyCode = CurrencyCode.DEFAULT,
+        holdings: OffLedgerHoldings = OffLedgerHoldings.NONE,
     ): List<NetWorthPoint> {
-        val included = accounts.filter { it.includeInNetWorth && !it.isArchived }
-        if (included.isEmpty()) return dates.map { NetWorthPoint(it, Money.zero(currency)) }
+        val included = accounts.filter { it.includeInNetWorth && !it.isArchived && it.currency == currency }
+        fun offLedgerAt(date: LocalDate) =
+            holdings.investmentValueAt(date, currency) - holdings.loanOutstandingAt(date, currency)
+        if (included.isEmpty()) return dates.sorted().map { NetWorthPoint(it, offLedgerAt(it)) }
 
         // Sorting once and sweeping forward keeps this O(n log n + n·|dates|) rather than
         // re-scanning the whole ledger for every point on the chart.
@@ -153,13 +168,14 @@ object BalanceCalculator {
                     // back-computing: the history is usually partial (an SMS import sees only the
                     // bank's messages), so reconstructing an earlier balance from it would be a
                     // guess drawn as a fact.
-                    if (account.movesBalanceOn(transaction.occurredOn)) {
-                        running += transaction.signedAmountFor(accountId)
+                    val delta = transaction.signedAmountFor(accountId)
+                    if (account.movesBalanceOn(transaction.occurredOn) && delta.currency == currency) {
+                        running += delta
                     }
                 }
                 cursor++
             }
-            NetWorthPoint(date, running)
+            NetWorthPoint(date, running + offLedgerAt(date))
         }
     }
 
@@ -189,10 +205,50 @@ fun Transaction.touchedAccountIds(): List<String> =
     if (transferAccountId != null) listOf(accountId, transferAccountId) else listOf(accountId)
 
 data class NetWorthSummary(
+    /** Account assets plus [investments]. */
     val assets: Money,
-    /** Positive magnitude of what is owed. */
+    /** Positive magnitude of what is owed: liability accounts plus [loans]. */
     val liabilities: Money,
     val netWorth: Money,
+    /** Of [assets], the part held as investments tracked on the Investments screen. */
+    val investments: Money = Money.zero(assets.currency),
+    /** Of [liabilities], the outstanding principal of loans tracked on the Loans screen. */
+    val loans: Money = Money.zero(assets.currency),
 )
+
+/**
+ * Investments and loans the user tracks on their own screens rather than as accounts.
+ *
+ * Net worth used to be accounts only, so a mutual fund added under Investments was never in it
+ * and a home loan added under Loans was never subtracted from it -- the headline figure was off
+ * by the whole of both. Anything linked to an account ([Investment.accountId] or
+ * [Loan.accountId]) is left out here, because that account's balance already carries it.
+ */
+data class OffLedgerHoldings(
+    val investments: List<Investment> = emptyList(),
+    val loans: List<Loan> = emptyList(),
+) {
+    /**
+     * What the open investments were worth on [date]: nothing before they were bought, the amount
+     * invested until the valuation date, and the latest valuation from then on. There is no price
+     * history, so the past is the best honest reconstruction, not a guess dressed as a price.
+     */
+    fun investmentValueAt(date: LocalDate, currency: CurrencyCode): Money =
+        investments
+            .filter { !it.isClosed && it.accountId == null && it.investedAmount.currency == currency }
+            .filter { !it.startedOn.isAfter(date) }
+            .sumOfMoney(currency) { if (date.isBefore(it.valuedOn)) it.investedAmount else it.currentValue }
+
+    /** Principal still owed on [date] on the open loans, assuming EMIs paid on schedule. */
+    fun loanOutstandingAt(date: LocalDate, currency: CurrencyCode): Money =
+        loans
+            .filter { !it.isClosed && it.accountId == null && it.principal.currency == currency }
+            .filter { !it.startDate.isAfter(date) }
+            .sumOfMoney(currency) { LoanCalculator.status(it, date).outstandingPrincipal }
+
+    companion object {
+        val NONE = OffLedgerHoldings()
+    }
+}
 
 data class NetWorthPoint(val date: LocalDate, val netWorth: Money)

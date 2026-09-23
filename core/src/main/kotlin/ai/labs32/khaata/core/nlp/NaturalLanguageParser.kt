@@ -211,13 +211,18 @@ class NaturalLanguageParser(
          * Requires either a currency marker, a magnitude suffix, or a bare number of at least two
          * digits — so "2 coffees" is not read as ₹2 while "850" still is.
          */
-        private const val MAGNITUDE = "k|l|cr|lakh|lakhs|lac|lacs|crore|crores|thousand"
+        // Longest first, and whole words only: with "l" ahead of "lakh", "2 lakh bonus" matched
+        // "2 l" and left "akh bonus" behind as the description.
+        private const val MAGNITUDE = """(?:lakhs|lakh|lacs|lac|crores|crore|cr|thousand|k|l)\b"""
 
         val AMOUNT_IN_TEXT = Regex(
             // Currency-marked: "Rs.850", "₹1,200", "INR 2 lakh".
-            """(?:(?:rs\.?|inr|₹)\s*\d[\d,]*(?:\.\d{1,2})?(?:\s*(?:$MAGNITUDE))?)""" +
+            """(?:(?:rs\.?|inr|₹)\s*\d[\d,]*(?:\.\d{1,2})?(?:\s*$MAGNITUDE)?)""" +
                 // Magnitude-suffixed: "50k", "2.5 lakh".
-                """|(?:\d[\d,]*(?:\.\d{1,2})?\s*(?:$MAGNITUDE))""" +
+                """|(?:\d[\d,]*(?:\.\d{1,2})?\s*$MAGNITUDE)""" +
+                // Comma-grouped, which may start with one digit: "1,20,000" is one lakh twenty
+                // thousand. The bare pattern below needs two leading digits and read it "20,000".
+                """|(?:\b\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?\b)""" +
                 // Bare, two digits or more: "850". One digit is excluded so "2 coffees" is
                 // not read as an amount.
                 """|(?:\b\d{2,}[\d,]*(?:\.\d{1,2})?\b)""",
@@ -230,7 +235,11 @@ class NaturalLanguageParser(
             "spent", "spend", "paid", "pay", "bought", "buy", "purchased", "gave", "expense",
             "bill", "cost", "charged",
         )
-        val INCOME_WORDS = listOf("received", "receive", "got", "earned", "credited", "income")
+        // "sold" and "borrowed" bring money in; filed as spending they moved the balance the
+        // wrong way by twice the amount.
+        val INCOME_WORDS = listOf(
+            "received", "receive", "got", "earned", "credited", "income", "sold", "borrowed",
+        )
 
         /**
          * Nouns that name incoming money rather than describe an action.

@@ -53,10 +53,20 @@ object MoneyParser {
      */
     fun parseDecimal(raw: String?): BigDecimal? {
         if (raw.isNullOrBlank()) return null
+        // A comma after the decimal point ("1.234,56") is a European amount. Refused rather than
+        // read as ₹1.23: a wrong amount accepted silently is worse than one the user retypes.
+        // Measured on the number itself, so the dot in a "Rs." prefix is not taken for one.
+        val number = raw.dropWhile { !it.isDigit() }
+        val decimalPoint = number.indexOf('.')
+        if (decimalPoint >= 0 && number.lastIndexOf(',') > decimalPoint) return null
 
         val cleaned = buildString(raw.length) {
             for (char in raw) if (char !in CURRENCY_NOISE) append(char)
         }.lowercase().trim()
+            // "Rs. 500/-" is how amounts are written on Indian receipts, cheques and bills.
+            .removeSuffix("/-")
+            .removeSuffix("/=")
+            .trim()
         if (cleaned.isEmpty()) return null
 
         // "rs"/"inr"/"rupees" prefixes are common in SMS and in typed input.

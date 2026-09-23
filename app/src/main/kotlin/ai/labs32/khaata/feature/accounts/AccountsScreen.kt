@@ -39,6 +39,8 @@ import androidx.lifecycle.viewModelScope
 import ai.labs32.khaata.R
 import ai.labs32.khaata.core.calc.BalanceCalculator
 import ai.labs32.khaata.core.calc.NetWorthSummary
+import ai.labs32.khaata.core.calc.OffLedgerHoldings
+import ai.labs32.khaata.core.common.KhaataClock
 import ai.labs32.khaata.core.model.AccountBalance
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.ui.components.CardHeader
@@ -53,10 +55,13 @@ import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.EntitlementRepository
+import ai.labs32.khaata.data.repository.InvestmentRepository
+import ai.labs32.khaata.data.repository.LoanRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -78,19 +83,32 @@ data class AccountsUiState(
 class AccountsViewModel @Inject constructor(
     private val accountRepository: AccountRepository,
     private val entitlementRepository: EntitlementRepository,
+    private val investmentRepository: InvestmentRepository,
+    private val loanRepository: LoanRepository,
+    private val clock: KhaataClock,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountsUiState())
     val uiState: StateFlow<AccountsUiState> = _uiState.asStateFlow()
 
     init {
-        accountRepository.observeBalances()
-            .onEach { balances ->
+        // The same net worth as the dashboard: investments and loans tracked on their own
+        // screens are in it here too, or the two screens would show two different figures.
+        combine(
+            accountRepository.observeBalances(),
+            investmentRepository.observeOpen(),
+            loanRepository.observeOpen(),
+        ) { balances, investments, loans -> balances to OffLedgerHoldings(investments, loans) }
+            .onEach { (balances, holdings) ->
                 val activeCount = balances.count { !it.account.isArchived }
                 _uiState.value = AccountsUiState(
                     isLoading = false,
                     balances = balances,
-                    netWorth = BalanceCalculator.netWorth(balances),
+                    netWorth = BalanceCalculator.netWorth(
+                        balances,
+                        holdings = holdings,
+                        asOf = clock.today(),
+                    ),
                     availableToSpend = BalanceCalculator.availableToSpend(balances),
                     // Null means unlimited. Read per emission rather than combined, because the
                     // limit depends on the account count that just changed.

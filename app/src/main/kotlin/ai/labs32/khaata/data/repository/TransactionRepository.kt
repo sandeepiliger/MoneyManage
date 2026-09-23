@@ -272,6 +272,24 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /** See [TransactionDao.occurrenceAlreadyRecorded]. */
+    suspend fun occurrenceAlreadyRecorded(
+        ruleId: String,
+        amount: Money,
+        accountId: String,
+        type: TransactionType,
+        date: LocalDate,
+        windowDays: Long,
+    ): Boolean = transactionDao.occurrenceAlreadyRecorded(
+        ruleId = ruleId,
+        minorUnits = amount.minorUnits,
+        accountId = accountId,
+        outflow = type != TransactionType.INCOME,
+        date = date,
+        from = date.minusDays(windowDays),
+        to = date.plusDays(windowDays),
+    )
+
     /** Staged imports of exactly [amount] dated within [days] of [around]; candidates for pairing. */
     suspend fun pendingImportsNear(amount: Money, around: LocalDate, days: Long): List<Transaction> =
         transactionDao.pendingImportsForAmount(amount.minorUnits, around.minusDays(days), around.plusDays(days))

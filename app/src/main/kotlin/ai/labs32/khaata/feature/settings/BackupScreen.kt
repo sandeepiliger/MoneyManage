@@ -294,8 +294,28 @@ fun BackupScreen(
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
+                    if (pending.needsAccount && pending.accounts.isNotEmpty()) {
+                        // A bank statement is one account's history with no account column, so
+                        // the user says which account it is rather than every row being refused.
+                        Text(
+                            text = stringResource(R.string.backup_csv_choose_account),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        androidx.compose.foundation.lazy.LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small),
+                        ) {
+                            items(pending.accounts.size) { index ->
+                                val account = pending.accounts[index]
+                                androidx.compose.material3.FilterChip(
+                                    selected = account.id == pending.fallbackAccountId,
+                                    onClick = { viewModel.selectCsvAccount(account.id) },
+                                    label = { Text(account.name, maxLines = 1) },
+                                )
+                            }
+                        }
+                    }
                     Text(
-                        text = stringResource(R.string.backup_csv_account_matching),
+                        text = stringResource(R.string.backup_csv_duplicates_skipped),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
