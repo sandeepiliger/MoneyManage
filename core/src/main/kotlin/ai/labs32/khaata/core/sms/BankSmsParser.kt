@@ -177,6 +177,13 @@ object BankSmsParser {
         RegexOption.IGNORE_CASE,
     )
 
+    /**
+     * The card a message's suffix names is a credit card, not a debit card. A debit card spends the
+     * bank account's own money; a credit card runs up a debt on a separate account, and filing it
+     * against the bank account took the money out of the wrong place.
+     */
+    private val CREDIT_CARD_WORDS = Regex("""\bcredit\s*card\b|\bcc\s*(?:no\.?|x+|ending)""", RegexOption.IGNORE_CASE)
+
     /** Available balance, which we read but never treat as the transaction amount. */
     private val BALANCE = Regex(
         """(?:avl\.?\s*bal|available\s*balance|avlbl\s*bal|bal(?:ance)?)\s*[:.\-]?\s*(?:rs\.?|inr|₹)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)""",
@@ -275,6 +282,7 @@ object BankSmsParser {
             confidence = scoreConfidence(merchantKey, rail, body),
             // Only money leaving a bank account can be a bill payment; a card's own "payment
             // received" is the other leg, and a card purchase that mentions the card is a spend.
+            isCreditCard = suffixMatch?.kind == AccountSuffixKind.CARD && CREDIT_CARD_WORDS.containsMatchIn(body),
             isCardBillPayment = direction == TransactionType.EXPENSE &&
                 suffixMatch?.kind != AccountSuffixKind.CARD &&
                 CARD_BILL_PAYMENT.containsMatchIn(body),
@@ -490,6 +498,11 @@ data class ParsedSms(
      * when it can tell which card, so card spending is not counted a second time as the bill.
      */
     val isCardBillPayment: Boolean = false,
+    /**
+     * [accountSuffix] is a credit card's. Such a message belongs on a credit card account and
+     * never on a bank account, which it would debit for money that has not left it.
+     */
+    val isCreditCard: Boolean = false,
 ) {
     val needsCloserReview: Boolean get() = confidence < REVIEW_THRESHOLD
 

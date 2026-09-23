@@ -438,6 +438,23 @@ interface TransactionDao {
         to: LocalDate,
     ): Boolean
 
+    /** Live rows on [accountId] on either side of a transfer; what blocks deleting the account. */
+    @Query(
+        "SELECT COUNT(*) FROM transactions WHERE deletedAt IS NULL " +
+            "AND (accountId = :accountId OR transferAccountId = :accountId)",
+    )
+    suspend fun countLiveTouchingAccount(accountId: String): Int
+
+    /**
+     * Permanently removes rows on [accountId] that were already deleted, so they no longer hold
+     * the account in place through its foreign key when the account itself is deleted.
+     */
+    @Query(
+        "DELETE FROM transactions WHERE deletedAt IS NOT NULL " +
+            "AND (accountId = :accountId OR transferAccountId = :accountId)",
+    )
+    suspend fun purgeDeletedTouchingAccount(accountId: String)
+
     /** Every distinct stored tag set, for tag suggestions and the tag filter. Decoded by the caller. */
     @Query("SELECT DISTINCT tags FROM transactions WHERE deletedAt IS NULL AND tags != ''")
     fun observeTagColumns(): Flow<List<String>>

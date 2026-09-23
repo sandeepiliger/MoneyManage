@@ -176,4 +176,26 @@ class RealWorldSmsDirectionTest {
             assertWithMessage(label).that(BankSmsParser.parse(body, LocalDate.of(2026, 3, 5))).isNull()
         }
     }
+
+    /**
+     * Credit card messages must be told apart from bank and debit card ones: a credit card spend
+     * is card debt, and filed against a bank account it took money out that never left.
+     */
+    @Test
+    fun `credit card messages are recognised as such, debit card and bank messages are not`() {
+        fun isCredit(body: String) = BankSmsParser.parse(body, LocalDate.of(2026, 3, 5))!!.isCreditCard
+        assertWithMessage("credit card spend").that(
+            isCredit("Rs.1,299.00 spent on your SBI Credit Card ending 1234 at AMAZON on 05/03/26. Avl Lmt Rs.48,701.00"),
+        ).isTrue()
+        assertWithMessage("credit card payment received").that(
+            isCredit("Payment of Rs. 25,000.00 has been received towards your HDFC Bank Credit Card ending 1234 on 05-03-2026."),
+        ).isTrue()
+        assertWithMessage("debit card spend").that(
+            isCredit("Rs.450.00 spent on your Debit Card XX5678 at DMART on 05-03-26. Avl Bal Rs.9,550.00"),
+        ).isFalse()
+        // A bank debit that pays a card bill names the card but is money leaving the bank.
+        assertWithMessage("bank debit paying the card").that(
+            isCredit("Rs.25,000.00 debited from A/c XX4321 on 05-03-26 towards your HDFC Credit Card."),
+        ).isFalse()
+    }
 }

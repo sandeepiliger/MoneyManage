@@ -273,7 +273,14 @@ class SmsTransactionImporter @Inject constructor(
      * none of them is a real mismatch, not a candidate for the fallback. Only when there is
      * nothing to discriminate on do we fall back to "there is only one account this can be".
      */
-    private fun matchAccount(parsed: ParsedSms, accounts: List<Account>): AccountMatch {
+    private fun matchAccount(parsed: ParsedSms, allAccounts: List<Account>): AccountMatch {
+        // Only accounts of the right kind are candidates. A credit card spend is card debt, not
+        // money leaving the bank; a bank, debit card or UPI message is money in or out of a bank
+        // account or wallet, never a card or loan. Without this split, the one-account fallbacks
+        // below filed a credit card purchase against someone's only (bank) account, or a bank
+        // debit against their only (card) account -- the balance moved in the wrong place.
+        if (parsed.isCreditCard) return matchCreditCard(parsed, allAccounts)
+        val accounts = allAccounts.filterNot { it.type.isLiability }
         val suffix = parsed.accountSuffix
         if (suffix.isNullOrBlank()) {
             // No digits to match on at all -- a UPI app's own "you sent" confirmation typically
@@ -333,6 +340,30 @@ class SmsTransactionImporter @Inject constructor(
         // belong to any of them. Guessing risks silently duplicating a real account, so this is
         // the one case that still asks the user to add digits to their existing accounts instead.
         return AccountMatch.Refuse
+    }
+
+    /**
+     * A credit card message: the card with those digits, or the only card on file when none
+     * declares digits. Never created blind -- a card has a limit and a statement cycle the user
+     * sets up on the Cards screen -- and never a bank account.
+     */
+    private fun matchCreditCard(parsed: ParsedSms, accounts: List<Account>): AccountMatch {
+        val cards = accounts.filter { it.type == AccountType.CREDIT_CARD }
+        val suffix = parsed.accountSuffix
+        if (!suffix.isNullOrBlank()) {
+            val byDigits = cards.filter {
+                it.maskedIdentifier?.takeLast(suffix.length)?.equals(suffix, ignoreCase = true) == true
+            }
+            if (byDigits.isNotEmpty()) {
+                return byDigits.singleOrNull()?.let { AccountMatch.Found(it) } ?: AccountMatch.Refuse
+            }
+        }
+        val single = cards.singleOrNull()
+        return if (single != null && single.maskedIdentifier.isNullOrBlank()) {
+            AccountMatch.Found(single)
+        } else {
+            AccountMatch.Refuse
+        }
     }
 
     /**

@@ -153,10 +153,15 @@ class AccountRepository @Inject constructor(
      */
     suspend fun delete(id: String): AccountDeletionResult {
         val account = accountDao.findById(id) ?: return AccountDeletionResult.NotFound
-        val transactionCount = transactionDao.countForAccount(id)
+        // Transfers into the account count too: they reference it as much as its own rows do.
+        // Counting only rows *from* it let a delete through that the database then refused with a
+        // foreign-key error, crashing the screen.
+        val transactionCount = transactionDao.countLiveTouchingAccount(id)
         if (transactionCount > 0) {
             return AccountDeletionResult.HasTransactions(transactionCount)
         }
+        // Rows already in Recently deleted still reference the account; they go with it.
+        transactionDao.purgeDeletedTouchingAccount(id)
         accountDao.delete(account)
         return AccountDeletionResult.Deleted
     }

@@ -173,6 +173,21 @@ class RecurringRepository @Inject constructor(
     /** Writes a single occurrence the user confirmed from a reminder. */
     suspend fun postOccurrence(ruleId: String, date: LocalDate): String? {
         val rule = findById(ruleId) ?: return null
+        // A second tap on "Paid", or rent the bank SMS already brought in: the payment is in the
+        // ledger, so confirming it only closes the reminder rather than recording it again.
+        if (
+            transactionRepository.occurrenceAlreadyRecorded(
+                ruleId = rule.id,
+                amount = rule.amount,
+                accountId = rule.accountId,
+                type = rule.type,
+                date = date,
+                windowDays = if (rule.frequency.approximateMonthsPerOccurrence >= 1.0) AUTO_POST_MATCH_DAYS else 0L,
+            )
+        ) {
+            recurringDao.markPosted(ruleId, date)
+            return null
+        }
         val id = transactionRepository.create(
             type = rule.type,
             amount = rule.amount,
