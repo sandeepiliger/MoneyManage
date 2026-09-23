@@ -101,7 +101,11 @@ class Migration1To2Test {
 
     @Test
     fun `after the upgrade an opening balance date is stored and honoured`() = runTest {
-        open().close()
+        // Room creates the file lazily, on first use; touch it so there is a file to downgrade.
+        open().apply {
+            openHelper.writableDatabase
+            close()
+        }
         downgradeToVersion1()
 
         val upgraded = open()
