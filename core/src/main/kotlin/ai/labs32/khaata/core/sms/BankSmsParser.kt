@@ -58,6 +58,52 @@ object BankSmsParser {
     )
 
     /**
+     * Direction words some banks abbreviate or phrase differently: "A/c XX1234 Cr with Rs..",
+     * "Dr with INR..", "INR 60,000 has been added to your account". Matched as whole phrases, not
+     * bare "cr"/"dr", which also appear in "Avl Cr Lmt" and reference codes.
+     */
+    private val CREDIT_PHRASES = listOf(
+        Regex("""\bcr\.?\s+(?:with|by)\b"""),
+        Regex("""\badded\s+to\s+(?:your|ur)\s+(?:a/?c|acct|account|wallet)"""),
+    )
+    private val DEBIT_PHRASES = listOf(
+        Regex("""\bdr\.?\s+(?:with|by|for)\b"""),
+    )
+
+    /**
+     * Money coming back: a failed or cancelled payment reversed into the account.
+     *
+     * These messages usually also say "failed" and often "debited" (describing the original
+     * attempt), so without this they were either thrown away as failures -- leaving the original
+     * debit, if it was imported, with nothing to cancel it -- or, worse, read as a second debit
+     * because "debited" came first. Only a completed return counts: "will be reversed" is a
+     * promise, and stays rejected.
+     */
+    private val REVERSAL_CREDIT = Regex(
+        """\breversed\s+(?:to|in|into|back)\b""" +
+            """|\bhas\s+been\s+reversed\b|\bhave\s+been\s+reversed\b""" +
+            """|\bcredited\s+back\b|\brefunded\s+(?:to|in|into)\b""" +
+            """|\breversal\s+of\b[^.]{0,40}?\bcredited\b""",
+    )
+    private val FUTURE_TENSE = listOf("will be", "shall be", "within", "would be")
+
+    /** Markers that describe a failure, which a completed reversal legitimately mentions. */
+    private val FAILURE_MARKERS = setOf(
+        "failed", "declined", "unsuccessful", "reversed", "could not be processed",
+    )
+
+    /**
+     * An amount with no currency marker, in the one position where it cannot be anything else:
+     * straight after the direction verb. SBI's UPI messages read "A/C X1234 debited by 250.0 on
+     * date..." with no Rs or INR at all, so without this the largest bank in the country's UPI
+     * debits were never imported.
+     */
+    private val BARE_AMOUNT_AFTER_VERB = Regex(
+        """\b(?:debited|credited)\s+(?:by|with|for)\s+(?:rs\.?|inr|₹)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)\b""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /**
      * A card being used, which is a spend however the message words it.
      *
      * Card purchase messages routinely carry no direction word at all — "Thank you for using your
@@ -73,7 +119,9 @@ object BankSmsParser {
      */
     private val CARD_USAGE = Regex(
         """\b(?:used|using|utilised|utilized)\b[^.]{0,60}?\bcard\b""" +
-            """|\bcard\b[^.]{0,60}?\b(?:used|utilised|utilized)\b""",
+            """|\bcard\b[^.]{0,60}?\b(?:used|utilised|utilized)\b""" +
+            // "INR 2,500.00 transaction on your Axis Bank Card no. XX1234 at SWIGGY"
+            """|\b(?:transaction|txn)\s+(?:on|using|through|via)\s+(?:your\s+)?[^.]{0,40}?\bcard\b""",
         RegexOption.IGNORE_CASE,
     )
 
@@ -116,6 +164,16 @@ object BankSmsParser {
     /** Merchant after the common connective words. Stops at sentence or clause boundaries. */
     private val MERCHANT_AFTER = Regex(
         """(?:\bat\b|\bto\b|\bvpa\b|\btowards\b|\bfor\b|\bfrom\b)\s+([A-Za-z0-9@._\-*&' ]{2,60}?)(?=\s+(?:on|ref|upi|txn|utr|rrn|avl|available|bal|balance|info|not you|if not)\b|[.,;!]|$)""",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /**
+     * The 12-digit UPI RRN where it is written without a "Ref" label: "UPI:412345678901" (ICICI)
+     * or "UPI/P2A/412345678901/NAME" (Axis). The reference is what tells a duplicate from a second
+     * payment, and pairs the two legs of a transfer, so missing it is not cosmetic.
+     */
+    private val UPI_RRN = Regex(
+        """\bupi\s*[:/]\s*(?:[a-z0-9]{2,6}/)?(\d{12})\b""",
         RegexOption.IGNORE_CASE,
     )
 
@@ -184,10 +242,12 @@ object BankSmsParser {
         if (body.isBlank()) return null
         val lower = body.lowercase()
 
-        // Reject non-transactions before doing any extraction work.
-        if (NON_TRANSACTION_MARKERS.any { lower.contains(it) }) return null
+        // Reject non-transactions before doing any extraction work. A completed reversal is
+        // money arriving, and may well mention the failure that caused it.
+        val isReversal = isReversalCredit(lower)
+        if (isNonTransaction(lower, isReversal)) return null
 
-        val direction = detectDirection(lower) ?: return null
+        val direction = if (isReversal) TransactionType.INCOME else detectDirection(lower) ?: return null
         val balance = BALANCE.find(body)?.groupValues?.get(1)
         val amount = extractAmount(body, balance) ?: return null
 
@@ -205,7 +265,8 @@ object BankSmsParser {
             occurredOn = extractDate(body) ?: receivedOn,
             accountSuffix = suffixMatch?.suffix,
             accountSuffixKind = suffixMatch?.kind,
-            referenceNumber = REFERENCE.find(body)?.groupValues?.get(1),
+            referenceNumber = REFERENCE.find(body)?.groupValues?.get(1)
+                ?: UPI_RRN.find(body)?.groupValues?.get(1),
             rail = rail,
             availableBalance = balance?.let {
                 runCatching { Money.of(it.replace(",", ""), currency) }.getOrNull()
@@ -257,16 +318,31 @@ object BankSmsParser {
      */
     fun diagnoseRejection(body: String): RejectionReason {
         val lower = body.lowercase()
+        val isReversal = isReversalCredit(lower)
         return when {
-            NON_TRANSACTION_MARKERS.any { lower.contains(it) } -> RejectionReason.NON_TRANSACTION_MARKER
-            detectDirection(lower) == null -> RejectionReason.NO_DIRECTION_WORD
+            isNonTransaction(lower, isReversal) -> RejectionReason.NON_TRANSACTION_MARKER
+            !isReversal && detectDirection(lower) == null -> RejectionReason.NO_DIRECTION_WORD
             else -> RejectionReason.NO_AMOUNT
         }
     }
 
+    private fun isReversalCredit(lower: String): Boolean =
+        REVERSAL_CREDIT.containsMatchIn(lower) && FUTURE_TENSE.none { lower.contains(it) }
+
+    private fun isNonTransaction(lower: String, isReversal: Boolean): Boolean =
+        NON_TRANSACTION_MARKERS.any { marker ->
+            lower.contains(marker) && !(isReversal && marker in FAILURE_MARKERS)
+        }
+
     private fun detectDirection(lower: String): TransactionType? {
-        val debitAt = DEBIT_WORDS.mapNotNull { directionIndex(lower, it) }.minOrNull()
-        val creditAt = CREDIT_WORDS.mapNotNull { directionIndex(lower, it) }.minOrNull()
+        val debitAt = (
+            DEBIT_WORDS.mapNotNull { directionIndex(lower, it) } +
+                DEBIT_PHRASES.mapNotNull { it.find(lower)?.range?.first }
+            ).minOrNull()
+        val creditAt = (
+            CREDIT_WORDS.mapNotNull { directionIndex(lower, it) } +
+                CREDIT_PHRASES.mapNotNull { it.find(lower)?.range?.first }
+            ).minOrNull()
         return when {
             // Nothing said which way the money went. A card being used still does — see
             // [CARD_USAGE] — and that is the only fallback, so a message with neither is left
@@ -302,8 +378,19 @@ object BankSmsParser {
 
     private fun namesACard(haystack: String, at: Int, needle: String): Boolean {
         if (needle != "credit" && needle != "debit") return false
-        return haystack.substring(at + needle.length).trimStart().startsWith("card")
+        val after = haystack.substring(at + needle.length).trimStart().trimStart(':', '-').trimStart()
+        if (after.startsWith("card")) return true
+        if (needle != "credit") return false
+        // "Available credit limit: INR 47,500" and "Available credit: INR 97,500" end nearly every
+        // card-spend message and describe headroom, not money arriving. Read as a direction word
+        // they turned the spend into income.
+        if (CREDIT_HEADROOM_AFTER.any { after.startsWith(it) }) return true
+        val before = haystack.substring(0, at).trimEnd()
+        return CREDIT_HEADROOM_BEFORE.any { before.endsWith(it) }
     }
+
+    private val CREDIT_HEADROOM_AFTER = listOf("limit", "lmt", "line", "score")
+    private val CREDIT_HEADROOM_BEFORE = listOf("available", "avl", "avl.", "avbl", "avail", "availed")
 
     /**
      * Finds the transaction amount, skipping the available-balance figure.
@@ -317,7 +404,10 @@ object BankSmsParser {
             .map { it.groupValues[1] to it.range.first }
             .sortedBy { it.second }
             .toList()
-        if (matches.isEmpty()) return null
+        if (matches.isEmpty()) {
+            val bare = BARE_AMOUNT_AFTER_VERB.find(body)?.groupValues?.get(1) ?: return null
+            return bare.replace(",", "").takeIf { it.toBigDecimalOrNull()?.signum() == 1 }
+        }
 
         val candidate = matches.firstOrNull { (value, _) -> value != balanceText } ?: return null
         val cleaned = candidate.first.replace(",", "")
