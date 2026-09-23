@@ -21,8 +21,10 @@ What that leaves:
   generates one and continues instead of failing. Someone must commit a real baseline, or run lint
   and fix what it finds, before the first release.
 - The **instrumentation** tests are written but have **never executed** — CI has no emulator, so
-  `connectedAndroidTest` has never run. That includes `TransactionAggregateParityTest`, which checks
-  the SQL balance queries (now including opening-balance dates) against the Kotlin reference.
+  `connectedAndroidTest` has never run. `TransactionAggregateParityTest`, which checks every SQL
+  total (balances, net worth, month, category, daily and filtered totals) against the Kotlin rules,
+  was moved out of them and now runs in CI under Robolectric's real SQLite, including a seeded
+  3,000-row random ledger.
 - Play Billing has never connected and AdMob has never rendered; both need an internal-testing
   track run.
 
@@ -122,9 +124,8 @@ In order:
    owner has used have been looked at.
 2. Commit a real lint baseline (or run lint and fix what it finds) so `abortOnError` actually
    gates something.
-3. Run the instrumentation tests — particularly `TransactionAggregateParityTest`, which checks the
-   thing most expensive to get wrong. These still need an emulator; the unit tests already run in
-   CI.
+3. Run the remaining instrumentation tests on an emulator. The most important one,
+   `TransactionAggregateParityTest`, already runs in CI.
 4. Add Compose UI tests for the transaction-entry flow first; it is the one people use daily.
 5. Before any Play upload: real values in `secrets.properties` (the build now refuses to produce a
    release artifact carrying placeholders), an upload keystore, the SMS Permissions Declaration,
