@@ -205,6 +205,16 @@ class TransactionAggregateParityTest {
             card.copy(openingBalanceDate = LocalDate.of(2026, 3, 20)),
         )
         val categories = listOf(null, "cat-food", "cat-fuel", "cat-rent", "cat-salary")
+        // Transactions reference categories by foreign key, so the ones used must exist.
+        database.categoryDao().upsertAll(
+            categories.filterNotNull().map { id ->
+                ai.labs32.khaata.core.model.Category(
+                    id = id,
+                    name = id,
+                    group = ai.labs32.khaata.core.model.CategoryGroup.entries.first(),
+                ).toEntity()
+            },
+        )
         val start = LocalDate.of(2026, 2, 1)
         val transactions = (1..3_000).map { n ->
             val on = start.plusDays(random.nextInt(89).toLong())
