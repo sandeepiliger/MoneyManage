@@ -2,7 +2,6 @@ package ai.labs32.khaata.database
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import ai.labs32.khaata.core.calc.BalanceCalculator
 import ai.labs32.khaata.core.common.DateRange
 import ai.labs32.khaata.core.database.KhaataDatabase
@@ -22,6 +21,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.time.Instant
 import java.time.LocalDate
 
@@ -37,10 +38,12 @@ import java.time.LocalDate
  * So every case that distinguishes them is exercised against both: transfers in each direction,
  * soft-deleted rows, pending rows, and a same-day mixture of all of them.
  *
- * Runs on a device or emulator against a real SQLite instance rather than under Robolectric,
- * because the point is the behaviour of SQLite's own `SUM` and `CASE`, not a stand-in for it.
+ * Runs under Robolectric, whose SQLite is the real native library, so it exercises SQLite's own
+ * `SUM` and `CASE` -- and, unlike an instrumentation test, it runs in CI on every push. It sat in
+ * `androidTest` for the whole life of the project and never executed once.
  */
-@RunWith(AndroidJUnit4::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class TransactionAggregateParityTest {
 
     private lateinit var database: KhaataDatabase
@@ -188,6 +191,104 @@ class TransactionAggregateParityTest {
         assertThat(calculatedSpend).isEqualTo(Money.of("2050"))
     }
 
+    /**
+     * A large, seeded, random ledger: every kind of row the app stores, on every account, around
+     * each account's opening-balance date. Hand-picked cases only cover the cases someone thought
+     * of; this checks every SQL figure against the Kotlin rules to the paisa across thousands.
+     */
+    @Test
+    fun aLargeRandomLedgerAgreesEverywhere() = runTest {
+        val random = java.util.Random(20_260_923L)
+        val dated = listOf(
+            hdfc.copy(openingBalanceDate = LocalDate.of(2026, 3, 5)),
+            cash,
+            card.copy(openingBalanceDate = LocalDate.of(2026, 3, 20)),
+        )
+        val categories = listOf(null, "cat-food", "cat-fuel", "cat-rent", "cat-salary")
+        val start = LocalDate.of(2026, 2, 1)
+        val transactions = (1..3_000).map { n ->
+            val on = start.plusDays(random.nextInt(89).toLong())
+            val from = dated[random.nextInt(dated.size)].id
+            val amount = Money.ofMinor(1L + random.nextInt(5_000_000), CurrencyCode.INR).toPlainString()
+            val base = when (random.nextInt(10)) {
+                in 0..5 -> expense("r$n", amount, from, on)
+                in 6..7 -> income("r$n", amount, from, on)
+                else -> {
+                    val to = dated.map { it.id }.filter { it != from }[random.nextInt(dated.size - 1)]
+                    transfer("r$n", amount, from = from, to = to, on = on)
+                }
+            }
+            base.copy(
+                categoryId = if (base.type == TransactionType.TRANSFER) null else categories[random.nextInt(categories.size)],
+                isPending = random.nextInt(10) == 0,
+                deletedAt = if (random.nextInt(20) == 0) Instant.parse("2026-04-01T00:00:00Z") else null,
+            )
+        }
+
+        assertParity(transactions, dated)
+
+        val march = DateRange(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 31))
+        val effectiveInMarch = transactions.filter { it.isEffective && it.occurredOn in march }
+        fun sumOf(rows: List<Transaction>) = rows.fold(Money.zero()) { acc, t -> acc + t.amount }
+
+        // Month totals.
+        assertThat(Money.ofMinor(transactionDao.observeTotalSpend(march.start, march.endInclusive).first(), CurrencyCode.INR))
+            .isEqualTo(sumOf(effectiveInMarch.filter { it.countsAsSpending }))
+        assertThat(Money.ofMinor(transactionDao.observeTotalIncome(march.start, march.endInclusive).first(), CurrencyCode.INR))
+            .isEqualTo(sumOf(effectiveInMarch.filter { it.countsAsIncome }))
+
+        // Spending by category, the uncategorised bucket included.
+        val sqlByCategory = transactionDao.observeCategoryTotals(march.start, march.endInclusive).first()
+            .associate { it.categoryId to it.totalMinor }
+        val calculatedByCategory = effectiveInMarch.filter { it.countsAsSpending }
+            .groupBy { it.categoryId }
+            .mapValues { (_, rows) -> sumOf(rows).minorUnits }
+        assertThat(sqlByCategory).isEqualTo(calculatedByCategory)
+
+        // Daily spending, which the reports chart draws.
+        val sqlDaily = transactionDao.dailyTotals(march.start, march.endInclusive).associate { it.date to it.totalMinor }
+        val calculatedDaily = effectiveInMarch.filter { it.countsAsSpending }
+            .groupBy { it.occurredOn }
+            .mapValues { (_, rows) -> sumOf(rows).minorUnits }
+        assertThat(sqlDaily).isEqualTo(calculatedDaily)
+
+        // The Transactions screen's filtered total: spending and income apart, transfers in
+        // neither, an account filter matching either leg of a transfer.
+        val filtered = transactionDao.filteredSpendTotal(
+            fromDate = march.start,
+            toDate = march.endInclusive,
+            type = null,
+            accountIds = listOf(hdfc.id),
+            accountCount = 1,
+            categoryIds = emptyList(),
+            categoryCount = 0,
+            minMinor = null,
+            maxMinor = null,
+            query = null,
+            tagPattern = null,
+        )
+        val onHdfc = effectiveInMarch.filter { it.accountId == hdfc.id || it.transferAccountId == hdfc.id }
+        assertThat(filtered.count).isEqualTo(onHdfc.size)
+        assertThat(filtered.totalMinor).isEqualTo(sumOf(onHdfc.filter { it.type == TransactionType.EXPENSE }).minorUnits)
+        assertThat(filtered.incomeMinor).isEqualTo(sumOf(onHdfc.filter { it.type == TransactionType.INCOME }).minorUnits)
+
+        // Net worth and available-to-spend from the SQL balances equal the calculator's.
+        val sqlTotals = transactionDao.observeAccountTotals().first().associateBy { it.accountId }
+        val sqlBalances = dated.map { account ->
+            ai.labs32.khaata.core.model.AccountBalance(
+                account = account,
+                currentBalance = account.openingBalance +
+                    Money.ofMinor(sqlTotals[account.id]?.totalMinor ?: 0L, CurrencyCode.INR),
+                transactionCount = sqlTotals[account.id]?.transactionCount ?: 0,
+                lastActivityAt = sqlTotals[account.id]?.lastActivityAt,
+            )
+        }
+        val calculatedBalances = BalanceCalculator.balances(dated, transactions)
+        assertThat(BalanceCalculator.netWorth(sqlBalances)).isEqualTo(BalanceCalculator.netWorth(calculatedBalances))
+        assertThat(BalanceCalculator.availableToSpend(sqlBalances))
+            .isEqualTo(BalanceCalculator.availableToSpend(calculatedBalances))
+    }
+
     // ---- Helpers -----------------------------------------------------------------------------
 
     /** Inserts [transactions] and asserts every account's SQL balance equals the calculated one. */
@@ -259,7 +360,7 @@ class TransactionAggregateParityTest {
         from: String,
         to: String,
         on: LocalDate = LocalDate.of(2026, 3, 10),
-    ) = base(id, TransactionType.TRANSFER, amount, from, on).copy(transferAccountId = to)
+    ) = base(id, TransactionType.TRANSFER, amount, from, on, transferAccountId = to)
 
     private fun base(
         id: String,
@@ -267,11 +368,15 @@ class TransactionAggregateParityTest {
         amount: String,
         accountId: String,
         on: LocalDate,
+        // Set at construction: Transaction refuses a transfer without a destination, so building
+        // one and copying the destination in afterwards throws before the copy is reached.
+        transferAccountId: String? = null,
     ) = Transaction(
         id = id,
         type = type,
         amount = Money.of(amount),
         accountId = accountId,
+        transferAccountId = transferAccountId,
         occurredOn = on,
         createdAt = Instant.parse("2026-03-01T00:00:00Z"),
         updatedAt = Instant.parse("2026-03-01T00:00:00Z"),

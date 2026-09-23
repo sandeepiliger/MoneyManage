@@ -303,6 +303,7 @@ class TransactionRepository @Inject constructor(
         )
         return FilteredTransactionTotal(
             total = Money.ofMinor(row.totalMinor, currency),
+            income = Money.ofMinor(row.incomeMinor, currency),
             count = row.count,
         )
     }
@@ -411,4 +412,9 @@ data class TransactionFilter(
 enum class TransactionSort { DATE_DESC, AMOUNT_DESC }
 
 /** Result of [TransactionRepository.filteredTotal]. */
-data class FilteredTransactionTotal(val total: Money, val count: Int)
+data class FilteredTransactionTotal(
+    /** Spending in the filtered rows. Transfers are in neither this nor [income]. */
+    val total: Money,
+    val income: Money,
+    val count: Int,
+)

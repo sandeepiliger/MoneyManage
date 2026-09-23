@@ -102,6 +102,9 @@ class AccountEditViewModel @Inject constructor(
      */
     private var loadedBalance: Money? = null
 
+    /** The balance field's text as first shown, so an untouched field is recognised exactly. */
+    private var loadedBalanceText: String? = null
+
     private val _uiState = MutableStateFlow(AccountEditUiState())
     val uiState: StateFlow<AccountEditUiState> = _uiState.asStateFlow()
 
@@ -136,7 +139,9 @@ class AccountEditViewModel @Inject constructor(
                         institution = account?.institution.orEmpty(),
                         type = account?.type ?: AccountType.BANK,
                         openingBalanceText = (loadedBalance ?: account?.openingBalance)
-                            ?.toPlainString().orEmpty(),
+                            ?.let { balance -> if (account?.type?.isLiability == true) -balance else balance }
+                            ?.toPlainString().orEmpty()
+                            .also { loadedBalanceText = it },
                         maskedIdentifier = account?.maskedIdentifier.orEmpty(),
                         includeInNetWorth = account?.includeInNetWorth ?: true,
                         includeInAvailableBalance = account?.includeInAvailableBalance ?: true,
@@ -210,7 +215,10 @@ class AccountEditViewModel @Inject constructor(
                     state.openingBalanceText.removePrefix("-"),
                     state.currency,
                 ) ?: Money.zero(state.currency)
-                val openingBalance = if (isNegative) -magnitude else magnitude
+                val typed = if (isNegative) -magnitude else magnitude
+                // For a card or loan the field is "amount owed", typed positive; the ledger keeps
+                // debt as a negative balance, so it is negated. See OnboardingViewModel.finish.
+                val openingBalance = if (state.type.isLiability) -typed else typed
 
                 val existing = editing
                 if (existing != null) {
@@ -219,7 +227,12 @@ class AccountEditViewModel @Inject constructor(
                     // the account's history and its snapshot date exactly as they were -- and an
                     // untouched field changes nothing at all.
                     val shown = loadedBalance
-                    val adjustedOpening = if (shown != null && openingBalance != shown) {
+                    val untouched = state.openingBalanceText == loadedBalanceText
+                    val adjustedOpening = if (untouched) {
+                        // Also covers changing only the account type, which flips what the field
+                        // means without the user having said anything about the balance.
+                        existing.openingBalance
+                    } else if (shown != null && openingBalance != shown) {
                         existing.openingBalance + (openingBalance - shown)
                     } else if (shown == null) {
                         openingBalance
@@ -367,7 +380,13 @@ fun AccountEditScreen(
             OutlinedTextField(
                 value = state.openingBalanceText,
                 onValueChange = viewModel::onOpeningBalanceChange,
-                label = { Text(stringResource(R.string.accounts_opening_balance)) },
+                label = {
+                    Text(
+                        stringResource(
+                            if (state.type.isLiability) R.string.accounts_amount_owed else R.string.accounts_opening_balance,
+                        ),
+                    )
+                },
                 prefix = { Text(state.currency.symbol) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),

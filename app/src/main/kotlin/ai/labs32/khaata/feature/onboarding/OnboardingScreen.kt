@@ -335,7 +335,13 @@ private fun AccountStep(state: OnboardingUiState, viewModel: OnboardingViewModel
     OutlinedTextField(
         value = state.openingBalanceText,
         onValueChange = viewModel::onOpeningBalanceChange,
-        label = { Text(stringResource(R.string.onboarding_balance_title)) },
+        label = {
+            Text(
+                stringResource(
+                    if (state.accountType.isLiability) R.string.onboarding_balance_owed_title else R.string.onboarding_balance_title,
+                ),
+            )
+        },
         supportingText = { Text(stringResource(R.string.onboarding_balance_body)) },
         prefix = { Text(state.currency.symbol) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),

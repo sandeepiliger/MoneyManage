@@ -253,8 +253,14 @@ class OnboardingViewModel @Inject constructor(
                     ),
                 )
 
-                val openingBalance = MoneyParser.parse(state.openingBalanceText, state.currency)
+                val stated = MoneyParser.parse(state.openingBalanceText, state.currency)
                     ?: Money.zero(state.currency)
+                // For a credit card or loan the question is "how much do you owe?", and the answer
+                // is typed as a plain positive amount. The ledger stores debt as a negative balance
+                // (spending takes a card further below zero), so it is negated here. Stored as
+                // typed, a ₹25,000 card debt counted +₹25,000 towards net worth and every purchase
+                // made the amount owed go down.
+                val openingBalance = if (state.accountType.isLiability) -stated else stated
 
                 accountRepository.create(
                     name = state.accountName.trim(),

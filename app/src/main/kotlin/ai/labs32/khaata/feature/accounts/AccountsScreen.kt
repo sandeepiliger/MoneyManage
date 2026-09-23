@@ -262,9 +262,11 @@ private fun AccountCard(balance: AccountBalance, onClick: () -> Unit) {
                 // sign is the more legible one and it is already how every other negative figure
                 // here reads, so liabilities now match it and the caption is dropped as redundant.
                 MoneyText(
-                    money = if (balance.account.isLiability) -balance.displayBalance else balance.displayBalance,
+                    // The signed balance itself: negative is owed, and a card in credit reads as
+                    // the positive amount it is.
+                    money = balance.currentBalance,
                     style = KhaataTextStyles.amountLarge,
-                    color = if (balance.account.isLiability) {
+                    color = if (balance.isOwed) {
                         KhaataTheme.money.expense
                     } else {
                         MaterialTheme.colorScheme.onSurface

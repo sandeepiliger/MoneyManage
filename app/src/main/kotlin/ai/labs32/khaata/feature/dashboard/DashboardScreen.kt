@@ -986,7 +986,7 @@ private fun AccountsCard(state: DashboardUiState, onSeeAll: () -> Unit) {
                     MoneyText(
                         money = balance.displayBalance,
                         style = KhaataTextStyles.amountMedium,
-                        color = if (balance.account.isLiability) {
+                        color = if (balance.isOwed) {
                             KhaataTheme.money.expense
                         } else {
                             MaterialTheme.colorScheme.onSurface

@@ -112,7 +112,17 @@ data class AccountBalance(
      * "-₹18,000 outstanding" reads as a double negative.
      */
     val displayBalance: Money
-        get() = if (account.isLiability) currentBalance.abs() else currentBalance
+        get() = if (isOwed) currentBalance.abs() else currentBalance
+
+    /**
+     * True when this is a card or loan with money actually owed on it.
+     *
+     * A liability can be in credit -- a card paid more than its bill -- and then it is money the
+     * user has, not money they owe. Showing its magnitude as "outstanding" turned an overpayment
+     * into a debt on screen.
+     */
+    val isOwed: Boolean
+        get() = account.isLiability && currentBalance.isNegative
 
     /** Signed contribution to net worth: assets add, liabilities subtract. */
     val netWorthContribution: Money

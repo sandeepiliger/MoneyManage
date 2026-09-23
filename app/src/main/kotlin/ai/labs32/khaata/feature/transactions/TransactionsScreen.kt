@@ -121,7 +121,8 @@ fun TransactionsScreen(
             if (state.filter.isActive && state.filteredTotal != null) {
                 FilterSummary(
                     count = state.filteredCount,
-                    total = state.filteredTotal!!,
+                    spent = state.filteredTotal!!,
+                    received = state.filteredIncome,
                 )
             }
 
@@ -349,7 +350,15 @@ private fun QuickTypeFilters(
  * as the user scrolls — which would be a subtly wrong number in a finance app.
  */
 @Composable
-private fun FilterSummary(count: Int, total: ai.labs32.khaata.core.money.Money) {
+private fun FilterSummary(
+    count: Int,
+    spent: ai.labs32.khaata.core.money.Money,
+    received: ai.labs32.khaata.core.money.Money?,
+) {
+    // Spent and received are shown apart, never netted: a filter on income used to read
+    // "5 Expense ₹0" because only spending was summed. Transfers count in neither.
+    val showReceived = received != null && !received.isZero
+    val showSpent = !spent.isZero || !showReceived
     Row(
         Modifier
             .fillMaxWidth()
@@ -361,21 +370,32 @@ private fun FilterSummary(count: Int, total: ai.labs32.khaata.core.money.Money) 
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = stringResource(R.string.transaction_expense),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = MoneyFormatter.plain(total),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+        Spacer(Modifier.weight(1f))
+        if (showSpent) {
+            SummaryFigure(stringResource(R.string.transaction_expense), spent)
+        }
+        if (showSpent && showReceived) Spacer(Modifier.width(16.dp))
+        if (showReceived) {
+            SummaryFigure(stringResource(R.string.transaction_income), received!!)
+        }
     }
+}
+
+@Composable
+private fun SummaryFigure(label: String, money: ai.labs32.khaata.core.money.Money) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+    Spacer(Modifier.width(8.dp))
+    Text(
+        text = MoneyFormatter.plain(money),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurface,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

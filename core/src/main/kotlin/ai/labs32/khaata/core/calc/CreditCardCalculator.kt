@@ -122,8 +122,15 @@ object CreditCardCalculator {
         statementDate: LocalDate,
     ): Money {
         val currency = card.creditLimit.currency
+        // Only what actually moved today's balance can be rewound out of it: anything dated before
+        // the account's opening-balance date never moved it (see Account.movesBalanceOn), so
+        // subtracting it again would put the statement off by that amount.
         val since = transactions
-            .filter { it.isEffective && it.occurredOn.isAfter(statementDate) }
+            .filter {
+                it.isEffective &&
+                    it.occurredOn.isAfter(statementDate) &&
+                    balance.account.movesBalanceOn(it.occurredOn)
+            }
             .sumOfMoney(currency) { it.signedAmountFor(card.accountId) }
         val atStatement = balance.currentBalance - since
         return if (atStatement.isNegative) atStatement.abs() else Money.zero(currency)

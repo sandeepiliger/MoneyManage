@@ -213,7 +213,7 @@ fun AccountDetailScreen(
                     state.balance?.let { balance ->
                         KhaataCard {
                             CardHeader(
-                                title = if (balance.account.isLiability) {
+                                title = if (balance.isOwed) {
                                     stringResource(R.string.cards_outstanding)
                                 } else {
                                     stringResource(R.string.accounts_opening_balance)
@@ -224,7 +224,7 @@ fun AccountDetailScreen(
                             MoneyText(
                                 money = balance.displayBalance,
                                 style = KhaataTextStyles.amountHero,
-                                color = if (balance.account.isLiability) {
+                                color = if (balance.isOwed) {
                                     KhaataTheme.money.expense
                                 } else {
                                     MaterialTheme.colorScheme.onSurface

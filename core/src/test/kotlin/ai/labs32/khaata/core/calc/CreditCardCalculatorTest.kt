@@ -173,6 +173,36 @@ class CreditCardCalculatorTest {
         assertThat(status.paymentDueOn).isEqualTo(LocalDate.of(2026, 3, 14))
     }
 
+    /**
+     * A card set up mid-cycle with its outstanding typed in, then SMS history from before that
+     * date confirmed: the history is inside the typed figure, so rewinding it out again would
+     * report a statement balance off by exactly that history.
+     */
+    @Test
+    fun `the statement balance ignores history from before the card's balance was stated`() {
+        val dated = cardAccount.copy(
+            openingBalance = Money.of("-30000"),
+            openingBalanceDate = LocalDate.of(2026, 3, 28),
+        )
+        val transactions = listOf(
+            // Before the stated balance: already inside the ₹30,000.
+            Fixtures.expense(amount = "5000", accountId = "acc-card", on = LocalDate.of(2026, 3, 26)),
+            // After it.
+            Fixtures.expense(amount = "2000", accountId = "acc-card", on = LocalDate.of(2026, 4, 2)),
+        )
+        val status = CreditCardCalculator.status(
+            card = card,
+            balance = BalanceCalculator.balances(listOf(dated), transactions).single(),
+            transactions = transactions,
+            asOf = LocalDate.of(2026, 4, 10),
+        )
+
+        assertThat(status.outstanding).isEqualTo(Money.of("32000"))
+        // Closed on 25 Mar, before the balance was stated: the best figure there is the stated
+        // balance itself, not ₹30,000 with the ₹5,000 wrongly added back.
+        assertThat(status.statementBalance).isEqualTo(Money.of("30000"))
+    }
+
     @Test
     fun `minimum due is five percent of the statement balance`() {
         assertThat(CreditCardCalculator.minimumDue(card, Money.of("12000")))

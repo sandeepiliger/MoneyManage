@@ -81,6 +81,7 @@
     <string name="onboarding_account_body">This is where your money sits — a bank account, cash in your wallet, or a card.</string>
     <string name="onboarding_account_type_title">What kind of account is it?</string>
     <string name="onboarding_balance_title">How much is in it right now?</string>
+    <string name="onboarding_balance_owed_title">How much do you owe on it right now?</string>
     <string name="onboarding_balance_body">A rough figure is fine. You can correct it any time.</string>
     <string name="onboarding_income_title">What do you earn in a month?</string>
     <string name="onboarding_income_body">Used to work out how much you are saving. Leave it blank if you would rather not say.</string>
@@ -270,6 +271,7 @@
     <string name="accounts_institution">Bank or provider</string>
     <string name="accounts_type">Type</string>
     <string name="accounts_opening_balance">Current balance</string>
+    <string name="accounts_amount_owed">Amount owed</string>
     <string name="accounts_last_four">Last 4 digits (optional)</string>
     <string name="accounts_last_four_help">Only the last four digits, so we can match your bank SMS. Never enter a full account or card number.</string>
     <string name="accounts_include_net_worth">Count towards net worth</string>

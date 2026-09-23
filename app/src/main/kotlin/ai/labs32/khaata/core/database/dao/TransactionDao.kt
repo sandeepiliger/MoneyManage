@@ -227,6 +227,7 @@ interface TransactionDao {
         """
         SELECT
           COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount_minor_units ELSE 0 END), 0) AS totalMinor,
+          COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount_minor_units ELSE 0 END), 0) AS incomeMinor,
           COUNT(*) AS count
         FROM transactions
         WHERE deletedAt IS NULL
@@ -539,6 +540,9 @@ data class DailyTotalRow(
 )
 
 data class FilteredTotalRow(
+    /** Spending only. */
     val totalMinor: Long,
+    /** Money received. Kept apart so a filtered view of income does not read as ₹0 spent. */
+    val incomeMinor: Long,
     val count: Int,
 )

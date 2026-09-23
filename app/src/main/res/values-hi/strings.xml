@@ -83,6 +83,7 @@
     <string name="onboarding_account_body">जहाँ आपका पैसा रहता है — बैंक खाता, जेब का कैश, या कोई कार्ड।</string>
     <string name="onboarding_account_type_title">यह किस तरह का खाता है?</string>
     <string name="onboarding_balance_title">अभी इसमें कितना है?</string>
+    <string name="onboarding_balance_owed_title">अभी इस पर कितना बकाया है?</string>
     <string name="onboarding_balance_body">अंदाज़न राशि भी चलेगी। कभी भी ठीक कर सकते हैं।</string>
     <string name="onboarding_income_title">महीने में कितना कमाते हैं?</string>
     <string name="onboarding_income_body">इससे पता चलता है कि आप कितना बचा रहे हैं। न बताना चाहें तो खाली छोड़ दें।</string>
@@ -257,6 +258,7 @@
     <string name="accounts_institution">बैंक या सेवा</string>
     <string name="accounts_type">प्रकार</string>
     <string name="accounts_opening_balance">मौजूदा राशि</string>
+    <string name="accounts_amount_owed">बकाया राशि</string>
     <string name="accounts_last_four">आख़िरी 4 अंक (वैकल्पिक)</string>
     <string name="accounts_last_four_help">सिर्फ़ आख़िरी चार अंक, ताकि बैंक SMS से मिलान हो सके। पूरा खाता या कार्ड नंबर कभी न डालें।</string>
     <string name="accounts_include_net_worth">कुल संपत्ति में गिनें</string>

@@ -48,6 +48,7 @@ data class TransactionsUiState(
     val tags: List<String> = emptyList(),
     val currency: CurrencyCode = CurrencyCode.DEFAULT,
     val filteredTotal: Money? = null,
+    val filteredIncome: Money? = null,
     val filteredCount: Int = 0,
     val showFilters: Boolean = false,
     /** The last deleted transaction, held so the undo snackbar can restore it. */
@@ -115,7 +116,7 @@ class TransactionsViewModel @Inject constructor(
 
     private suspend fun refreshFilteredTotal(filter: TransactionFilter) {
         if (!filter.isActive) {
-            _uiState.update { it.copy(filteredTotal = null, filteredCount = 0) }
+            _uiState.update { it.copy(filteredTotal = null, filteredIncome = null, filteredCount = 0) }
             return
         }
         // Summed and counted by SQL (TransactionDao.filteredSpendTotal) rather than loading every
@@ -123,7 +124,7 @@ class TransactionsViewModel @Inject constructor(
         val currency = _uiState.value.currency
         val result = transactionRepository.filteredTotal(filter, currency)
         _uiState.update {
-            it.copy(filteredTotal = result.total, filteredCount = result.count)
+            it.copy(filteredTotal = result.total, filteredIncome = result.income, filteredCount = result.count)
         }
     }
 
@@ -165,7 +166,7 @@ class TransactionsViewModel @Inject constructor(
     fun clearFilters() {
         _uiState.update { it.copy(searchText = "") }
         filterFlow.value = TransactionFilter()
-        _uiState.update { it.copy(filter = TransactionFilter(), filteredTotal = null) }
+        _uiState.update { it.copy(filter = TransactionFilter(), filteredTotal = null, filteredIncome = null) }
     }
 
     fun setFiltersVisible(visible: Boolean) = _uiState.update { it.copy(showFilters = visible) }
