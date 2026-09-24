@@ -32,6 +32,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import ai.labs32.khaata.feature.reports.ReportsScreen
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -75,7 +84,88 @@ import java.time.LocalDate
 fun TransactionsScreen(
     onOpenTransaction: (String) -> Unit,
     onAddTransaction: () -> Unit,
+    onOpenPaywall: () -> Unit,
+    onOpenInsights: () -> Unit,
     viewModel: TransactionsViewModel = hiltViewModel(),
+) {
+    // Which half of the tab is showing. Saved, so coming back from a transaction's detail screen
+    // lands on the same view rather than resetting to the list.
+    var showAnalysis by rememberSaveable { mutableStateOf(false) }
+
+    Column(Modifier.fillMaxSize()) {
+        ActivityHeader(showAnalysis = showAnalysis, onShowAnalysis = { showAnalysis = it })
+        if (showAnalysis) {
+            ReportsScreen(
+                onBack = null,
+                onOpenPaywall = onOpenPaywall,
+                onOpenInsights = onOpenInsights,
+            )
+        } else {
+            TransactionListPane(
+                onOpenTransaction = onOpenTransaction,
+                onAddTransaction = onAddTransaction,
+                viewModel = viewModel,
+            )
+        }
+    }
+}
+
+/**
+ * The tab's title and its List / Analysis switch.
+ *
+ * Reports used to be a separate screen three levels down under More. They answer the same
+ * question as the list -- where did the money go -- so they are the other half of this tab now,
+ * one tap from the transactions they summarise.
+ */
+@Composable
+private fun ActivityHeader(showAnalysis: Boolean, onShowAnalysis: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = KhaataTheme.spacing.screenHorizontal,
+                end = KhaataTheme.spacing.screenHorizontal,
+                top = KhaataTheme.spacing.default,
+                bottom = KhaataTheme.spacing.tiny,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.nav_activity),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier
+                .weight(1f)
+                .semantics { heading() },
+        )
+        val options = listOf(R.string.activity_view_list, R.string.activity_view_analysis)
+        SingleChoiceSegmentedButtonRow {
+            options.forEachIndexed { index, labelRes ->
+                val selected = (index == 1) == showAnalysis
+                SegmentedButton(
+                    selected = selected,
+                    onClick = { onShowAnalysis(index == 1) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    // No checkmark: on a two-way switch the filled segment already says which is on,
+                    // and the tick pushed "Analysis" into truncating on a compact phone.
+                    icon = {},
+                    colors = SegmentedButtonDefaults.colors(
+                        activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ),
+                ) {
+                    Text(stringResource(labelRes), maxLines = 1)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TransactionListPane(
+    onOpenTransaction: (String) -> Unit,
+    onAddTransaction: () -> Unit,
+    viewModel: TransactionsViewModel,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val pagedTransactions = viewModel.transactions.collectAsLazyPagingItems()

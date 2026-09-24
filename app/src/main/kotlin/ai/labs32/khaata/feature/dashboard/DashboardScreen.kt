@@ -1,5 +1,27 @@
 package ai.labs32.khaata.feature.dashboard
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.EventRepeat
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PieChart
+import androidx.compose.material.icons.outlined.Sms
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextDecoration
+import ai.labs32.khaata.core.money.Money
+import ai.labs32.khaata.core.ui.components.PaceBar
+import ai.labs32.khaata.core.ui.theme.KhaataPalette
+import ai.labs32.khaata.data.repository.DueOccurrence
+import ai.labs32.khaata.feature.shared.relativeDateLabel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +51,6 @@ import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material.icons.outlined.Subscriptions
 import androidx.compose.material.icons.outlined.TrendingUp
@@ -91,16 +112,15 @@ import ai.labs32.khaata.feature.shared.chartMoneyFormatter
 import ai.labs32.khaata.navigation.Routes
 
 /**
- * The home screen.
+ * The home screen: what needs me today?
  *
- * The layout answers the questions in the order people actually ask them: how much do I have,
- * what happened this month, what is coming, where did it go. The lead figure is
- * "available to spend" rather than net worth — net worth is a number you check occasionally,
- * while what you can safely spend is the one you open the app for.
+ * One headline figure, then only what needs doing, then today's spending. The headline is what can
+ * safely be spent today -- the sum of every budget's own daily pace -- rather than a balance,
+ * because it is the number that answers "can I afford this?", which is the question people open a
+ * finance app to ask. With no budgets yet it falls back to available to spend.
  *
- * Cards below the header are user-reorderable, because the right order genuinely differs: someone
- * servicing three EMIs wants upcoming payments first, someone building a habit wants recent
- * transactions.
+ * The six shortcut tiles that used to sit here are gone: their destinations have tabs of their own
+ * now, and a grid of links is the least useful thing to put on the first screen of an app.
  */
 @Composable
 fun DashboardScreen(
@@ -119,10 +139,10 @@ fun DashboardScreen(
             onRetry = viewModel::retry,
         )
 
-        state.isEmpty -> Column {
-            DashboardHeader(state = state, onToggleVisibility = viewModel::toggleAmountVisibility)
+        state.isEmpty -> Column(Modifier.padding(horizontal = KhaataTheme.spacing.screenHorizontal)) {
+            HomeTopBar(state = state, onToggleVisibility = viewModel::toggleAmountVisibility, onNavigate = onNavigate)
             EmptyState(
-                icon = Icons.Outlined.ReceiptLong,
+                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
                 title = stringResource(R.string.dashboard_empty_title),
                 description = stringResource(R.string.dashboard_empty_body),
                 actionLabel = stringResource(R.string.dashboard_empty_action),
@@ -136,6 +156,7 @@ fun DashboardScreen(
             onNavigate = onNavigate,
             onOpenTransaction = onOpenTransaction,
             onSnoozeInsight = viewModel::snoozeInsight,
+            onBillPaid = viewModel::markBillPaid,
         )
     }
 }
@@ -147,6 +168,7 @@ private fun DashboardContent(
     onNavigate: (String) -> Unit,
     onOpenTransaction: (String) -> Unit,
     onSnoozeInsight: (String) -> Unit,
+    onBillPaid: (DueOccurrence) -> Unit,
 ) {
     val spacing = KhaataTheme.spacing
 
@@ -159,8 +181,12 @@ private fun DashboardContent(
         ),
         verticalArrangement = Arrangement.spacedBy(spacing.medium),
     ) {
-        item("header") {
-            DashboardHeader(state = state, onToggleVisibility = onToggleVisibility)
+        item("top-bar") {
+            HomeTopBar(state = state, onToggleVisibility = onToggleVisibility, onNavigate = onNavigate)
+        }
+
+        item("hero") {
+            HomeHero(state = state, onNavigate = onNavigate)
         }
 
         if (state.isDemoMode) {
@@ -169,71 +195,69 @@ private fun DashboardContent(
             }
         }
 
-        if (state.pendingImportCount > 0) {
-            item("pending-imports") {
-                PendingImportsBanner(
-                    count = state.pendingImportCount,
-                    onOpen = { onNavigate(Routes.PENDING_IMPORTS) },
-                )
-            }
-        }
-
-        item("shortcuts") {
-            DashboardShortcuts(onNavigate = onNavigate)
+        item("needs-you") {
+            NeedsYouCard(state = state, onNavigate = onNavigate, onBillPaid = onBillPaid)
         }
 
         items(state.visibleCards, key = { it.name }) { card ->
-            when (card) {
-                DashboardCard.SPENDING_OVERVIEW -> SpendingOverviewCard(state)
-                DashboardCard.AI_INSIGHT -> InsightCard(
-                    state = state,
-                    onSeeAll = { onNavigate(Routes.INSIGHTS) },
-                    onAdjustBudget = { budgetId -> onNavigate(Routes.editBudget(budgetId)) },
-                    onSnooze = onSnoozeInsight,
-                )
-                DashboardCard.BUDGET_PROGRESS -> BudgetProgressCard(
-                    state = state,
-                    onSeeAll = { onNavigate(Routes.BUDGETS) },
-                )
-                DashboardCard.UPCOMING_PAYMENTS -> UpcomingPaymentsCard(
-                    state = state,
-                    onSeeAll = { onNavigate(Routes.RECURRING) },
-                )
-                DashboardCard.CATEGORY_BREAKDOWN -> CategoryBreakdownCard(
-                    state = state,
-                    onSeeAll = { onNavigate(Routes.REPORTS) },
-                )
-                DashboardCard.RECENT_TRANSACTIONS -> RecentTransactionsCard(
-                    state = state,
-                    onOpenTransaction = onOpenTransaction,
-                    onSeeAll = { onNavigate(Routes.TRANSACTIONS) },
-                )
-                DashboardCard.GOALS -> GoalsCard(
-                    state = state,
-                    onSeeAll = { onNavigate(Routes.GOALS) },
-                )
-                DashboardCard.ACCOUNTS -> AccountsCard(
-                    state = state,
-                    onSeeAll = { onNavigate(Routes.ACCOUNTS) },
-                )
-                DashboardCard.SUBSCRIPTIONS -> SubscriptionsCard(
-                    state = state,
-                    onSeeAll = { onNavigate(Routes.SUBSCRIPTIONS) },
-                )
-                DashboardCard.NET_WORTH_TREND -> NetWorthTrendCard(state)
+            Box(Modifier.animateItem()) {
+                when (card) {
+                    DashboardCard.SPENDING_OVERVIEW -> SpendingOverviewCard(state)
+                    DashboardCard.AI_INSIGHT -> InsightCard(
+                        state = state,
+                        onSeeAll = { onNavigate(Routes.INSIGHTS) },
+                        onAdjustBudget = { budgetId -> onNavigate(Routes.editBudget(budgetId)) },
+                        onSnooze = onSnoozeInsight,
+                    )
+                    DashboardCard.BUDGET_PROGRESS -> BudgetProgressCard(
+                        state = state,
+                        onSeeAll = { onNavigate(Routes.PLAN) },
+                    )
+                    DashboardCard.UPCOMING_PAYMENTS -> UpcomingPaymentsCard(
+                        state = state,
+                        onSeeAll = { onNavigate(Routes.PLAN) },
+                    )
+                    DashboardCard.CATEGORY_BREAKDOWN -> CategoryBreakdownCard(
+                        state = state,
+                        onSeeAll = { onNavigate(Routes.TRANSACTIONS) },
+                    )
+                    DashboardCard.RECENT_TRANSACTIONS -> RecentTransactionsCard(
+                        state = state,
+                        onOpenTransaction = onOpenTransaction,
+                        onSeeAll = { onNavigate(Routes.TRANSACTIONS) },
+                    )
+                    DashboardCard.GOALS -> GoalsCard(
+                        state = state,
+                        onSeeAll = { onNavigate(Routes.GOALS) },
+                    )
+                    DashboardCard.ACCOUNTS -> AccountsCard(
+                        state = state,
+                        onSeeAll = { onNavigate(Routes.MONEY) },
+                    )
+                    DashboardCard.SUBSCRIPTIONS -> SubscriptionsCard(
+                        state = state,
+                        onSeeAll = { onNavigate(Routes.SUBSCRIPTIONS) },
+                    )
+                    DashboardCard.NET_WORTH_TREND -> NetWorthTrendCard(state)
+                }
             }
         }
     }
 }
 
-// ---- Header ----------------------------------------------------------------------------------
+// ---- Top bar ---------------------------------------------------------------------------------
 
+/**
+ * Greeting and date, then the three things reachable from Home: the assistant, the privacy toggle
+ * and settings. Settings used to be the last entry on a More tab; the avatar is where people look
+ * for it in every other app.
+ */
 @Composable
-private fun DashboardHeader(
+private fun HomeTopBar(
     state: DashboardUiState,
     onToggleVisibility: () -> Unit,
+    onNavigate: (String) -> Unit,
 ) {
-    val spacing = KhaataTheme.spacing
     val greeting = stringResource(
         when (state.greetingKey) {
             GreetingKey.MORNING -> R.string.dashboard_greeting_morning
@@ -241,296 +265,431 @@ private fun DashboardHeader(
             GreetingKey.EVENING -> R.string.dashboard_greeting_evening
         },
     )
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("EEEE, d MMMM") }
 
-    KhaataHeroCard(modifier = Modifier.padding(top = spacing.small, bottom = spacing.tiny)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = state.displayName?.let { "$greeting, $it" } ?: greeting,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.72f),
-                )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = stringResource(R.string.dashboard_available_to_spend),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.White.copy(alpha = 0.72f),
-                )
-            }
-            IconButton(onClick = onToggleVisibility) {
-                Icon(
-                    imageVector = if (state.amountsHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                    contentDescription = stringResource(
-                        if (state.amountsHidden) R.string.a11y_show_amounts else R.string.a11y_hide_amounts,
-                    ),
-                    tint = Color.White.copy(alpha = 0.90f),
-                )
-            }
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        HeroAmount(money = state.availableToSpend, hidden = state.amountsHidden, color = Color.White)
-
-        // The one line that turns "here is a number" into "here is what to do today" -- the
-        // aggregate of every budget's own safe-daily-spend, so it answers "can I afford this"
-        // without a trip to the Budgets tab.
-        if (!state.amountsHidden) {
-            state.dailySafeSpend?.let { daily ->
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.dashboard_daily_pace, MoneyFormatter.plain(daily)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White.copy(alpha = 0.80f),
-                )
-            }
-        }
-
-        state.netWorth?.let { netWorth ->
-            Spacer(Modifier.height(12.dp))
-            // Separates the hero amount and its daily-pace line from net worth, the delta and the
-            // sparkline below -- without it the card is four competing figures with nothing
-            // marking which one is the headline.
-            HorizontalDivider(
-                color = Color.White.copy(alpha = 0.16f),
-                thickness = 1.dp,
-            )
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = stringResource(R.string.dashboard_net_worth),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White.copy(alpha = 0.72f),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        if (state.amountsHidden) {
-                            val hiddenDescription = stringResource(R.string.a11y_amount_hidden)
-                            Text(
-                                text = "••••",
-                                modifier = Modifier.clearAndSetSemantics {
-                                    contentDescription = hiddenDescription
-                                },
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color.White,
-                            )
-                        } else {
-                            MoneyText(
-                                money = netWorth.netWorth,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color.White,
-                            )
-                        }
-                    }
-                    NetWorthDelta(state)
-                }
-
-                // The trend is drawn against net worth rather than the headline figure above it,
-                // because net worth is what the series actually measures -- putting this curve
-                // under "available to spend" would chart one number and label it as another.
-                if (!state.amountsHidden && state.netWorthTrend.size >= 2) {
-                    Sparkline(
-                        values = state.netWorthTrend.map { it.second },
-                        color = Color.White.copy(alpha = 0.85f),
-                        modifier = Modifier
-                            .padding(start = KhaataTheme.spacing.small)
-                            .width(72.dp)
-                            .height(28.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * "+12.4% vs last month", under the net worth figure.
- *
- * Direction is carried by the sign and by an arrow, never by colour: this sits on the indigo hero
- * card where a red/green pair would both have to be lightened to stay legible, and would then be
- * hard to tell apart for exactly the readers the palette was chosen to protect.
- */
-@Composable
-private fun NetWorthDelta(state: DashboardUiState) {
-    val percent = state.netWorthChangePercent ?: return
-    if (state.amountsHidden) return
-
-    val rising = percent.signum() >= 0
-    val formatted = MoneyFormatter.percentage(percent, decimals = 1)
-    val signed = if (rising && percent.signum() > 0) "+$formatted" else formatted
-
-    Spacer(Modifier.height(2.dp))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = if (rising) Icons.Outlined.TrendingUp else Icons.Default.TrendingDown,
-            contentDescription = null,
-            tint = Color.White.copy(alpha = 0.72f),
-            modifier = Modifier.size(14.dp),
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(
-            text = stringResource(R.string.dashboard_vs_last_month, signed),
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.72f),
-        )
-    }
-}
-
-// ---- Shortcuts -------------------------------------------------------------------------------
-
-/** One destination on the shortcuts grid. */
-private data class Shortcut(
-    val titleRes: Int,
-    val subtitleRes: Int,
-    val icon: ImageVector,
-    val route: String,
-)
-
-/**
- * A grid of the destinations that are otherwise buried under the More tab.
- *
- * The app carries considerably more than the five bottom-tab screens — loans with amortisation,
- * investments, credit-card cycles, goals — and until now a user had to go looking through More to
- * discover any of it. Depth nobody finds is depth that may as well not be built.
- *
- * Deliberately *not* a [DashboardCard]. That enum is persisted as the user's saved card order, so
- * adding a value to it would change how existing stored orders deserialise; this sits above the
- * reorderable cards as fixed chrome instead.
- */
-@Composable
-private fun DashboardShortcuts(onNavigate: (String) -> Unit) {
-    val spacing = KhaataTheme.spacing
-    val money = KhaataTheme.money
-
-    val shortcuts = remember {
-        listOf(
-            Shortcut(
-                R.string.shortcut_analytics,
-                R.string.shortcut_analytics_sub,
-                Icons.Outlined.Assessment,
-                Routes.REPORTS,
-            ),
-            Shortcut(
-                R.string.shortcut_accounts,
-                R.string.shortcut_accounts_sub,
-                Icons.Outlined.AccountBalanceWallet,
-                Routes.ACCOUNTS,
-            ),
-            Shortcut(
-                R.string.shortcut_goals,
-                R.string.shortcut_goals_sub,
-                Icons.Outlined.Flag,
-                Routes.GOALS,
-            ),
-            Shortcut(
-                R.string.shortcut_cards,
-                R.string.shortcut_cards_sub,
-                Icons.Outlined.CreditCard,
-                Routes.CREDIT_CARDS,
-            ),
-            Shortcut(
-                R.string.shortcut_loans,
-                R.string.shortcut_loans_sub,
-                Icons.Outlined.AccountBalance,
-                Routes.LOANS,
-            ),
-            Shortcut(
-                R.string.shortcut_investments,
-                R.string.shortcut_investments_sub,
-                Icons.Outlined.TrendingUp,
-                Routes.INVESTMENTS,
-            ),
-        )
-    }
-
-    Column(Modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(R.string.dashboard_shortcuts),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(spacing.small))
-
-        // Built from Rows rather than a LazyVerticalGrid on purpose: this sits inside the
-        // dashboard's LazyColumn, and nesting a lazy grid inside a lazy list that scrolls the same
-        // axis throws at runtime.
-        shortcuts.chunked(2).forEachIndexed { rowIndex, row ->
-            if (rowIndex > 0) Spacer(Modifier.height(spacing.small))
-            Row(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
-                row.forEachIndexed { columnIndex, shortcut ->
-                    ShortcutTile(
-                        shortcut = shortcut,
-                        tint = money.swatch(rowIndex * 2 + columnIndex),
-                        modifier = Modifier.weight(1f),
-                        onClick = { onNavigate(shortcut.route) },
-                    )
-                }
-                // Keeps a lone tile on a final odd row at half width rather than stretching it
-                // across the screen, so the grid stays a grid.
-                if (row.size == 1) Spacer(Modifier.weight(1f))
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShortcutTile(
-    shortcut: Shortcut,
-    tint: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    KhaataCard(
-        modifier = modifier,
-        onClick = onClick,
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = KhaataTheme.spacing.default),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = LocalDate.now().format(dateFormatter),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = state.displayName?.let { "$greeting, $it" } ?: greeting,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.semantics { heading() },
+            )
+        }
+        IconButton(onClick = { onNavigate(Routes.AI_ASSISTANT) }) {
+            Icon(
+                Icons.Outlined.AutoAwesome,
+                contentDescription = stringResource(R.string.ai_title),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        IconButton(onClick = onToggleVisibility) {
+            Icon(
+                imageVector = if (state.amountsHidden) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                contentDescription = stringResource(
+                    if (state.amountsHidden) R.string.a11y_show_amounts else R.string.a11y_hide_amounts,
+                ),
+            )
+        }
+        IconButton(onClick = { onNavigate(Routes.SETTINGS) }) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(34.dp)
                     .clip(CircleShape)
-                    .background(tint.copy(alpha = 0.15f)),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = shortcut.icon,
-                    contentDescription = null,
-                    tint = tint,
+                    Icons.Outlined.Person,
+                    contentDescription = stringResource(R.string.settings_title),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(20.dp),
                 )
             }
-            Spacer(Modifier.width(10.dp))
-            Column(Modifier.weight(1f)) {
+        }
+    }
+}
+
+// ---- Hero ------------------------------------------------------------------------------------
+
+/**
+ * The headline card.
+ *
+ * Safe to spend today when there are budgets to derive it from, available to spend otherwise.
+ * Under it the month's budget as a bar, with a marker at today's share of the month so "ahead of
+ * the calendar" is visible without a percentage to read, and the month's three figures below.
+ */
+@Composable
+private fun HomeHero(state: DashboardUiState, onNavigate: (String) -> Unit) {
+    val onHero = Color.White
+    val onHeroMuted = Color.White.copy(alpha = 0.74f)
+    val daily = state.dailySafeSpend
+    val overall = state.overallBudget
+    val status = overall?.status ?: state.budgetProgress.maxByOrNull { it.status.ordinal }?.status
+
+    KhaataHeroCard(modifier = Modifier.animateContentSize()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(
+                    if (daily != null) R.string.home_safe_today else R.string.dashboard_available_to_spend,
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = onHeroMuted,
+                modifier = Modifier.weight(1f),
+            )
+            status?.let { HeroStatusPill(it) }
+        }
+        Spacer(Modifier.height(4.dp))
+
+        AnimatedHeroAmount(
+            money = daily ?: state.availableToSpend,
+            hidden = state.amountsHidden,
+        )
+
+        when {
+            overall != null && !state.amountsHidden -> {
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    text = stringResource(shortcut.titleRes),
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    text = stringResource(
+                        R.string.home_left_of,
+                        MoneyFormatter.plain(overall.remaining.floorAtZero()),
+                        MoneyFormatter.plain(overall.limit),
+                    ) + " · " + pluralStringResource(
+                        R.plurals.budgets_days_left,
+                        overall.daysRemaining,
+                        overall.daysRemaining,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = onHeroMuted,
                 )
+                Spacer(Modifier.height(12.dp))
+                val periodDays = overall.daysElapsed + overall.daysRemaining
+                PaceBar(
+                    fraction = overall.percentUsedClamped / 100f,
+                    paceFraction = if (periodDays > 0) overall.daysElapsed.toFloat() / periodDays else null,
+                    description = "${budgetStatusLabel(overall.status)}, ${overall.percentUsedClamped}%",
+                    color = KhaataPalette.Brass70,
+                    trackColor = Color.White.copy(alpha = 0.18f),
+                    markerColor = Color.White,
+                )
+            }
+            daily != null && !state.amountsHidden -> {
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    text = stringResource(shortcut.subtitleRes),
-                    style = MaterialTheme.typography.labelSmall,
+                    text = stringResource(R.string.dashboard_available_to_spend) + " " +
+                        MoneyFormatter.plain(state.availableToSpend),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = onHeroMuted,
+                )
+            }
+            state.budgetProgress.isEmpty() -> {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.home_set_budget),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = onHero,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable { onNavigate(Routes.ADD_BUDGET) }
+                        .padding(vertical = 6.dp),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            state.monthSummary?.let { summary ->
+                HeroStat(
+                    label = stringResource(R.string.home_spent),
+                    value = summary.expense,
+                    hidden = state.amountsHidden,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onNavigate(Routes.TRANSACTIONS) },
+                )
+                HeroStat(
+                    label = stringResource(R.string.home_received),
+                    value = summary.income,
+                    hidden = state.amountsHidden,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onNavigate(Routes.TRANSACTIONS) },
+                )
+            }
+            state.netWorth?.let { netWorth ->
+                HeroStat(
+                    label = stringResource(R.string.dashboard_net_worth),
+                    value = netWorth.netWorth,
+                    hidden = state.amountsHidden,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onNavigate(Routes.MONEY) },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The hero figure, counting to its new value rather than jumping, so a change -- a spend just
+ * saved, a budget just set -- is something the eye catches instead of has to find.
+ */
+@Composable
+private fun AnimatedHeroAmount(money: Money, hidden: Boolean) {
+    val animated by animateFloatAsState(
+        targetValue = money.amount.toFloat(),
+        animationSpec = tween(durationMillis = 500),
+        label = "hero-amount",
+    )
+    // The animation only drives what is drawn; the settled value is formatted from the exact
+    // amount, so a rounding artefact of the float can never be the figure left on screen.
+    val shown = if (animated == money.amount.toFloat()) {
+        money
+    } else {
+        Money.of(java.math.BigDecimal.valueOf(animated.toDouble()).setScale(0, java.math.RoundingMode.HALF_EVEN), money.currency)
+    }
+    HeroAmount(money = shown, hidden = hidden, color = Color.White)
+}
+
+@Composable
+private fun HeroStatusPill(status: BudgetStatus) {
+    val label = when (status) {
+        BudgetStatus.ON_TRACK -> R.string.home_on_track
+        BudgetStatus.PROJECTED_OVER, BudgetStatus.NEARING_LIMIT -> R.string.home_ahead_of_pace
+        BudgetStatus.EXHAUSTED, BudgetStatus.OVERSPENT -> R.string.home_over_budget
+    }
+    Text(
+        text = stringResource(label),
+        style = MaterialTheme.typography.labelMedium,
+        color = Color.White,
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (status == BudgetStatus.ON_TRACK) {
+                    Color.White.copy(alpha = 0.14f)
+                } else {
+                    KhaataPalette.Brass70.copy(alpha = 0.45f)
+                },
+            )
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+    )
+}
+
+@Composable
+private fun HeroStat(
+    label: String,
+    value: Money,
+    hidden: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = 0.09f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White.copy(alpha = 0.74f),
+            maxLines = 1,
+        )
+        if (hidden) {
+            val hiddenDescription = stringResource(R.string.a11y_amount_hidden)
+            Text(
+                text = "••••",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                modifier = Modifier.clearAndSetSemantics { contentDescription = hiddenDescription },
+            )
+        } else {
+            MoneyText(
+                money = value,
+                moneyStyle = MoneyStyle.COMPACT,
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+            )
+        }
+    }
+}
+
+// ---- Needs you -------------------------------------------------------------------------------
+
+/**
+ * Everything on Home that wants an action, each with its action on the row.
+ *
+ * Bank messages waiting for confirmation, bills whose date has passed, card payments coming due,
+ * budgets running ahead. These used to be a banner, a card further down, and two screens away;
+ * gathered here, "is there anything I need to do?" has one place to look, and an empty list says
+ * so plainly rather than making the user scroll to be sure.
+ */
+@Composable
+private fun NeedsYouCard(
+    state: DashboardUiState,
+    onNavigate: (String) -> Unit,
+    onBillPaid: (DueOccurrence) -> Unit,
+) {
+    val money = KhaataTheme.money
+
+    KhaataCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
+        Text(
+            text = stringResource(R.string.home_needs_you),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+
+        if (state.needsAttentionCount == 0) {
+            Row(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Outlined.CheckCircle,
+                    contentDescription = null,
+                    tint = money.income,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.home_all_clear),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            NeedsYouRows(state = state, onNavigate = onNavigate, onBillPaid = onBillPaid)
+        }
+    }
+}
+
+@Composable
+private fun NeedsYouRows(
+    state: DashboardUiState,
+    onNavigate: (String) -> Unit,
+    onBillPaid: (DueOccurrence) -> Unit,
+) {
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("d MMM") }
+    val money = KhaataTheme.money
+    // Rows so far, so each one after the first is set off by a divider.
+    var shown = 0
+    val divider = MaterialTheme.colorScheme.outlineVariant
+
+    if (state.pendingImportCount > 0) {
+        if (shown++ > 0) HorizontalDivider(color = divider)
+        NeedsYouRow(
+            icon = Icons.Outlined.Sms,
+            tint = MaterialTheme.colorScheme.primary,
+            title = stringResource(R.string.dashboard_pending_imports, state.pendingImportCount),
+            subtitle = null,
+            actionLabel = stringResource(R.string.home_review),
+            onAction = { onNavigate(Routes.PENDING_IMPORTS) },
+        )
+    }
+
+    state.awaitingBills.forEach { occurrence ->
+        if (shown++ > 0) HorizontalDivider(color = divider)
+        NeedsYouRow(
+            icon = Icons.Outlined.EventRepeat,
+            tint = money.warning,
+            title = "${occurrence.rule.name} · ${MoneyFormatter.plain(occurrence.rule.amount)}",
+            subtitle = stringResource(R.string.recurring_was_due, occurrence.dueOn.format(dateFormatter)),
+            actionLabel = stringResource(R.string.recurring_confirm_post),
+            onAction = { onBillPaid(occurrence) },
+        )
+    }
+
+    state.cardsDueSoon.forEach { status ->
+        if (shown++ > 0) HorizontalDivider(color = divider)
+        NeedsYouRow(
+            icon = Icons.Outlined.CreditCard,
+            tint = money.warning,
+            title = stringResource(
+                R.string.home_card_bill_due,
+                status.card.cardName,
+                relativeDateLabel(status.paymentDueOn),
+            ),
+            subtitle = MoneyFormatter.plain(status.statementBalance.takeIf { it.isPositive } ?: status.outstanding),
+            actionLabel = stringResource(R.string.home_open),
+            onAction = { onNavigate(Routes.creditCardDetail(status.card.id)) },
+        )
+    }
+
+    state.budgetsNeedingAttention.take(MAX_BUDGETS_IN_NEEDS_YOU).forEach { progress ->
+        if (shown++ > 0) HorizontalDivider(color = divider)
+        NeedsYouRow(
+            icon = Icons.Outlined.PieChart,
+            tint = budgetStatusColor(progress.status),
+            title = stringResource(R.string.home_budget_used, progress.budget.name, progress.percentUsedClamped),
+            subtitle = budgetStatusLabel(progress.status),
+            actionLabel = stringResource(R.string.home_open),
+            onAction = { onNavigate(Routes.budgetDetail(progress.budget.id)) },
+        )
+    }
+}
+
+@Composable
+private fun NeedsYouRow(
+    icon: ImageVector,
+    tint: Color,
+    title: String,
+    subtitle: String?,
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(tint.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            subtitle?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
         }
+        TextButton(onClick = onAction) {
+            Text(actionLabel, style = MaterialTheme.typography.labelLarge)
+        }
     }
 }
 
 @Composable
 private fun DemoBanner(onManage: () -> Unit) {
-    // Demoted from an Emphasized brass card to a plain row. It is context about the data on
-    // screen, not something to act on the way an over-budget warning or a pending import is --
-    // SpendingOverviewCard is the one card on this screen that earns Emphasized now, and every
-    // other "important" card competing for the same weight is what made none of them read as
-    // important.
+    // A plain row rather than a card: it is context about the data on screen, not something to
+    // act on the way the "Needs you" items are.
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -559,35 +718,7 @@ private fun DemoBanner(onManage: () -> Unit) {
     }
 }
 
-@Composable
-private fun PendingImportsBanner(count: Int, onOpen: () -> Unit) {
-    // Raised rather than Emphasized: Emphasized is reserved for SpendingOverviewCard alone now,
-    // so the one card that actually needs the eye to land somewhere first still stands out. This
-    // banner is still primaryContainer-toned and still its own onClick, so it reads as actionable
-    // without competing with the card that matters most on the screen.
-    KhaataCard(
-        onClick = onOpen,
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.dashboard_pending_imports, count),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = stringResource(R.string.action_confirm),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-        }
-    }
-}
+private const val MAX_BUDGETS_IN_NEEDS_YOU = 2
 
 // ---- Cards -----------------------------------------------------------------------------------
 

@@ -6,6 +6,7 @@ import ai.labs32.khaata.core.calc.BudgetProgress
 import ai.labs32.khaata.core.calc.CashflowAnalyzer
 import ai.labs32.khaata.core.calc.CashflowSummary
 import ai.labs32.khaata.core.calc.CategorySpend
+import ai.labs32.khaata.core.calc.CreditCardStatus
 import ai.labs32.khaata.core.calc.GoalProgress
 import ai.labs32.khaata.core.calc.NetWorthSummary
 import ai.labs32.khaata.core.calc.OffLedgerHoldings
@@ -26,6 +27,8 @@ import ai.labs32.khaata.core.money.CurrencyCode
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.data.repository.AccountRepository
 import ai.labs32.khaata.data.repository.BudgetRepository
+import ai.labs32.khaata.data.repository.CreditCardRepository
+import ai.labs32.khaata.data.repository.DueOccurrence
 import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.data.repository.GoalRepository
 import ai.labs32.khaata.data.repository.InvestmentRepository
@@ -90,6 +93,10 @@ data class DashboardUiState(
     val netWorthTrend: List<Pair<String, Float>> = emptyList(),
     val netWorthChangePercent: BigDecimal? = null,
     val topInsight: Insight? = null,
+    /** Manual bills whose date has passed, waiting for "did this go out?". */
+    val awaitingBills: List<DueOccurrence> = emptyList(),
+    /** Cards with something owed and a payment due within [CARD_DUE_WINDOW_DAYS]. */
+    val cardsDueSoon: List<CreditCardStatus> = emptyList(),
 
     val categories: List<Category> = emptyList(),
     val cardOrder: List<DashboardCard> = DashboardCard.DEFAULT_ORDER,
@@ -105,7 +112,22 @@ data class DashboardUiState(
         get() = cardOrder.filterNot { it in hiddenCards }
 
     val savingsRatePercent: BigDecimal? get() = monthSummary?.savingsRatePercent
+
+    /** The budget with no category filter, if there is one -- the month's budget as a whole. */
+    val overallBudget: BudgetProgress? get() = budgetProgress.firstOrNull { it.budget.isOverallLimit }
+
+    /** Budgets off track, worst first, for the "Needs you" list. */
+    val budgetsNeedingAttention: List<BudgetProgress>
+        get() = budgetProgress.filter { it.status.needsAttention }
+            .sortedWith(compareByDescending<BudgetProgress> { it.status.ordinal }.thenByDescending { it.percentUsed })
+
+    val needsAttentionCount: Int
+        get() = (if (pendingImportCount > 0) 1 else 0) + awaitingBills.size + cardsDueSoon.size +
+            budgetsNeedingAttention.size
 }
+
+/** How far ahead a card's payment date puts it on Home's "Needs you" list. */
+const val CARD_DUE_WINDOW_DAYS = 7L
 
 /** Which greeting to show. Resolved to a string in the UI so it stays localisable. */
 enum class GreetingKey { MORNING, AFTERNOON, EVENING }
@@ -121,6 +143,7 @@ class DashboardViewModel @Inject constructor(
     private val subscriptionRepository: SubscriptionRepository,
     private val loanRepository: LoanRepository,
     private val investmentRepository: InvestmentRepository,
+    private val creditCardRepository: CreditCardRepository,
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
     private val insightEngine: InsightEngine,
@@ -321,8 +344,32 @@ class DashboardViewModel @Inject constructor(
             .launchIn(viewModelScope)
             .also { streams += it }
 
+        // The "Needs you" list: bills waiting to be confirmed and card payments coming due.
+        combine(
+            recurringRepository.observeAwaitingConfirmation(),
+            creditCardRepository.observeStatuses(),
+        ) { awaiting, cards ->
+            val today = clock.today()
+            awaiting to cards
+                .filter { it.outstanding.isPositive && it.daysUntilDue(today) in 0..CARD_DUE_WINDOW_DAYS }
+                .sortedBy { it.paymentDueOn }
+        }
+            .catch { error -> KhaataLog.e(TAG, "Needs-you stream failed", error) }
+            .onEach { (awaiting, cards) ->
+                _uiState.update { it.copy(awaitingBills = awaiting, cardsDueSoon = cards) }
+            }
+            .launchIn(viewModelScope)
+            .also { streams += it }
+
         streams += refreshInsight()
         streams += refreshNetWorthTrend()
+    }
+
+    /** "Paid" on a bill in "Needs you": records it, exactly as Plan and Recurring do. */
+    fun markBillPaid(occurrence: DueOccurrence) {
+        viewModelScope.launch {
+            recurringRepository.postOccurrence(occurrence.rule.id, occurrence.dueOn)
+        }
     }
 
     /**

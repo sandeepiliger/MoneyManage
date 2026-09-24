@@ -53,9 +53,12 @@ class BudgetRepository @Inject constructor(
      *
      * The widest period any budget covers is loaded once and shared, rather than querying per
      * budget, so a user with a dozen budgets still gets one database read.
+     *
+     * [asOf] picks the period: today by default, or the last day of an earlier month when Plan
+     * is looking back, which evaluates each budget over the period that contained that day.
      */
-    fun observeProgress(): Flow<List<BudgetProgress>> {
-        val today = clock.today()
+    fun observeProgress(asOf: LocalDate = clock.today()): Flow<List<BudgetProgress>> {
+        val today = asOf
         return combine(
             observeActive(),
             transactionRepository.observeInRange(evaluationWindow(today)),

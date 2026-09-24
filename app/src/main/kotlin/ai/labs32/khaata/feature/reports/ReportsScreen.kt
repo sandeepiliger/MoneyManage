@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.outlined.Assessment
@@ -332,11 +333,19 @@ class ReportsViewModel @Inject constructor(
  * is not a report, and colour alone never carries a meaning here.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * The reports.
+ *
+ * Opened on its own with [onBack], or embedded as Activity's Analysis view with [onBack] null --
+ * then there is no top bar, since Activity's own header already says where the user is, and the
+ * export action sits at the end of the period chips instead.
+ */
 @Composable
 fun ReportsScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onOpenPaywall: () -> Unit,
     viewModel: ReportsViewModel = hiltViewModel(),
+    onOpenInsights: (() -> Unit)? = null,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -367,49 +376,56 @@ fun ReportsScreen(
         }
     }
 
+    val exportAction: @Composable () -> Unit = {
+        IconButton(
+            // Kept visible for everyone and routed to the paywall when it is not included.
+            // Someone tapping Export wants a PDF right now -- usually for a landlord, an
+            // accountant or a visa -- and that is the moment to offer the upgrade, not to hide
+            // the button and leave them wondering where it went.
+            onClick = {
+                if (state.canUseAdvancedReports) {
+                    viewModel.exportStatement(currentPeriodLabel)
+                } else {
+                    onOpenPaywall()
+                }
+            },
+            enabled = state.hasData && !state.isExporting,
+        ) {
+            if (state.isExporting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                )
+            } else {
+                Icon(
+                    Icons.Default.Download,
+                    contentDescription = stringResource(R.string.reports_export_pdf),
+                )
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                windowInsets = WindowInsets(0),
-                title = { Text(stringResource(R.string.reports_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_back),
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(
-                        // Kept visible for everyone and routed to the paywall when it is not
-                        // included. Someone tapping Export wants a PDF right now -- usually for a
-                        // landlord, an accountant or a visa -- and that is the moment to offer the
-                        // upgrade, not to hide the button and leave them wondering where it went.
-                        onClick = {
-                            if (state.canUseAdvancedReports) {
-                                viewModel.exportStatement(currentPeriodLabel)
-                            } else {
-                                onOpenPaywall()
-                            }
-                        },
-                        enabled = state.hasData && !state.isExporting,
-                    ) {
-                        if (state.isExporting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
+            if (onBack != null) {
+                TopAppBar(
+                    windowInsets = WindowInsets(0),
+                    title = { Text(stringResource(R.string.reports_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
                             Icon(
-                                Icons.Default.Download,
-                                contentDescription = stringResource(R.string.reports_export_pdf),
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.action_back),
                             )
                         }
-                    }
-                },
-            )
+                    },
+                    actions = { exportAction() },
+                )
+            }
         },
+        // Embedded, there is no top bar to consume the status-bar inset, and the chrome
+        // Scaffold has already applied it once.
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
@@ -417,12 +433,32 @@ fun ReportsScreen(
                 .padding(padding)
                 .fillMaxSize(),
         ) {
-            PeriodFilter(
-                selected = state.period,
-                customRange = state.customRange,
-                onSelect = viewModel::selectPeriod,
-                onPickCustom = { showRangePicker = true },
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) {
+                    PeriodFilter(
+                        selected = state.period,
+                        customRange = state.customRange,
+                        onSelect = viewModel::selectPeriod,
+                        onPickCustom = { showRangePicker = true },
+                    )
+                }
+                if (onBack == null) exportAction()
+            }
+
+            if (onOpenInsights != null && state.hasData) {
+                TextButton(
+                    onClick = onOpenInsights,
+                    modifier = Modifier.padding(horizontal = KhaataTheme.spacing.small),
+                ) {
+                    Icon(
+                        Icons.Outlined.Lightbulb,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(KhaataTheme.spacing.small))
+                    Text(stringResource(R.string.activity_open_insights))
+                }
+            }
 
             when {
                 state.isLoading -> LoadingState()

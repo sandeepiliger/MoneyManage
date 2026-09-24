@@ -19,7 +19,6 @@ import ai.labs32.khaata.feature.accounts.AccountsScreen
 import ai.labs32.khaata.feature.ai.AiAssistantScreen
 import ai.labs32.khaata.feature.budgets.BudgetDetailScreen
 import ai.labs32.khaata.feature.budgets.BudgetEditScreen
-import ai.labs32.khaata.feature.budgets.BudgetsScreen
 import ai.labs32.khaata.feature.categories.CategoriesScreen
 import ai.labs32.khaata.feature.creditcards.CreditCardEditScreen
 import ai.labs32.khaata.feature.creditcards.CreditCardsScreen
@@ -32,7 +31,8 @@ import ai.labs32.khaata.feature.investments.InvestmentsScreen
 import ai.labs32.khaata.feature.loans.LoanDetailScreen
 import ai.labs32.khaata.feature.loans.LoanEditScreen
 import ai.labs32.khaata.feature.loans.LoansScreen
-import ai.labs32.khaata.feature.more.MoreScreen
+import ai.labs32.khaata.feature.money.MoneyScreen
+import ai.labs32.khaata.feature.plan.PlanScreen
 import ai.labs32.khaata.feature.recurring.RecurringScreen
 import ai.labs32.khaata.feature.reports.ReportsScreen
 import ai.labs32.khaata.feature.settings.AboutScreen
@@ -85,26 +85,28 @@ fun KhaataNavHost(
             TransactionsScreen(
                 onOpenTransaction = { navController.navigate(Routes.transactionDetail(it)) },
                 onAddTransaction = { navController.navigate(Routes.ADD_TRANSACTION) },
+                onOpenPaywall = { navController.navigate(Routes.PAYWALL) },
+                onOpenInsights = { navController.navigate(Routes.INSIGHTS) },
             )
         }
 
-        composable(Routes.BUDGETS) {
-            BudgetsScreen(
-                onOpenBudget = { navController.navigate(Routes.budgetDetail(it)) },
-                onAddBudget = { navController.navigate(Routes.ADD_BUDGET) },
-            )
+        composable(Routes.PLAN) {
+            PlanScreen(onNavigate = navController::navigate)
         }
+
+        composable(Routes.MONEY) {
+            MoneyScreen(onNavigate = navController::navigate)
+        }
+
+        // ---- Insights ------------------------------------------------------------------------
 
         composable(Routes.INSIGHTS) {
             InsightsScreen(
+                onBack = { navController.popBackStack() },
                 onOpenAssistant = { navController.navigate(Routes.AI_ASSISTANT) },
                 onOpenReports = { navController.navigate(Routes.REPORTS) },
                 onOpenBudget = { navController.navigate(Routes.budgetDetail(it)) },
             )
-        }
-
-        composable(Routes.MORE) {
-            MoreScreen(onNavigate = navController::navigate)
         }
 
         // ---- Transactions --------------------------------------------------------------------

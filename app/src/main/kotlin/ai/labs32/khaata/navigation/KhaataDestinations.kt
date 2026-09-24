@@ -2,16 +2,14 @@ package ai.labs32.khaata.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ListAlt
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.DonutLarge
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.PieChart
-import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.DonutLarge
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Lightbulb
-import androidx.compose.material.icons.outlined.MoreHoriz
-import androidx.compose.material.icons.outlined.PieChart
 import androidx.compose.ui.graphics.vector.ImageVector
 import ai.labs32.khaata.R
 
@@ -26,10 +24,15 @@ object Routes {
 
     // Top-level tabs
     const val HOME = "home"
+    /** The Activity tab: the transaction list, with the reports behind its Analysis switch. */
     const val TRANSACTIONS = "transactions"
-    const val BUDGETS = "budgets"
+    /** Budgets, bills and goals -- everything about the rest of the month. */
+    const val PLAN = "plan"
+    /** Net worth and everything it is made of: accounts, cards, loans, investments. */
+    const val MONEY = "money"
+
+    /** Pushed from Home's insight card and from Activity's Analysis view; no longer a tab. */
     const val INSIGHTS = "insights"
-    const val MORE = "more"
 
     // Entry
     const val ONBOARDING = "onboarding"
@@ -160,12 +163,15 @@ object Routes {
 }
 
 /**
- * The bottom navigation bar.
+ * The bottom navigation bar's destinations.
  *
- * Five destinations, which is the practical maximum before labels start truncating and targets
- * get too small. Reports and the assistant live under More rather than competing for a slot:
- * they are things people visit occasionally, while the four that made the cut are what someone
- * opens the app to do.
+ * Four, split two either side of the add button, each answering one question: what needs me
+ * today (Home), where did it go (Activity), what is coming (Plan) and what do I have (Money).
+ *
+ * This replaced Home, Transactions, Budgets, Insights and a More tab of thirteen entries, six of
+ * which Home also repeated as shortcut tiles. Reports now sit behind Activity's Analysis switch,
+ * bills and goals sit beside budgets, accounts and the money products share one tab, and settings
+ * open from the avatar on Home -- so nothing needs a catch-all tab to be found.
  */
 enum class TopLevelDestination(
     val route: String,
@@ -179,34 +185,31 @@ enum class TopLevelDestination(
         selectedIcon = Icons.Filled.Home,
         unselectedIcon = Icons.Outlined.Home,
     ),
-    TRANSACTIONS(
+    ACTIVITY(
         route = Routes.TRANSACTIONS,
-        labelRes = R.string.nav_transactions,
-        selectedIcon = Icons.AutoMirrored.Filled.ListAlt,
-        unselectedIcon = Icons.AutoMirrored.Outlined.ListAlt,
+        labelRes = R.string.nav_activity,
+        selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
+        unselectedIcon = Icons.AutoMirrored.Outlined.ReceiptLong,
     ),
-    BUDGETS(
-        route = Routes.BUDGETS,
-        labelRes = R.string.nav_budgets,
-        selectedIcon = Icons.Filled.PieChart,
-        unselectedIcon = Icons.Outlined.PieChart,
+    PLAN(
+        route = Routes.PLAN,
+        labelRes = R.string.nav_plan,
+        selectedIcon = Icons.Filled.DonutLarge,
+        unselectedIcon = Icons.Outlined.DonutLarge,
     ),
-    INSIGHTS(
-        route = Routes.INSIGHTS,
-        labelRes = R.string.nav_insights,
-        selectedIcon = Icons.Filled.Lightbulb,
-        unselectedIcon = Icons.Outlined.Lightbulb,
-    ),
-    MORE(
-        route = Routes.MORE,
-        labelRes = R.string.nav_more,
-        selectedIcon = Icons.Filled.MoreHoriz,
-        unselectedIcon = Icons.Outlined.MoreHoriz,
+    MONEY(
+        route = Routes.MONEY,
+        labelRes = R.string.nav_money,
+        selectedIcon = Icons.Filled.AccountBalanceWallet,
+        unselectedIcon = Icons.Outlined.AccountBalanceWallet,
     ),
     ;
 
     companion object {
         fun fromRoute(route: String?): TopLevelDestination? =
             entries.firstOrNull { it.route == route }
+
+        /** The two tabs drawn left of the add button; the rest go to its right. */
+        const val LEADING_COUNT = 2
     }
 }

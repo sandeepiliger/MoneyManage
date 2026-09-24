@@ -67,7 +67,10 @@ class SettingsRepository @Inject constructor(
         edit { it[Keys.DASHBOARD_ORDER] = order.joinToString(",") { card -> card.name } }
 
     suspend fun setDashboardCardHidden(card: DashboardCard, hidden: Boolean) = edit { prefs ->
-        val current = prefs[Keys.HIDDEN_CARDS].orEmpty().toMutableSet()
+        // Nothing stored means the defaults are in force, so the first change starts from them --
+        // starting from empty would quietly unhide every default-hidden card at once.
+        val current = (prefs[Keys.HIDDEN_CARDS] ?: DashboardCard.DEFAULT_HIDDEN.map { it.name }.toSet())
+            .toMutableSet()
         if (hidden) current += card.name else current -= card.name
         prefs[Keys.HIDDEN_CARDS] = current
     }
@@ -170,10 +173,12 @@ class SettingsRepository @Inject constructor(
                 ?: AppLockMode.OFF,
             lockAfterSeconds = this[Keys.LOCK_AFTER_SECONDS] ?: 30,
             dashboardCardOrder = order,
+            // Null -- never customised -- takes the defaults; an empty set is a real choice to
+            // show everything and is kept as one.
             hiddenDashboardCards = this[Keys.HIDDEN_CARDS]
-                .orEmpty()
-                .mapNotNull { name -> DashboardCard.entries.firstOrNull { it.name == name } }
-                .toSet(),
+                ?.mapNotNull { name -> DashboardCard.entries.firstOrNull { it.name == name } }
+                ?.toSet()
+                ?: DashboardCard.DEFAULT_HIDDEN,
             analyticsEnabled = this[Keys.ANALYTICS] ?: false,
             crashReportingEnabled = this[Keys.CRASH_REPORTING] ?: false,
             cloudAiEnabled = this[Keys.CLOUD_AI] ?: false,

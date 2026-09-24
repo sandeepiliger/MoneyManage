@@ -36,7 +36,6 @@ import ai.labs32.khaata.navigation.KhaataNavHost
 import ai.labs32.khaata.navigation.Routes
 import ai.labs32.khaata.navigation.TopLevelDestination
 import ai.labs32.khaata.ui.KhaataBottomBar
-import ai.labs32.khaata.ui.KhaataFloatingAddButton
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -140,7 +139,7 @@ private enum class DeepLink {
 }
 
 /**
- * The app shell: bottom navigation, the add button, and the lock overlay.
+ * The app shell: bottom navigation with the add button in it, and the lock overlay.
  *
  * The lock is drawn over the app rather than as a separate destination, so unlocking returns the
  * user exactly where they were instead of resetting them to the dashboard.
@@ -192,21 +191,11 @@ private fun KhaataApp(
                                 restoreState = true
                             }
                         },
-                    )
-                }
-            },
-            floatingActionButton = {
-                AnimatedVisibility(
-                    visible = showChrome,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                ) {
-                    KhaataFloatingAddButton(
-                        onClick = { navController.navigate(Routes.ADD_TRANSACTION) },
-                        // Straight into listening -- tapping a microphone means "start talking
-                        // now", so the screen opens the recogniser itself rather than landing on
-                        // a form with a second microphone to press.
-                        onVoiceClick = {
+                        onAdd = { navController.navigate(Routes.ADD_TRANSACTION) },
+                        // Straight into listening -- holding add means "let me say it", so the
+                        // screen opens the recogniser itself rather than landing on a form with
+                        // a microphone still to press.
+                        onAddByVoice = {
                             navController.navigate(Routes.naturalLanguageEntry(listen = true))
                         },
                     )

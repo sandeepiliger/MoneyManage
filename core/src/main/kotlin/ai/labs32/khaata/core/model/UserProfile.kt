@@ -72,7 +72,7 @@ data class AppSettings(
     val lockMode: AppLockMode = AppLockMode.OFF,
     val lockAfterSeconds: Int = 30,
     val dashboardCardOrder: List<DashboardCard> = DashboardCard.DEFAULT_ORDER,
-    val hiddenDashboardCards: Set<DashboardCard> = emptySet(),
+    val hiddenDashboardCards: Set<DashboardCard> = DashboardCard.DEFAULT_HIDDEN,
     /** All of the following default to the privacy-preserving choice. */
     val analyticsEnabled: Boolean = false,
     val crashReportingEnabled: Boolean = false,
@@ -142,13 +142,33 @@ enum class DashboardCard {
     ;
 
     companion object {
+        /**
+         * Home leads with what needs doing -- the insight worth a look, then today's spending --
+         * because budgets, bills and net worth each have a tab of their own now.
+         */
         val DEFAULT_ORDER: List<DashboardCard> = listOf(
-            SPENDING_OVERVIEW,
             AI_INSIGHT,
+            RECENT_TRANSACTIONS,
+            CATEGORY_BREAKDOWN,
+            UPCOMING_PAYMENTS,
+            BUDGET_PROGRESS,
+            SPENDING_OVERVIEW,
+            GOALS,
+            ACCOUNTS,
+            SUBSCRIPTIONS,
+            NET_WORTH_TREND,
+        )
+
+        /**
+         * Hidden until the user asks for them. Each repeats something Home's header or another
+         * tab already shows -- the month's totals are in the header, budgets and bills on Plan,
+         * accounts and net worth on Money -- and ten cards is a page nobody reads to the end of.
+         * Still one switch away under Settings, for anyone who wants Home to hold them again.
+         */
+        val DEFAULT_HIDDEN: Set<DashboardCard> = setOf(
+            SPENDING_OVERVIEW,
             BUDGET_PROGRESS,
             UPCOMING_PAYMENTS,
-            CATEGORY_BREAKDOWN,
-            RECENT_TRANSACTIONS,
             GOALS,
             ACCOUNTS,
             SUBSCRIPTIONS,

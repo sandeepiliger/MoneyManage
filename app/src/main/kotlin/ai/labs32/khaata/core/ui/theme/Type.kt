@@ -212,11 +212,11 @@ data class KhaataSpacing(
     val touchTarget: androidx.compose.ui.unit.Dp = 48.dp,
 
     /**
-     * Bottom padding that clears the navigation bar and the floating action button.
+     * Bottom padding under the last item of a scrolling list.
      *
-     * The FAB stack is 56dp add button + 12dp gap + 40dp mic button = 108dp tall, sitting above
-     * a roughly 48dp nav bar with its own margin -- 96dp was sized for the single add button this
-     * screen used to have and left the FAB stack overlapping the last card in a list.
+     * Only breathing room now. It used to be 168dp to clear a floating add button stacked above
+     * the navigation bar; add lives inside the bar itself, which the outer Scaffold already
+     * reserves space for, so nothing floats over a list's last row any more.
      */
-    val bottomBarClearance: androidx.compose.ui.unit.Dp = 168.dp,
+    val bottomBarClearance: androidx.compose.ui.unit.Dp = 24.dp,
 )

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.ExpandLess
@@ -168,6 +169,7 @@ class InsightsViewModel @Inject constructor(
  */
 @Composable
 fun InsightsScreen(
+    onBack: () -> Unit,
     onOpenAssistant: () -> Unit,
     onOpenReports: () -> Unit,
     onOpenBudget: (String) -> Unit,
@@ -188,7 +190,7 @@ fun InsightsScreen(
                 .padding(padding)
                 .fillMaxSize(),
         ) {
-            InsightsHeader(onOpenAssistant = onOpenAssistant)
+            InsightsHeader(onBack = onBack, onOpenAssistant = onOpenAssistant)
 
             when {
                 state.isLoading -> LoadingState()
@@ -229,16 +231,26 @@ fun InsightsScreen(
 }
 
 @Composable
-private fun InsightsHeader(onOpenAssistant: () -> Unit) {
+private fun InsightsHeader(onBack: () -> Unit, onOpenAssistant: () -> Unit) {
+    // Opened from Home and from Activity's Analysis view now that Insights is no longer a tab, so
+    // it needs its own way back.
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = KhaataTheme.spacing.screenHorizontal,
-                vertical = KhaataTheme.spacing.default,
+                start = KhaataTheme.spacing.tiny,
+                end = KhaataTheme.spacing.screenHorizontal,
+                top = KhaataTheme.spacing.small,
+                bottom = KhaataTheme.spacing.small,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.action_back),
+            )
+        }
         Text(
             text = stringResource(R.string.insights_title),
             style = MaterialTheme.typography.headlineSmall,
