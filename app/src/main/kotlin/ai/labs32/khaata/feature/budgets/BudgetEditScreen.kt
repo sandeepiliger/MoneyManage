@@ -354,6 +354,7 @@ fun BudgetEditScreen(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 state.categories.forEach { category ->
                     FilterChip(
+                        colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                         selected = category.id in state.selectedCategoryIds,
                         onClick = { viewModel.onCategoryToggle(category.id) },
                         label = { Text(category.name, maxLines = 1) },

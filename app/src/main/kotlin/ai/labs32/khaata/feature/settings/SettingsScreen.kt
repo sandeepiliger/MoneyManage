@@ -499,6 +499,7 @@ private fun <T> ChipRow(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
             items(options, key = { it.toString() }) { option ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = option == selected,
                     onClick = { onSelect(option) },
                     label = { Text(optionLabel(option)) },
@@ -526,6 +527,7 @@ private fun MonthStartRow(day: Int, onSelect: (Int) -> Unit) {
         LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
             items(MONTH_START_OPTIONS, key = { it }) { option ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = option == day,
                     onClick = { onSelect(option) },
                     label = { Text(option.toString()) },

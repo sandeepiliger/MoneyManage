@@ -346,6 +346,7 @@ fun AccountEditScreen(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AccountType.ONBOARDING_ORDER.forEach { type ->
                     FilterChip(
+                        colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                         selected = state.type == type,
                         onClick = { viewModel.onTypeChange(type) },
                         label = { Text(accountTypeLabel(type)) },

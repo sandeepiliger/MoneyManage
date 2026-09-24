@@ -324,6 +324,7 @@ private fun DraftCard(
         ) {
             items(topLevelCategories, key = { it.id }) { category ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = category.id == draft.categoryId,
                     onClick = { onCategoryChange(category.id) },
                     label = { Text(category.name, maxLines = 1) },
@@ -338,6 +339,7 @@ private fun DraftCard(
         ) {
             items(state.accounts, key = { it.id }) { account ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = account.id == draft.accountId,
                     onClick = { onAccountChange(account.id) },
                     label = { Text(account.name, maxLines = 1) },

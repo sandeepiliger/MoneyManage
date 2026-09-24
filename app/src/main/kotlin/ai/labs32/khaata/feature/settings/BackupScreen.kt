@@ -307,6 +307,7 @@ fun BackupScreen(
                             items(pending.accounts.size) { index ->
                                 val account = pending.accounts[index]
                                 androidx.compose.material3.FilterChip(
+                                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                                     selected = account.id == pending.fallbackAccountId,
                                     onClick = { viewModel.selectCsvAccount(account.id) },
                                     label = { Text(account.name, maxLines = 1) },

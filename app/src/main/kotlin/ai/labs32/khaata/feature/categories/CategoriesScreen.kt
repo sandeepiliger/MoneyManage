@@ -630,6 +630,7 @@ private fun KindFilter(selected: CategoryKind, onSelect: (CategoryKind) -> Unit)
     ) {
         listOf(CategoryKind.EXPENSE, CategoryKind.INCOME).forEach { kind ->
             FilterChip(
+                colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                 selected = selected == kind,
                 onClick = { onSelect(kind) },
                 label = {
@@ -892,6 +893,7 @@ private fun ParentPicker(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
             item {
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = parentId == null,
                     onClick = { onSelect(null) },
                     label = { Text(stringResource(R.string.categories_top_level)) },
@@ -899,6 +901,7 @@ private fun ParentPicker(
             }
             items(options, key = { it.id }) { option ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = parentId == option.id,
                     onClick = { onSelect(option.id) },
                     label = { Text(option.name) },
@@ -941,6 +944,7 @@ private fun GroupPicker(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
             items(options, key = { it.name }) { group ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = selected == group,
                     onClick = { onSelect(group) },
                     label = { Text(groupLabel(group)) },

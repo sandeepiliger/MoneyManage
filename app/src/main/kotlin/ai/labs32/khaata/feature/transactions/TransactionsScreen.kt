@@ -666,6 +666,7 @@ private fun FilterSheet(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(DatePreset.entries.toList()) { preset ->
                     FilterChip(
+                        colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                         selected = false,
                         onClick = { viewModel.applyPreset(preset) },
                         label = { Text(presetLabel(preset), maxLines = 1) },
@@ -680,6 +681,7 @@ private fun FilterSheet(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(state.accounts, key = { it.id }) { account ->
                     FilterChip(
+                        colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                         selected = account.id in state.filter.accountIds,
                         onClick = { viewModel.onAccountFilterToggle(account.id) },
                         label = { Text(account.name, maxLines = 1) },
@@ -699,6 +701,7 @@ private fun FilterSheet(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(topLevelCategories, key = { it.id }) { category ->
                     FilterChip(
+                        colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                         selected = category.id in state.filter.categoryIds,
                         onClick = { viewModel.onCategoryFilterToggle(category.id) },
                         label = { Text(category.name, maxLines = 1) },
@@ -715,6 +718,7 @@ private fun FilterSheet(
                     items(state.tags, key = { it }) { tag ->
                         val selected = tag in state.filter.tags
                         FilterChip(
+                            colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                             selected = selected,
                             onClick = { viewModel.onTagFilterChange(if (selected) null else tag) },
                             label = { Text(tag, maxLines = 1) },

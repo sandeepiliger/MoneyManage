@@ -628,6 +628,7 @@ private fun CategorySelector(
         LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(quick, key = { it.id }) { category ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = category.id == selectedId,
                     onClick = { onSelect(category.id) },
                     label = { Text(category.name, maxLines = 1) },
@@ -648,6 +649,7 @@ private fun CategorySelector(
             // first so it never displaces a category the user could have tapped directly.
             item(key = "__browse_all") {
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = false,
                     onClick = onBrowseAll,
                     label = { Text(stringResource(R.string.category_browse_all), maxLines = 1) },
@@ -849,6 +851,7 @@ private fun TagsField(
             ) {
                 items(state.knownTags.take(MAX_TAG_SUGGESTIONS)) { tag ->
                     FilterChip(
+                        colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                         selected = state.tags.any { it.equals(tag, ignoreCase = true) },
                         onClick = { viewModel.onKnownTagToggle(tag) },
                         label = { Text(tag, maxLines = 1) },

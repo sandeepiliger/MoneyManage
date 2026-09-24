@@ -146,3 +146,17 @@ fun ProgressRing(
 
 /** Long enough to be seen filling, short enough never to be waited on. */
 private const val FILL_ANIMATION_MS = 450
+
+/**
+ * Filter chip colours for the whole app: selected reads as primaryContainer (indigo), the same as
+ * the navigation bar and the segmented switches. Material's default is secondaryContainer, which
+ * in this palette is brass -- the colour kept for warnings -- so an unset chip made "selected" and
+ * "nearly over budget" look alike.
+ */
+@Composable
+fun khaataChipColors() = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    selectedTrailingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+)

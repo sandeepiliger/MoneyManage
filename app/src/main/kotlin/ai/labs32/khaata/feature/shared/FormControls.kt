@@ -191,6 +191,7 @@ fun <T> ChipSelector(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
             items(options, key = optionKey) { option ->
                 FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
                     selected = option == selected,
                     onClick = { onSelect(option) },
                     label = { Text(optionLabel(option), maxLines = 1) },
