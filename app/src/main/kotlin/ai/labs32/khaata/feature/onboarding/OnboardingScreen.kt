@@ -235,6 +235,28 @@ private fun AccountStep(state: OnboardingUiState, viewModel: OnboardingViewModel
         body = stringResource(R.string.onboarding_account_body),
     )
 
+    // Currency is chosen here, beside the balance it applies to, rather than on a screen of its
+    // own. It is fixed once setup finishes -- every account and amount is stored in it -- so it
+    // cannot be left to Settings the way the other old onboarding questions were.
+    if (CurrencyCode.entries.size > 1) {
+        Text(
+            text = stringResource(R.string.onboarding_currency_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CurrencyCode.entries.forEach { currency ->
+                FilterChip(
+                    selected = state.currency == currency,
+                    onClick = { viewModel.onCurrencyChange(currency) },
+                    label = { Text("${currency.symbol} ${currency.code}") },
+                )
+            }
+        }
+        Spacer(Modifier.height(KhaataTheme.spacing.default))
+    }
+
     Text(
         text = stringResource(R.string.onboarding_account_type_title),
         style = MaterialTheme.typography.labelLarge,

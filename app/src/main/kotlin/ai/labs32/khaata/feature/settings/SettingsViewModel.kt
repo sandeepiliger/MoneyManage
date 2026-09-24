@@ -12,6 +12,7 @@ import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.AppLockMode
 import ai.labs32.khaata.core.model.ThemePreference
 import ai.labs32.khaata.core.money.CurrencyCode
+import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.notifications.KhaataNotifier
 import ai.labs32.khaata.core.security.AppLockManager
 import ai.labs32.khaata.core.security.BiometricAvailability
@@ -54,6 +55,8 @@ sealed interface SettingsMessage {
 
 data class SettingsUiState(
     val displayName: String = "",
+    /** Whole rupees, or blank when not stated. Read by the assistant. */
+    val monthlyIncomeText: String = "",
     val currency: CurrencyCode = CurrencyCode.DEFAULT,
     val monthStartDay: Int = 1,
     val theme: ThemePreference = ThemePreference.SYSTEM,
@@ -116,6 +119,11 @@ class SettingsViewModel @Inject constructor(
             val availability = biometricAuthenticator.availability()
             SettingsUiState(
                 displayName = profile?.displayName.orEmpty(),
+                monthlyIncomeText = profile?.monthlyIncome
+                    ?.amount
+                    ?.setScale(0, java.math.RoundingMode.DOWN)
+                    ?.toPlainString()
+                    .orEmpty(),
                 currency = profile?.currency ?: CurrencyCode.DEFAULT,
                 monthStartDay = profile?.monthStartDay ?: 1,
                 theme = settings.theme,
@@ -183,6 +191,22 @@ class SettingsViewModel @Inject constructor(
     fun setDisplayName(name: String) {
         _uiState.update { it.copy(displayName = name) }
         viewModelScope.launch { profileRepository.setDisplayName(name.ifBlank { null }) }
+    }
+
+    /**
+     * The monthly income the assistant reasons from. It used to be asked only during onboarding;
+     * onboarding no longer asks, so this is where it is stated or changed. Whole rupees only, so
+     * what is shown is always exactly what was saved.
+     */
+    fun setMonthlyIncome(text: String) {
+        val digits = text.filter { it.isDigit() }.take(MAX_INCOME_DIGITS)
+        _uiState.update { it.copy(monthlyIncomeText = digits) }
+        viewModelScope.launch {
+            val currency = _uiState.value.currency
+            profileRepository.setMonthlyIncome(
+                digits.takeIf { it.isNotEmpty() }?.let { Money.of(java.math.BigDecimal(it), currency) },
+            )
+        }
     }
 
     fun setMonthStartDay(day: Int) {
@@ -376,6 +400,9 @@ class SettingsViewModel @Inject constructor(
     fun consumeMessage() = _uiState.update { it.copy(message = null) }
 
     private companion object {
+        /** Up to ₹999 crore a month, far beyond any income, well inside what Money holds. */
+        const val MAX_INCOME_DIGITS = 10
+
         const val TAG = "SettingsViewModel"
     }
 }

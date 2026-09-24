@@ -306,10 +306,8 @@ private fun TransactionEditContent(
                 WarningRow(warning)
             }
 
-            if (state.type != TransactionType.TRANSFER) {
-                Spacer(Modifier.height(spacing.small))
-                MerchantField(state = state, onChange = viewModel::onMerchantChange)
-            }
+            Spacer(Modifier.height(spacing.small))
+            MerchantField(state = state, onChange = viewModel::onMerchantChange)
 
             Spacer(Modifier.height(if (compact) spacing.default else spacing.large))
 

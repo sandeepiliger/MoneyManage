@@ -152,6 +152,21 @@ fun SettingsScreen(
                         .padding(horizontal = 16.dp),
                 )
                 Spacer(Modifier.height(KhaataTheme.spacing.medium))
+                OutlinedTextField(
+                    value = state.monthlyIncomeText,
+                    onValueChange = viewModel::setMonthlyIncome,
+                    label = { Text(stringResource(R.string.settings_monthly_income)) },
+                    supportingText = { Text(stringResource(R.string.settings_monthly_income_help)) },
+                    prefix = { Text(state.currency.symbol) },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+                    ),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                )
+                Spacer(Modifier.height(KhaataTheme.spacing.small))
                 SettingsRow(
                     title = stringResource(R.string.settings_currency),
                     subtitle = state.currency.code,

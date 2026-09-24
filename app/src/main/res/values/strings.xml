@@ -1073,4 +1073,7 @@
     <string name="sms_review_transfer_matched">Both messages matched · counted once</string>
 
     <string name="onboarding_step_of">Step %1$d of %2$d</string>
+
+    <string name="settings_monthly_income">Monthly income (optional)</string>
+    <string name="settings_monthly_income_help">The assistant uses it to judge what is affordable</string>
 </resources>

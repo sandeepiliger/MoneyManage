@@ -1075,4 +1075,7 @@
     <string name="sms_review_transfer_matched">दोनों संदेश मिले · एक बार गिना गया</string>
 
     <string name="onboarding_step_of">%2$d में से चरण %1$d</string>
+
+    <string name="settings_monthly_income">मासिक आय (ज़रूरी नहीं)</string>
+    <string name="settings_monthly_income_help">सहायक इससे तय करता है कि क्या खर्च करना ठीक है</string>
 </resources>

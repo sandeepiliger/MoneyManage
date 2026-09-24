@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -381,7 +382,16 @@ private fun BillsCard(
         }
 
         Spacer(Modifier.height(KhaataTheme.spacing.tiny))
-        AddRow(label = stringResource(R.string.subscriptions_title), onClick = onOpenSubscriptions)
+        // A link, not an AddRow: it opens the subscriptions list rather than adding one.
+        TextButton(onClick = onOpenSubscriptions) {
+            Text(stringResource(R.string.subscriptions_title))
+            Spacer(Modifier.width(4.dp))
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                modifier = Modifier.padding(top = 1.dp),
+            )
+        }
     }
 }
 
