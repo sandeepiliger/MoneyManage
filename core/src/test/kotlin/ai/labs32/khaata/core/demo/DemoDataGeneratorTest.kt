@@ -210,4 +210,28 @@ class DemoDataGeneratorTest {
             DemoDataGenerator().generate(asOf, months = 99)
         }
     }
+
+    /**
+     * Cash and wallets cannot hold less than nothing. The ATM withdrawal used to be an expense
+     * rather than a transfer into Cash, and the wallet was never topped up, so both ran below zero
+     * and the first screen a new user saw showed a negative cash balance.
+     */
+    @Test
+    fun `no cash or wallet account is left below zero`() {
+        for (months in listOf(1, 3, 6, 12)) {
+            val data = DemoDataGenerator().generate(asOf, months = months)
+            val balances = BalanceCalculator.balances(data.accounts, data.transactions)
+            balances
+                .filter { it.account.type == ai.labs32.khaata.core.model.AccountType.CASH ||
+                    it.account.type == ai.labs32.khaata.core.model.AccountType.WALLET }
+                .forEach { assertThat(it.currentBalance.isNegative).isFalse() }
+        }
+    }
+
+    /** Every spend in the sample has a category, so the breakdown has no unexplained slice. */
+    @Test
+    fun `every sample expense has a category`() {
+        assertThat(dataset.transactions.filter { it.type == TransactionType.EXPENSE && it.categoryId == null })
+            .isEmpty()
+    }
 }

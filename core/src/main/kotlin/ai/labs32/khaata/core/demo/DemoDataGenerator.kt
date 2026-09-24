@@ -270,7 +270,12 @@ class DemoDataGenerator(
 
             // ---- Movements between the user's own accounts ----
             add(TransactionType.TRANSFER, "25000", ACC_HDFC, null, null, day(9), transferTo = ACC_ICICI)
-            add(TransactionType.EXPENSE, "3000", ACC_HDFC, null, "ATM Withdrawal", day(11), transferTo = null)
+            // Cash out of an ATM is money moving into the wallet, not money spent: recorded as an
+            // expense it counted ₹3,000 a month as "uncategorised" spending, and the cash it
+            // should have put in the wallet never arrived, so Cash ran below zero.
+            add(TransactionType.TRANSFER, "3000", ACC_HDFC, null, "ATM Withdrawal", day(11), transferTo = ACC_CASH)
+            // The wallet pays for cabs all month; without a top-up it went negative too.
+            add(TransactionType.TRANSFER, "2500", ACC_HDFC, null, "Paytm top-up", day(2), transferTo = ACC_UPI_WALLET)
             // Paying off the credit card is a transfer, not a new expense — counting it as
             // spending would double-count everything already charged to the card.
             add(TransactionType.TRANSFER, "18000", ACC_HDFC, null, null, day(14), transferTo = ACC_CARD)
