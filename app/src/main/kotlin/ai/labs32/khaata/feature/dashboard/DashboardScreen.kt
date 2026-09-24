@@ -23,6 +23,8 @@ import ai.labs32.khaata.feature.shared.relativeDateLabel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -139,8 +141,16 @@ fun DashboardScreen(
             onRetry = viewModel::retry,
         )
 
-        state.isEmpty -> Column(Modifier.padding(horizontal = KhaataTheme.spacing.screenHorizontal)) {
+        // Nothing recorded yet, but the account and balance from setup are real: the headline shows
+        // them straight away, so the first screen after onboarding reflects what was just entered.
+        state.isEmpty -> Column(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = KhaataTheme.spacing.screenHorizontal),
+            verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
+        ) {
             HomeTopBar(state = state, onToggleVisibility = viewModel::toggleAmountVisibility, onNavigate = onNavigate)
+            HomeHero(state = state, onNavigate = onNavigate)
             EmptyState(
                 icon = Icons.AutoMirrored.Outlined.ReceiptLong,
                 title = stringResource(R.string.dashboard_empty_title),

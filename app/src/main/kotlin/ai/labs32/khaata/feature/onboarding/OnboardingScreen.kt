@@ -37,6 +37,7 @@ import ai.labs32.khaata.core.sms.SmsPermission
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -183,6 +184,8 @@ private fun OnboardingTopBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = KhaataTheme.spacing.large),
+                // Brass is the app's warning colour; a progress track is not a warning.
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
             Text(
                 text = stringResource(R.string.onboarding_step_of, state.stepNumber, state.stepCount),
@@ -251,6 +254,7 @@ private fun AccountStep(state: OnboardingUiState, viewModel: OnboardingViewModel
                     selected = state.currency == currency,
                     onClick = { viewModel.onCurrencyChange(currency) },
                     label = { Text("${currency.symbol} ${currency.code}") },
+                    colors = selectedChipColors(),
                 )
             }
         }
@@ -269,6 +273,7 @@ private fun AccountStep(state: OnboardingUiState, viewModel: OnboardingViewModel
                 selected = state.accountType == type,
                 onClick = { viewModel.onAccountTypeChange(type) },
                 label = { Text(accountTypeLabel(type)) },
+                colors = selectedChipColors(),
             )
         }
     }
@@ -501,4 +506,11 @@ private fun accountTypeLabel(type: AccountType): String = stringResource(
         AccountType.LOAN -> R.string.account_type_loan
         AccountType.OTHER -> R.string.account_type_other
     },
+)
+
+/** Selected reads as primaryContainer everywhere in the app; brass is kept for warnings. */
+@Composable
+private fun selectedChipColors() = FilterChipDefaults.filterChipColors(
+    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
 )
