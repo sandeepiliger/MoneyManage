@@ -90,16 +90,19 @@ class SmsAutoAddTest {
         coEvery { settings.current() } answers {
             AppSettings(smsImportEnabled = true, smsAutoAdd = autoAdd)
         }
+        val categories = CategoryRepository(
+            database.categoryDao(),
+            database.merchantRuleDao(),
+            database.transactionDao(),
+            categorizer,
+        )
+        // The categories the app seeds on first launch: a suggested category is a foreign key.
+        categories.seedIfEmpty()
         importer = SmsTransactionImporter(
             settingsRepository = settings,
             profileRepository = ProfileRepository(database.userProfileDao(), clock),
             accountRepository = AccountRepository(database.accountDao(), database.transactionDao(), clock),
-            categoryRepository = CategoryRepository(
-                database.categoryDao(),
-                database.merchantRuleDao(),
-                database.transactionDao(),
-                categorizer,
-            ),
+            categoryRepository = categories,
             transactionRepository = transactions,
             clock = clock,
         )
