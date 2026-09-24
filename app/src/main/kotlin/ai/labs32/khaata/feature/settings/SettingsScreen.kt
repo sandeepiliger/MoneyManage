@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -517,22 +518,36 @@ private fun <T> ChipRow(
  * The app's language, each option named in its own script. Choosing one recreates the screen in it
  * at once; see [AppLocales].
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun LanguageRow() {
     val context = LocalContext.current
     var language by remember { mutableStateOf(AppLocales.current(context)) }
-    ChipRow(
-        label = stringResource(R.string.settings_language),
-        options = AppLanguage.entries,
-        selected = language,
-        optionLabel = { languageLabel(it) },
-        onSelect = {
-            if (it != language) {
-                language = it
-                AppLocales.set(context, it)
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Text(
+            text = stringResource(R.string.settings_language),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(Modifier.height(6.dp))
+        // Wrapped rather than scrolled: every language is visible at once, so nobody has to know
+        // to swipe sideways to find theirs.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small)) {
+            AppLanguage.entries.forEach { option ->
+                FilterChip(
+                    colors = ai.labs32.khaata.core.ui.components.khaataChipColors(),
+                    selected = option == language,
+                    onClick = {
+                        if (option != language) {
+                            language = option
+                            AppLocales.set(context, option)
+                        }
+                    },
+                    label = { Text(languageLabel(option)) },
+                )
             }
-        },
-    )
+        }
+    }
 }
 
 @Composable

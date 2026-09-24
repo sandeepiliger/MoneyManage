@@ -253,7 +253,7 @@
     <string name="quick_add_shortcut">త్వరగా జోడించండి</string>
     <string name="quick_add_title">ఎంత?</string>
     <string name="quick_add_more_options">మరిన్ని ఎంపికలు</string>
-    <string name="quick_add_natural_language">బదులుగా రాసి చెప్పండి</string>
+    <string name="quick_add_natural_language">రాసి చెప్పండి</string>
     <string name="quick_add_nl_hint">ఉదా. spent 850 on Swiggy yesterday</string>
     <string name="quick_add_nl_title">మీరు ఏమి ఖర్చు చేశారో చెప్పండి</string>
     <string name="quick_add_nl_confirm">సేవ్ చేసే ముందు వీటిని సరిచూడండి</string>

@@ -253,7 +253,7 @@
     <string name="quick_add_shortcut">விரைவுச் சேர்ப்பு</string>
     <string name="quick_add_title">எவ்வளவு?</string>
     <string name="quick_add_more_options">மேலும் விருப்பங்கள்</string>
-    <string name="quick_add_natural_language">பதிலாக எழுதிச் சொல்லுங்கள்</string>
+    <string name="quick_add_natural_language">எழுதிச் சொல்</string>
     <string name="quick_add_nl_hint">எ.கா. spent 850 on Swiggy yesterday</string>
     <string name="quick_add_nl_title">நீங்கள் என்ன செலவு செய்தீர்கள் என்று சொல்லுங்கள்</string>
     <string name="quick_add_nl_confirm">சேமிக்கும் முன் இவற்றைச் சரிபாருங்கள்</string>

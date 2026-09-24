@@ -25,6 +25,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.hasScrollToIndexAction
 import ai.labs32.khaata.MainActivity
 import ai.labs32.khaata.R
+import ai.labs32.khaata.core.locale.AppLanguage
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -264,6 +265,8 @@ class AppWalkthroughTest {
         waitForText(R.string.settings_title)
         compose.onNode(hasText(str(R.string.settings_appearance))).performScrollTo()
         compose.onNode(hasText(str(R.string.settings_language_system)) and hasClickAction()).assertIsDisplayed()
+        // Every language is on screen at once, the last included: nobody has to swipe to find theirs.
+        compose.onNode(hasText(AppLanguage.TAMIL.nativeName) and hasClickAction()).assertIsDisplayed()
         snap("settings-language")
         pressBack()
         compose.waitUntil(TIMEOUT_MS) { compose.onAllNodes(avatar).fetchSemanticsNodes().isNotEmpty() }
