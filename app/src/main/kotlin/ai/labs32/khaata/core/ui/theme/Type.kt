@@ -29,9 +29,9 @@ internal val BrandFontFamily = FontFamily(
 /**
  * Typography, set in [family].
  *
- * The theme passes the brand face for English and the system font for Hindi. A Latin-only face
- * under Devanagari text falls back glyph by glyph to the system font mid-word, which looks broken;
- * the device's own font renders Hindi whole. Amounts ([KhaataTextStyles]) stay in the brand face in
+ * The theme passes the brand face for English and the system font for Hindi, Kannada, Telugu and
+ * Tamil. A Latin-only face under an Indic script falls back glyph by glyph to the system font
+ * mid-word, which looks broken; the device's own font renders each script whole. Amounts ([KhaataTextStyles]) stay in the brand face in
  * both, because a figure is only ever digits, a rupee sign and a lakh or crore suffix.
  *
  * Sizes are generous. A finance app is read at arm's length while standing at a counter, and the
@@ -140,6 +140,46 @@ internal fun khaataTypography(family: FontFamily) = Typography(
         letterSpacing = 0.5.sp,
     ),
 )
+
+/**
+ * Languages written in an Indic script. The brand face has none of them, so these are set in the
+ * device's font, which renders each script whole (see [khaataTypography]).
+ */
+internal val INDIC_SCRIPT_LANGUAGES = setOf("hi", "kn", "te", "ta")
+
+/**
+ * [base] adjusted for an Indic script.
+ *
+ * Kannada and Telugu stack consonants below the line and vowel signs above it, and Tamil words run
+ * long; line heights tuned for Latin text clip the tops and tails off. Each line gets a quarter more
+ * height, and the negative tracking used on large Latin headings is removed because it pushes
+ * joined letters into each other.
+ */
+internal fun indicTypography(base: Typography): Typography {
+    fun TextStyle.roomier() = copy(
+        lineHeight = if (lineHeight.isSp) (lineHeight.value * INDIC_LINE_HEIGHT_SCALE).sp else lineHeight,
+        letterSpacing = if (letterSpacing.isSp && letterSpacing.value < 0f) 0.sp else letterSpacing,
+    )
+    return base.copy(
+        displayLarge = base.displayLarge.roomier(),
+        displayMedium = base.displayMedium.roomier(),
+        displaySmall = base.displaySmall.roomier(),
+        headlineLarge = base.headlineLarge.roomier(),
+        headlineMedium = base.headlineMedium.roomier(),
+        headlineSmall = base.headlineSmall.roomier(),
+        titleLarge = base.titleLarge.roomier(),
+        titleMedium = base.titleMedium.roomier(),
+        titleSmall = base.titleSmall.roomier(),
+        bodyLarge = base.bodyLarge.roomier(),
+        bodyMedium = base.bodyMedium.roomier(),
+        bodySmall = base.bodySmall.roomier(),
+        labelLarge = base.labelLarge.roomier(),
+        labelMedium = base.labelMedium.roomier(),
+        labelSmall = base.labelSmall.roomier(),
+    )
+}
+
+private const val INDIC_LINE_HEIGHT_SCALE = 1.25f
 
 /**
  * Styles for monetary figures.

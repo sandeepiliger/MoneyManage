@@ -1,6 +1,7 @@
 package ai.labs32.khaata
 
 import android.app.Application
+import android.content.res.Configuration as AndroidConfiguration
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -8,6 +9,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
 import ai.labs32.khaata.core.analytics.AnalyticsEvent
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
+import ai.labs32.khaata.core.locale.AppLocales
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.AppSettings
 import ai.labs32.khaata.core.notifications.KhaataNotifier
@@ -64,6 +66,12 @@ class KhaataApplication : Application(), Configuration.Provider {
             },
     )
 
+    /** A system change -- a new phone language, a font size -- resets the resources; reapply. */
+    override fun onConfigurationChanged(newConfig: AndroidConfiguration) {
+        super.onConfigurationChanged(newConfig)
+        AppLocales.applyStored(this)
+    }
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -72,6 +80,10 @@ class KhaataApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        // The in-app language, before anything reads a string: notification channels below are
+        // named in it.
+        AppLocales.applyStored(this)
 
         // Channels must exist before any notification is posted, and creating them is cheap.
         NotificationChannels.createAll(this)

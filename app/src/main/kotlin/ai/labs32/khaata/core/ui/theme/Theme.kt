@@ -166,10 +166,15 @@ fun KhaataTheme(
 
     val moneyColors = if (darkTheme) MoneyColors.Dark else MoneyColors.Light
 
-    // Hindi keeps the device font, which renders Devanagari whole; see khaataTypography.
+    // Indic scripts keep the device font, which renders them whole, and get taller lines; see
+    // khaataTypography and indicTypography.
     val language = LocalConfiguration.current.locales[0]?.language
     val typography = remember(language) {
-        khaataTypography(if (language == "hi") FontFamily.Default else BrandFontFamily)
+        if (language in INDIC_SCRIPT_LANGUAGES) {
+            indicTypography(khaataTypography(FontFamily.Default))
+        } else {
+            khaataTypography(BrandFontFamily)
+        }
     }
 
     CompositionLocalProvider(

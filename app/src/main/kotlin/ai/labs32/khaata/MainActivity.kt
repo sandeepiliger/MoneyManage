@@ -21,7 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -42,8 +42,10 @@ import javax.inject.Inject
 /**
  * The app's only activity.
  *
- * A [FragmentActivity] rather than a ComponentActivity because `BiometricPrompt` needs a fragment
- * host; everything above it is Compose.
+ * An [AppCompatActivity], which is a `FragmentActivity`: `BiometricPrompt` needs a fragment host,
+ * and AndroidX applies the in-app language choice to AppCompat activities on Android versions that
+ * have no per-app language of their own (see [ai.labs32.khaata.core.locale.AppLocales]). Everything
+ * above it is Compose.
  *
  * The splash screen is held until the first real state has loaded, so the app never flashes an
  * empty dashboard on the way to onboarding or to the lock screen.
@@ -55,7 +57,7 @@ import javax.inject.Inject
  * both places, rather than a value computed once from `intent`.
  */
 @AndroidEntryPoint
-class MainActivity : FragmentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 

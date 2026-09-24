@@ -54,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -66,6 +67,8 @@ import ai.labs32.khaata.core.model.ThemePreference
 import ai.labs32.khaata.core.ui.components.KhaataCard
 import ai.labs32.khaata.core.ui.components.SettingsRow
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
+import ai.labs32.khaata.core.locale.AppLanguage
+import ai.labs32.khaata.core.locale.AppLocales
 import ai.labs32.khaata.feature.lock.PinSetupDialog
 import ai.labs32.khaata.navigation.Routes
 
@@ -178,6 +181,7 @@ fun SettingsScreen(
             }
 
             SectionCard(title = stringResource(R.string.settings_appearance)) {
+                LanguageRow()
                 ChipRow(
                     label = stringResource(R.string.settings_theme),
                     options = ThemePreference.entries,
@@ -508,6 +512,32 @@ private fun <T> ChipRow(
         }
     }
 }
+
+/**
+ * The app's language, each option named in its own script. Choosing one recreates the screen in it
+ * at once; see [AppLocales].
+ */
+@Composable
+private fun LanguageRow() {
+    val context = LocalContext.current
+    var language by remember { mutableStateOf(AppLocales.current(context)) }
+    ChipRow(
+        label = stringResource(R.string.settings_language),
+        options = AppLanguage.entries,
+        selected = language,
+        optionLabel = { languageLabel(it) },
+        onSelect = {
+            if (it != language) {
+                language = it
+                AppLocales.set(context, it)
+            }
+        },
+    )
+}
+
+@Composable
+internal fun languageLabel(language: AppLanguage): String =
+    if (language == AppLanguage.SYSTEM) stringResource(R.string.settings_language_system) else language.nativeName
 
 @Composable
 private fun MonthStartRow(day: Int, onSelect: (Int) -> Unit) {

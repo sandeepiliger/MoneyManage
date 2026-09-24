@@ -1,0 +1,1095 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Kannada translations.
+
+  Written the way people talk about money day to day rather than in formal register: familiar
+  English words (bank, budget, card, EMI, UPI, SMS, PIN) are kept, because the formal equivalents
+  would make the app harder to read, not easier. Brand and product names stay in Latin script.
+
+  Keep in step with values/strings.xml: every key, placeholder and plural is checked against the
+  English file by TranslationParityTest.
+-->
+<resources>
+    <string name="app_name">ಖಾತಾ</string>
+    <string name="app_tagline">ಹಣ, ಸುಲಭವಾಗಿ.</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">ಹೋಮ್</string>
+    <string name="nav_transactions">ವಹಿವಾಟುಗಳು</string>
+    <string name="nav_budgets">ಬಜೆಟ್‌ಗಳು</string>
+    <string name="nav_insights">ಒಳನೋಟಗಳು</string>
+    <string name="nav_more">ಇನ್ನಷ್ಟು</string>
+    <string name="nav_add_transaction">ವಹಿವಾಟು ಸೇರಿಸಿ</string>
+
+    <!-- Common actions -->
+    <string name="action_save">ಸೇವ್ ಮಾಡಿ</string>
+    <string name="action_cancel">ರದ್ದುಮಾಡಿ</string>
+    <string name="action_delete">ಅಳಿಸಿ</string>
+    <string name="action_edit">ಬದಲಿಸಿ</string>
+    <string name="action_duplicate">ನಕಲು ಮಾಡಿ</string>
+    <string name="action_done">ಆಯಿತು</string>
+    <string name="action_next">ಮುಂದೆ</string>
+    <string name="action_back">ಹಿಂದೆ</string>
+    <string name="action_skip">ಬಿಟ್ಟುಬಿಡಿ</string>
+    <string name="action_continue">ಮುಂದುವರಿಸಿ</string>
+    <string name="action_retry">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
+    <string name="action_undo">ಹಿಂಪಡೆಯಿರಿ</string>
+    <string name="action_close">ಮುಚ್ಚಿ</string>
+    <string name="action_confirm">ಖಚಿತಪಡಿಸಿ</string>
+    <string name="action_see_all">ಎಲ್ಲಾ ನೋಡಿ</string>
+    <string name="action_add">ಸೇರಿಸಿ</string>
+    <string name="action_got_it">ಅರ್ಥವಾಯಿತು</string>
+    <string name="action_learn_more">ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ</string>
+    <string name="action_not_now">ಈಗ ಬೇಡ</string>
+    <string name="action_enable">ಆನ್ ಮಾಡಿ</string>
+    <string name="action_restore">ಮರುಸ್ಥಾಪಿಸಿ</string>
+    <string name="action_share">ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="action_clear">ತೆರವುಗೊಳಿಸಿ</string>
+    <string name="action_apply">ಅನ್ವಯಿಸಿ</string>
+    <string name="action_reset">ಮರುಹೊಂದಿಸಿ</string>
+    <string name="action_search">ಹುಡುಕಿ</string>
+    <string name="action_filter">ಫಿಲ್ಟರ್</string>
+    <string name="date_field_none">ಹೊಂದಿಸಿಲ್ಲ</string>
+
+    <!-- States -->
+    <string name="state_loading">ಲೋಡ್ ಆಗುತ್ತಿದೆ</string>
+    <string name="state_error_title">ಏನೋ ತಪ್ಪಾಗಿದೆ</string>
+    <string name="state_error_generic">ಇದನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="state_error_database">ನಿಮ್ಮ ಉಳಿಸಿದ ಡೇಟಾವನ್ನು ಓದಲಾಗಲಿಲ್ಲ.</string>
+    <string name="state_error_offline">ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಇದಕ್ಕೆ ಇಂಟರ್ನೆಟ್ ಬೇಕು.</string>
+    <string name="chart_no_data">ಇನ್ನೂ ಸಾಕಷ್ಟು ಡೇಟಾ ಇಲ್ಲ</string>
+
+    <!-- Accessibility -->
+    <string name="a11y_spent">ಖರ್ಚು</string>
+    <string name="a11y_received">ಬಂದಿದೆ</string>
+    <string name="a11y_transferred_amount">%1$s ರೂಪಾಯಿ ವರ್ಗಾಯಿಸಲಾಗಿದೆ</string>
+    <string name="a11y_amount_hidden">ಮೊತ್ತ ಮರೆಮಾಡಲಾಗಿದೆ</string>
+    <string name="a11y_show_amounts">ಮೊತ್ತಗಳನ್ನು ತೋರಿಸಿ</string>
+    <string name="a11y_hide_amounts">ಮೊತ್ತಗಳನ್ನು ಮರೆಮಾಡಿ</string>
+    <string name="a11y_close_sheet">ಮುಚ್ಚಿ</string>
+    <string name="a11y_more_options">ಇನ್ನಷ್ಟು ಆಯ್ಕೆಗಳು</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">ಖಾತಾಗೆ ಸ್ವಾಗತ</string>
+    <string name="onboarding_welcome_body">ನಿಮ್ಮ ಹಣ ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತದೆ ಎಂದು ಒಂದೆರಡು ಟ್ಯಾಪ್‌ಗಳಲ್ಲಿ ದಾಖಲಿಸಿ. ಎಲ್ಲವೂ ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲೇ ಇರುತ್ತದೆ.</string>
+    <string name="onboarding_why_title">ಲೆಕ್ಕ ಏಕೆ ಇಡಬೇಕು?</string>
+    <string name="onboarding_why_spending">ನಿಮ್ಮ ಹಣ ನಿಜವಾಗಿ ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತದೆ ಎಂದು ನೋಡಿ</string>
+    <string name="onboarding_why_budget">ಎಷ್ಟು ಖರ್ಚು ಮಾಡುವುದು ಸುರಕ್ಷಿತ ಎಂದು ತಿಳಿಯಿರಿ</string>
+    <string name="onboarding_why_bills">ಯಾವುದೇ ಬಿಲ್ ಅಥವಾ ಇಎಂಐ ತಪ್ಪಿಸಬೇಡಿ</string>
+    <string name="onboarding_why_private">ನಿಮ್ಮ ಡೇಟಾ ನಿಮ್ಮ ಸಾಧನದಲ್ಲೇ ಇರುತ್ತದೆ</string>
+    <string name="onboarding_currency_title">ನೀವು ಯಾವ ಕರೆನ್ಸಿ ಬಳಸುತ್ತೀರಿ?</string>
+    <string name="onboarding_currency_body">ಇದನ್ನು ನಂತರ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ಬದಲಿಸಬಹುದು.</string>
+    <string name="onboarding_language_title">ನಿಮ್ಮ ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="onboarding_account_title">ನಿಮ್ಮ ಮೊದಲ ಖಾತೆ ಸೇರಿಸಿ</string>
+    <string name="onboarding_account_body">ನಿಮ್ಮ ಹಣ ಇರುವ ಸ್ಥಳ — ಬ್ಯಾಂಕ್ ಖಾತೆ, ಪರ್ಸ್‌ನಲ್ಲಿರುವ ನಗದು ಅಥವಾ ಕಾರ್ಡ್.</string>
+    <string name="onboarding_account_type_title">ಇದು ಯಾವ ರೀತಿಯ ಖಾತೆ?</string>
+    <string name="onboarding_balance_title">ಈಗ ಇದರಲ್ಲಿ ಎಷ್ಟು ಇದೆ?</string>
+    <string name="onboarding_balance_owed_title">ಈಗ ಇದರ ಮೇಲೆ ಎಷ್ಟು ಬಾಕಿ ಇದೆ?</string>
+    <string name="onboarding_balance_body">ಅಂದಾಜು ಮೊತ್ತ ಸಾಕು. ಯಾವಾಗ ಬೇಕಾದರೂ ಸರಿಪಡಿಸಬಹುದು.</string>
+    <string name="onboarding_income_title">ತಿಂಗಳಿಗೆ ನೀವು ಎಷ್ಟು ಗಳಿಸುತ್ತೀರಿ?</string>
+    <string name="onboarding_income_body">ನೀವು ಎಷ್ಟು ಉಳಿಸುತ್ತಿದ್ದೀರಿ ಎಂದು ಲೆಕ್ಕ ಹಾಕಲು ಬಳಸಲಾಗುತ್ತದೆ. ಹೇಳಲು ಇಷ್ಟವಿಲ್ಲದಿದ್ದರೆ ಖಾಲಿ ಬಿಡಿ.</string>
+    <string name="onboarding_categories_title">ನೀವು ಸಾಮಾನ್ಯವಾಗಿ ಯಾವುದಕ್ಕೆ ಖರ್ಚು ಮಾಡುತ್ತೀರಿ?</string>
+    <string name="onboarding_categories_body">ಕೆಲವನ್ನು ಆರಿಸಿ. ಮುಂದೆ ಅವುಗಳಿಗೆ ಬಜೆಟ್ ಸೂಚಿಸುತ್ತೇವೆ.</string>
+    <string name="onboarding_budget_title">ಖರ್ಚಿನ ಮಿತಿ ಹೊಂದಿಸಿ</string>
+    <string name="onboarding_budget_body">ನೀವು ನಿರ್ಲಕ್ಷಿಸುವ ಮಿತಿಗಿಂತ ಪಾಲಿಸಬಹುದಾದ ಮಿತಿ ಉತ್ತಮ. ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಿಸಬಹುದು.</string>
+    <string name="onboarding_notifications_title">ಬಿಲ್ ಜ್ಞಾಪನೆಗಳು</string>
+    <string name="onboarding_notifications_body">ಬಿಲ್ ಅಥವಾ ಇಎಂಐ ಬಾಕಿಯಾಗುವ ಮೊದಲು ನಿಮಗೆ ನೆನಪಿಸುತ್ತೇವೆ. ಬೇರೇನೂ ಇಲ್ಲ.</string>
+    <string name="onboarding_lock_title">ಆ್ಯಪ್ ಲಾಕ್ ಮಾಡಿ</string>
+    <string name="onboarding_lock_body">ನಿಮ್ಮ ಫೋನ್ ತೆಗೆದುಕೊಳ್ಳುವ ಯಾರಿಗೂ ನಿಮ್ಮ ಹಣಕಾಸು ಕಾಣದಂತೆ ಬೆರಳಚ್ಚು ಅಥವಾ ಪಿನ್ ಬಳಸಿ.</string>
+    <string name="onboarding_sms_title">ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳನ್ನು ಓದಬೇಕೆ?</string>
+    <string name="onboarding_sms_body">ನೀವು ಟೈಪ್ ಮಾಡಬೇಕಾಗಿಲ್ಲದಂತೆ ಖಾತಾ ನಿಮ್ಮ ಬ್ಯಾಂಕ್‌ನ ವಹಿವಾಟು SMS ಓದಬಹುದು. ಸಂದೇಶಗಳನ್ನು ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲೇ ಓದಲಾಗುತ್ತದೆ, ಎಲ್ಲಿಗೂ ಕಳುಹಿಸುವುದಿಲ್ಲ. ಪ್ರತಿ ಖರ್ಚು ಬಂದ ಕೂಡಲೇ ಸೇರುತ್ತದೆ, ಬೇಡವಾದುದನ್ನು ತೆಗೆದುಹಾಕಬಹುದು.</string>
+    <string name="onboarding_sms_optional">ಇದು ಸಂಪೂರ್ಣ ಐಚ್ಛಿಕ — ಇದಿಲ್ಲದೆಯೂ ಎಲ್ಲವೂ ಕೆಲಸ ಮಾಡುತ್ತದೆ.</string>
+    <string name="onboarding_sms_history_title">ಕಳೆದ 90 ದಿನಗಳದ್ದೂ ತನ್ನಿ</string>
+    <string name="onboarding_sms_history_body">ಕಳೆದ 90 ದಿನಗಳ ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳನ್ನು ಒಮ್ಮೆ ಓದುತ್ತದೆ. ಸಿಕ್ಕಿದ್ದು ನಿಮ್ಮ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತದೆ, ನೀವು ನಮೂದಿಸಿದ ಬ್ಯಾಲೆನ್ಸ್ ಬದಲಾಗುವುದಿಲ್ಲ.</string>
+    <string name="onboarding_finish_title">ಎಲ್ಲಾ ಸಿದ್ಧವಾಗಿದೆ</string>
+    <string name="onboarding_finish_body">ಏನಾದರೂ ಖರ್ಚು ಮಾಡಿದಾಗಲೆಲ್ಲಾ + ಬಟನ್ ಒತ್ತಿ. ಅಷ್ಟೇ.</string>
+    <string name="onboarding_try_demo">ಮಾದರಿ ಡೇಟಾದೊಂದಿಗೆ ನೋಡಿ</string>
+    <string name="onboarding_start_fresh">ನನ್ನ ಸ್ವಂತ ಡೇಟಾದೊಂದಿಗೆ ಪ್ರಾರಂಭಿಸಿ</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_greeting_morning">ಶುಭೋದಯ</string>
+    <string name="dashboard_greeting_afternoon">ಶುಭ ಮಧ್ಯಾಹ್ನ</string>
+    <string name="dashboard_greeting_evening">ಶುಭ ಸಂಜೆ</string>
+    <string name="dashboard_total_balance">ಒಟ್ಟು ಬ್ಯಾಲೆನ್ಸ್</string>
+    <string name="dashboard_available_to_spend">ಖರ್ಚಿಗೆ ಲಭ್ಯ</string>
+    <string name="dashboard_net_worth">ನಿವ್ವಳ ಆಸ್ತಿ</string>
+    <string name="dashboard_this_month">ಈ ತಿಂಗಳು</string>
+    <string name="dashboard_income">ಆದಾಯ</string>
+    <string name="dashboard_expenses">ಖರ್ಚುಗಳು</string>
+    <string name="dashboard_saved">ಉಳಿತಾಯ</string>
+    <string name="dashboard_savings_rate">ಉಳಿತಾಯ ದರ</string>
+    <string name="dashboard_budget_remaining">ಉಳಿದ ಬಜೆಟ್</string>
+    <string name="dashboard_spending_overview">ಖರ್ಚಿನ ಸಾರಾಂಶ</string>
+    <string name="dashboard_category_breakdown">ಎಲ್ಲಿಗೆ ಹೋಯಿತು</string>
+    <string name="dashboard_upcoming_payments">ಮುಂಬರುವವು</string>
+    <string name="dashboard_recent_transactions">ಇತ್ತೀಚಿನವು</string>
+    <string name="dashboard_budget_progress">ಬಜೆಟ್‌ಗಳು</string>
+    <string name="dashboard_goals">ಗುರಿಗಳು</string>
+    <string name="dashboard_accounts">ಖಾತೆಗಳು</string>
+    <string name="dashboard_subscriptions">ಚಂದಾದಾರಿಕೆಗಳು</string>
+    <string name="dashboard_net_worth_trend">ಕಾಲಕ್ರಮೇಣ ನಿವ್ವಳ ಆಸ್ತಿ</string>
+    <string name="dashboard_ai_insight">ತಿಳಿದಿರಬೇಕಾದದ್ದು</string>
+    <string name="dashboard_customise">ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಬದಲಿಸಿ</string>
+    <string name="dashboard_empty_title">ಇನ್ನೂ ಏನೂ ದಾಖಲಾಗಿಲ್ಲ</string>
+    <string name="dashboard_empty_body">ನಿಮ್ಮ ಮೊದಲ ಖರ್ಚು ದಾಖಲಿಸಲು + ಬಟನ್ ಒತ್ತಿ. ಒಂದೆರಡು ಸೆಕೆಂಡು ಸಾಕು.</string>
+    <string name="dashboard_empty_action">ಖರ್ಚು ಸೇರಿಸಿ</string>
+    <string name="dashboard_demo_banner">ನೀವು ಮಾದರಿ ಡೇಟಾ ನೋಡುತ್ತಿದ್ದೀರಿ</string>
+    <string name="dashboard_demo_exit">ಮಾದರಿ ಡೇಟಾ ತೆರವುಗೊಳಿಸಿ</string>
+    <string name="dashboard_daily_pace">ದಿನಕ್ಕೆ ಸುಮಾರು %1$s ಖರ್ಚು ಮಾಡಿದರೆ ಈ ತಿಂಗಳು ಹಿಡಿತದಲ್ಲಿರುತ್ತದೆ</string>
+    <string name="insight_action_adjust_budget">ಬಜೆಟ್ ಹೊಂದಿಸಿ</string>
+    <string name="insight_action_snooze">ಮುಂದೂಡಿ</string>
+    <string name="dashboard_pending_imports">%1$d ವಹಿವಾಟು(ಗಳು) ನಿಮ್ಮ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತಿವೆ</string>
+
+    <!-- Dashboard shortcuts -->
+    <string name="dashboard_shortcuts">ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು</string>
+    <string name="shortcut_analytics">ವಿಶ್ಲೇಷಣೆ</string>
+    <string name="shortcut_analytics_sub">ವರದಿಗಳು &amp; ಪ್ರವೃತ್ತಿಗಳು</string>
+    <string name="shortcut_accounts">ಖಾತೆಗಳು</string>
+    <string name="shortcut_accounts_sub">ಬ್ಯಾಲೆನ್ಸ್‌ಗಳು</string>
+    <string name="shortcut_goals">ಗುರಿಗಳು</string>
+    <string name="shortcut_goals_sub">ಉಳಿತಾಯ ಗಮನಿಸಿ</string>
+    <string name="shortcut_cards">ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್‌ಗಳು</string>
+    <string name="shortcut_cards_sub">ಬಿಲ್‌ಗಳು &amp; ಮಿತಿಗಳು</string>
+    <string name="shortcut_loans">ಸಾಲಗಳು</string>
+    <string name="shortcut_loans_sub">ಇಎಂಐ &amp; ತೀರುವಳಿ</string>
+    <string name="shortcut_investments">ಹೂಡಿಕೆಗಳು</string>
+    <string name="shortcut_investments_sub">ಪೋರ್ಟ್‌ಫೋಲಿಯೊ</string>
+    <string name="dashboard_vs_last_month">ಕಳೆದ ತಿಂಗಳಿಗೆ ಹೋಲಿಸಿದರೆ %1$s</string>
+    <string name="dashboard_customise_help">ಯಾವ ಕಾರ್ಡ್‌ಗಳು ಯಾವ ಕ್ರಮದಲ್ಲಿ ಕಾಣಬೇಕು ಎಂದು ಆರಿಸಿ.</string>
+    <string name="dashboard_customise_reset">ಮರುಹೊಂದಿಸಿ</string>
+    <string name="dashboard_customise_move_up">ಮೇಲೆ ಸರಿಸಿ</string>
+    <string name="dashboard_customise_move_down">ಕೆಳಗೆ ಸರಿಸಿ</string>
+    <string name="dashboard_card_spending_overview">ಈ ತಿಂಗಳು</string>
+    <string name="dashboard_card_budget_progress">ಬಜೆಟ್‌ಗಳು</string>
+    <string name="dashboard_card_upcoming_payments">ಮುಂಬರುವ ಪಾವತಿಗಳು</string>
+    <string name="dashboard_card_category_breakdown">ಎಲ್ಲಿಗೆ ಹೋಯಿತು</string>
+    <string name="dashboard_card_recent_transactions">ಇತ್ತೀಚಿನ ವಹಿವಾಟುಗಳು</string>
+    <string name="dashboard_card_insight">ಒಳನೋಟ</string>
+    <string name="dashboard_card_goals">ಗುರಿಗಳು</string>
+    <string name="dashboard_card_accounts">ಖಾತೆಗಳು</string>
+    <string name="dashboard_card_subscriptions">ಚಂದಾದಾರಿಕೆಗಳು</string>
+    <string name="dashboard_card_net_worth">ನಿವ್ವಳ ಆಸ್ತಿಯ ಪ್ರವೃತ್ತಿ</string>
+
+    <!-- Transactions -->
+    <string name="transaction_expense">ಖರ್ಚು</string>
+    <string name="transaction_income">ಆದಾಯ</string>
+    <string name="transaction_transfer">ವರ್ಗಾವಣೆ</string>
+    <string name="transaction_amount">ಮೊತ್ತ</string>
+    <string name="transaction_account">ಖಾತೆ</string>
+    <string name="transaction_to_account">ಯಾವ ಖಾತೆಗೆ</string>
+    <string name="transaction_from_account">ಯಾವ ಖಾತೆಯಿಂದ</string>
+    <string name="category_browse_all">ಎಲ್ಲಾ ವರ್ಗಗಳು</string>
+    <string name="category_search">ವರ್ಗಗಳನ್ನು ಹುಡುಕಿ</string>
+    <string name="category_search_none">ಅದಕ್ಕೆ ಹೊಂದುವ ವರ್ಗ ಇಲ್ಲ.</string>
+    <string name="transaction_category">ವರ್ಗ</string>
+    <string name="transaction_merchant">ವ್ಯಾಪಾರಿ</string>
+    <string name="transaction_note">ಟಿಪ್ಪಣಿ</string>
+    <string name="transaction_date">ದಿನಾಂಕ</string>
+    <string name="transaction_tags">ಟ್ಯಾಗ್‌ಗಳು</string>
+    <string name="transaction_tags_hint">ಅಲ್ಪವಿರಾಮದಿಂದ ಬೇರ್ಪಡಿಸಿ, ಉದಾ. ಗೋವಾ ಪ್ರವಾಸ, ಆಫೀಸ್</string>
+    <string name="transaction_receipt">ರಸೀದಿ</string>
+    <string name="transaction_reference">ರೆಫರೆನ್ಸ್</string>
+    <string name="transaction_recorded_via">ದಾಖಲಾದ ವಿಧಾನ</string>
+    <string name="transaction_added">ಸೇರಿಸಿದ್ದು</string>
+    <string name="transaction_last_edited">ಕೊನೆಯ ಬದಲಾವಣೆ</string>
+    <string name="transaction_add_title">ವಹಿವಾಟು ಸೇರಿಸಿ</string>
+    <string name="transaction_edit_title">ವಹಿವಾಟು ಬದಲಿಸಿ</string>
+    <string name="transaction_deleted">ವಹಿವಾಟು ಅಳಿಸಲಾಗಿದೆ</string>
+    <string name="transaction_saved">ಸೇವ್ ಆಯಿತು</string>
+    <string name="transaction_delete_confirm_title">ಈ ವಹಿವಾಟು ಅಳಿಸಬೇಕೆ?</string>
+    <string name="transaction_delete_confirm_body">ಇದು \'ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವು\'ಗೆ ಹೋಗುತ್ತದೆ, ಅಲ್ಲಿಂದ 30 ದಿನಗಳವರೆಗೆ ಮರುಸ್ಥಾಪಿಸಬಹುದು.</string>
+    <string name="transaction_list_empty_title">ಇನ್ನೂ ವಹಿವಾಟುಗಳಿಲ್ಲ</string>
+    <string name="transaction_list_empty_body">ನೀವು ದಾಖಲಿಸುವ ಎಲ್ಲವೂ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತದೆ.</string>
+    <string name="transaction_filter_empty_title">ಯಾವುದೂ ಹೊಂದುತ್ತಿಲ್ಲ</string>
+    <string name="transaction_filter_empty_body">ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಸಡಿಲಿಸಿ ಅಥವಾ ಹುಡುಕಾಟ ತೆರವುಗೊಳಿಸಿ.</string>
+    <string name="transaction_search_hint">ವ್ಯಾಪಾರಿ, ಟಿಪ್ಪಣಿ ಅಥವಾ ರೆಫರೆನ್ಸ್ ಹುಡುಕಿ</string>
+    <string name="transaction_filters_active">ಫಿಲ್ಟರ್‌ಗಳು (%1$d)</string>
+    <string name="transaction_today">ಇಂದು</string>
+    <string name="transaction_yesterday">ನಿನ್ನೆ</string>
+    <string name="transaction_pending_badge">ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತಿದೆ</string>
+    <string name="transaction_source_sms">ನಿಮ್ಮ ಬ್ಯಾಂಕ್ SMS‌ನಿಂದ</string>
+    <string name="transaction_source_import">ಆಮದು ಮಾಡಲಾಗಿದೆ</string>
+    <string name="transaction_source_recurring">ಪುನರಾವರ್ತಿತ</string>
+    <string name="transaction_suggestion_hint">ಸಾಮಾನ್ಯವಾಗಿ %1$s</string>
+    <string name="transaction_overdraft_warning">ಇದರಿಂದ %1$s ಶೂನ್ಯಕ್ಕಿಂತ ಕೆಳಗೆ ಹೋಗುತ್ತದೆ</string>
+    <string name="receipts_title">ರಸೀದಿಗಳು</string>
+    <string name="receipts_add">ರಸೀದಿ ಲಗತ್ತಿಸಿ</string>
+    <string name="receipts_locked">ರಸೀದಿ ಲಗತ್ತಿಸುವುದು Pro ಭಾಗ</string>
+    <string name="receipts_open">ರಸೀದಿ ತೆರೆಯಿರಿ</string>
+    <string name="receipts_take_photo">ಫೋಟೋ ತೆಗೆಯಿರಿ</string>
+    <string name="receipts_choose_photo">ಫೋಟೋಗಳಿಂದ ಆರಿಸಿ</string>
+    <string name="receipts_share">ರಸೀದಿ ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="receipts_delete_title">ಈ ರಸೀದಿ ಅಳಿಸಬೇಕೆ?</string>
+    <string name="receipts_delete_body">ಫೋಟೋವನ್ನು ಈ ಸಾಧನದಿಂದ ತೆಗೆಯಲಾಗುತ್ತದೆ. ವಹಿವಾಟಿಗೆ ಏನೂ ಆಗುವುದಿಲ್ಲ.</string>
+    <string name="receipts_error_unreadable">ಆ ಚಿತ್ರವನ್ನು ಓದಲಾಗಲಿಲ್ಲ. ಬೇರೊಂದನ್ನು ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="receipts_error_too_many">ಒಂದು ವಹಿವಾಟಿಗೆ ಗರಿಷ್ಠ 5 ರಸೀದಿಗಳನ್ನು ಲಗತ್ತಿಸಬಹುದು.</string>
+    <string name="receipts_error_out_of_space">ರಸೀದಿ ಸಂಗ್ರಹ ತುಂಬಿದೆ. ಜಾಗ ಮಾಡಲು ಕೆಲವನ್ನು ಅಳಿಸಿ.</string>
+    <string name="receipts_storage_used">ರಸೀದಿಗಳು %1$s ಬಳಸುತ್ತಿವೆ</string>
+
+    <!-- Validation -->
+    <string name="validation_amount_required">ಮೊತ್ತ ನಮೂದಿಸಿ</string>
+    <string name="validation_amount_invalid">ಅದು ಸರಿಯಾದ ಮೊತ್ತವಲ್ಲ</string>
+    <string name="validation_amount_zero">ಮೊತ್ತ ಶೂನ್ಯಕ್ಕಿಂತ ಹೆಚ್ಚಿರಬೇಕು</string>
+    <string name="validation_account_required">ಖಾತೆ ಆರಿಸಿ</string>
+    <string name="validation_category_required">ವರ್ಗ ಆರಿಸಿ</string>
+    <string name="validation_transfer_account_required">ಹಣ ಎಲ್ಲಿಗೆ ಹೋಗುತ್ತಿದೆ ಎಂದು ಆರಿಸಿ</string>
+    <string name="validation_transfer_same_account">ಬೇರೆ ಗಮ್ಯ ಖಾತೆ ಆರಿಸಿ</string>
+    <string name="validation_date_too_far_future">ಆ ದಿನಾಂಕ ಒಂದು ವರ್ಷಕ್ಕಿಂತ ಮುಂದಿದೆ</string>
+    <string name="validation_date_too_far_past">ಆ ದಿನಾಂಕ ತುಂಬಾ ಹಿಂದಿನದು</string>
+    <string name="validation_note_too_long">ಟಿಪ್ಪಣಿ ತುಂಬಾ ಉದ್ದವಾಗಿದೆ</string>
+    <string name="validation_name_required">ಹೆಸರು ನೀಡಿ</string>
+    <string name="validation_name_too_long">ಆ ಹೆಸರು ತುಂಬಾ ಉದ್ದವಾಗಿದೆ</string>
+    <string name="validation_name_duplicate">ಆ ಹೆಸರಿನದು ಈಗಾಗಲೇ ಇದೆ</string>
+    <string name="validation_balance_invalid">ಅದು ಸರಿಯಾದ ಮೊತ್ತವಲ್ಲ</string>
+    <string name="validation_limit_required">ಬಜೆಟ್ ಮೊತ್ತ ನಮೂದಿಸಿ</string>
+    <string name="validation_limit_zero">ಬಜೆಟ್ ಶೂನ್ಯಕ್ಕಿಂತ ಹೆಚ್ಚಿರಬೇಕು</string>
+    <string name="validation_alert_out_of_range" formatted="false">ಎಚ್ಚರಿಕೆ 1% ಮತ್ತು 100% ನಡುವೆ ಇರಬೇಕು</string>
+    <string name="validation_target_required">ಗುರಿ ಮೊತ್ತ ನಮೂದಿಸಿ</string>
+    <string name="validation_target_zero">ಗುರಿ ಶೂನ್ಯಕ್ಕಿಂತ ಹೆಚ್ಚಿರಬೇಕು</string>
+    <string name="validation_current_exceeds_target">ಉಳಿಸಿದ ಮೊತ್ತ ಗುರಿಗಿಂತ ಹೆಚ್ಚಿದೆ</string>
+    <string name="validation_date_in_past">ಮುಂದಿನ ದಿನಾಂಕ ಆರಿಸಿ</string>
+
+    <!-- Quick add -->
+    <string name="quick_add_shortcut">ತ್ವರಿತ ಸೇರ್ಪಡೆ</string>
+    <string name="quick_add_title">ಎಷ್ಟು?</string>
+    <string name="quick_add_more_options">ಇನ್ನಷ್ಟು ಆಯ್ಕೆಗಳು</string>
+    <string name="quick_add_natural_language">ಬದಲಿಗೆ ಬರೆದು ತಿಳಿಸಿ</string>
+    <string name="quick_add_nl_hint">ಉದಾ. spent 850 on Swiggy yesterday</string>
+    <string name="quick_add_nl_title">ನೀವು ಏನು ಖರ್ಚು ಮಾಡಿದಿರಿ ಎಂದು ತಿಳಿಸಿ</string>
+    <string name="quick_add_nl_confirm">ಸೇವ್ ಮಾಡುವ ಮೊದಲು ಇವನ್ನು ಪರಿಶೀಲಿಸಿ</string>
+    <string name="quick_add_nl_none_found">ಅದರಲ್ಲಿ ಮೊತ್ತ ಸಿಗಲಿಲ್ಲ. ಒಂದು ಸಂಖ್ಯೆ ಸೇರಿಸಿ ನೋಡಿ.</string>
+    <string name="quick_add_nl_count">%1$d ವಹಿವಾಟು(ಗಳು) ಸಿಕ್ಕಿವೆ</string>
+
+    <!-- Voice input -->
+    <string name="voice_input">ಮಾತನಾಡಿ</string>
+    <string name="voice_prompt">ನೀವು ಏನು ಖರ್ಚು ಮಾಡಿದಿರಿ ಎಂದು ಹೇಳಿ</string>
+    <string name="voice_unavailable">ಈ ಸಾಧನದಲ್ಲಿ ಧ್ವನಿ ಇನ್‌ಪುಟ್ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="voice_did_you_mean">ನೀವು ಹೇಳಿದ್ದು ಇದೇ?</string>
+
+    <!-- Accounts -->
+    <string name="accounts_title">ಖಾತೆಗಳು</string>
+    <string name="accounts_add">ಖಾತೆ ಸೇರಿಸಿ</string>
+    <string name="accounts_edit">ಖಾತೆ ಬದಲಿಸಿ</string>
+    <string name="accounts_name">ಖಾತೆಯ ಹೆಸರು</string>
+    <string name="accounts_institution">ಬ್ಯಾಂಕ್ ಅಥವಾ ಸೇವಾದಾರ</string>
+    <string name="accounts_type">ಪ್ರಕಾರ</string>
+    <string name="accounts_opening_balance">ಪ್ರಸ್ತುತ ಬ್ಯಾಲೆನ್ಸ್</string>
+    <string name="accounts_amount_owed">ಬಾಕಿ ಮೊತ್ತ</string>
+    <string name="accounts_last_four">ಕೊನೆಯ 4 ಅಂಕಿಗಳು (ಐಚ್ಛಿಕ)</string>
+    <string name="accounts_last_four_help">ನಿಮ್ಮ ಬ್ಯಾಂಕ್ SMS ಹೊಂದಿಸಲು ಕೊನೆಯ ನಾಲ್ಕು ಅಂಕಿಗಳು ಮಾತ್ರ. ಪೂರ್ಣ ಖಾತೆ ಅಥವಾ ಕಾರ್ಡ್ ಸಂಖ್ಯೆ ಎಂದಿಗೂ ನಮೂದಿಸಬೇಡಿ.</string>
+    <string name="accounts_include_net_worth">ನಿವ್ವಳ ಆಸ್ತಿಯಲ್ಲಿ ಎಣಿಸಿ</string>
+    <string name="accounts_include_available">ನಾನು ಖರ್ಚು ಮಾಡಬಹುದಾದ ಹಣ ಎಂದು ಎಣಿಸಿ</string>
+    <string name="accounts_archive">ಆರ್ಕೈವ್ ಮಾಡಿ</string>
+    <string name="accounts_unarchive">ಆರ್ಕೈವ್‌ನಿಂದ ತೆಗೆಯಿರಿ</string>
+    <string name="accounts_archived">ಆರ್ಕೈವ್ ಮಾಡಲಾಗಿದೆ</string>
+    <string name="accounts_delete_blocked_title">ಈ ಖಾತೆಯಲ್ಲಿ ವಹಿವಾಟುಗಳಿವೆ</string>
+    <string name="accounts_delete_blocked_body">ಇದನ್ನು ಅಳಿಸಿದರೆ ನಿಮ್ಮ ಇತಿಹಾಸದಿಂದ %1$d ವಹಿವಾಟು(ಗಳು) ಹೋಗುತ್ತವೆ. ದಾಖಲೆಗಳನ್ನು ಉಳಿಸಿಕೊಂಡು ಮರೆಮಾಡಲು ಆರ್ಕೈವ್ ಮಾಡಿ.</string>
+    <string name="accounts_empty_title">ಇನ್ನೂ ಖಾತೆಗಳಿಲ್ಲ</string>
+    <string name="accounts_empty_body">ನೀವು ಹೆಚ್ಚು ಬಳಸುವ ಬ್ಯಾಂಕ್ ಖಾತೆ, ವಾಲೆಟ್ ಅಥವಾ ಕಾರ್ಡ್ ಸೇರಿಸಿ.</string>
+    <string name="accounts_limit_reached_title">ಉಚಿತ ಪ್ಲಾನ್‌ನಲ್ಲಿ %1$d ಖಾತೆಗಳಿವೆ</string>
+    <string name="accounts_limit_reached_body">ಬೇಕಾದಷ್ಟು ಸೇರಿಸಲು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ.</string>
+    <string name="accounts_never_credentials">ಖಾತಾ ನಿಮ್ಮ ಬ್ಯಾಂಕಿಂಗ್ ಪಾಸ್‌ವರ್ಡ್, ಪಿನ್ ಅಥವಾ OTP ಎಂದಿಗೂ ಕೇಳುವುದಿಲ್ಲ.</string>
+
+    <string name="account_type_cash">ನಗದು</string>
+    <string name="account_type_bank">ಬ್ಯಾಂಕ್ ಖಾತೆ</string>
+    <string name="account_type_savings">ಉಳಿತಾಯ ಖಾತೆ</string>
+    <string name="account_type_current">ಚಾಲ್ತಿ ಖಾತೆ</string>
+    <string name="account_type_credit_card">ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್</string>
+    <string name="account_type_wallet">ವಾಲೆಟ್ / UPI</string>
+    <string name="account_type_investment">ಹೂಡಿಕೆ ಖಾತೆ</string>
+    <string name="account_type_loan">ಸಾಲದ ಖಾತೆ</string>
+    <string name="account_type_other">ಇತರೆ</string>
+
+    <!-- Budgets -->
+    <string name="budgets_title">ಬಜೆಟ್‌ಗಳು</string>
+    <string name="budgets_add">ಬಜೆಟ್ ರಚಿಸಿ</string>
+    <string name="budgets_edit">ಬಜೆಟ್ ಬದಲಿಸಿ</string>
+    <string name="budgets_name">ಬಜೆಟ್ ಹೆಸರು</string>
+    <string name="budgets_limit">ಮಿತಿ</string>
+    <string name="budgets_period">ಅವಧಿ</string>
+    <string name="budgets_period_weekly">ವಾರಕ್ಕೊಮ್ಮೆ</string>
+    <string name="budgets_period_monthly">ತಿಂಗಳಿಗೊಮ್ಮೆ</string>
+    <string name="budgets_categories">ವರ್ಗಗಳು</string>
+    <string name="budgets_all_spending">ಎಲ್ಲಾ ಖರ್ಚು</string>
+    <string name="budgets_alert_threshold">ಇಷ್ಟಕ್ಕೆ ಎಚ್ಚರಿಸಿ</string>
+    <string name="budgets_rollover">ಖರ್ಚಾಗದ ಹಣವನ್ನು ಮುಂದಕ್ಕೆ ಒಯ್ಯಿರಿ</string>
+    <string name="budgets_rollover_help">ಈ ಅವಧಿಯಲ್ಲಿ ಖರ್ಚು ಮಾಡದ್ದು ಮುಂದಿನ ಅವಧಿಗೆ ಸೇರುತ್ತದೆ.</string>
+    <string name="budgets_spent_of">%2$s ರಲ್ಲಿ %1$s</string>
+    <string name="budgets_remaining">%1$s ಉಳಿದಿದೆ</string>
+    <string name="budgets_overspent_by">%1$s ಹೆಚ್ಚು</string>
+    <plurals name="budgets_days_left">
+        <item quantity="one">%1$d ದಿನ ಉಳಿದಿದೆ</item>
+        <item quantity="other">%1$d ದಿನಗಳು ಉಳಿದಿವೆ</item>
+    </plurals>
+    <string name="budgets_safe_daily">ದಿನಕ್ಕೆ ಸುಮಾರು %1$s ಖರ್ಚು ಮಾಡಿದರೆ ಹಿಡಿತದಲ್ಲಿರುತ್ತೀರಿ</string>
+    <string name="budgets_projected">%1$s ಖರ್ಚಾಗುವ ಹಾದಿಯಲ್ಲಿದೆ</string>
+    <string name="budgets_carried_over">ಮುಂದಕ್ಕೆ ತಂದ %1$s ಸೇರಿದೆ</string>
+    <string name="budgets_empty_title">ಇನ್ನೂ ಬಜೆಟ್‌ಗಳಿಲ್ಲ</string>
+    <string name="budgets_empty_body">ಬಜೆಟ್ "ಎಲ್ಲಾ ಎಲ್ಲಿಗೆ ಹೋಯಿತು?" ಎಂಬುದನ್ನು "ಎಷ್ಟು ಉಳಿದಿದೆ?" ಎಂದು ಬದಲಿಸುತ್ತದೆ.</string>
+
+    <string name="budget_status_on_track">ಹಿಡಿತದಲ್ಲಿದೆ</string>
+    <string name="budget_status_projected_over">ವೇಗವಾಗಿ ಖರ್ಚಾಗುತ್ತಿದೆ</string>
+    <string name="budget_status_nearing_limit">ಬಹುತೇಕ ಮುಗಿದಿದೆ</string>
+    <string name="budget_status_exhausted">ಪೂರ್ತಿ ಬಳಸಲಾಗಿದೆ</string>
+    <string name="budget_status_overspent">ಬಜೆಟ್ ಮೀರಿದೆ</string>
+
+    <!-- Categories -->
+    <string name="categories_title">ವರ್ಗಗಳು</string>
+    <string name="categories_add">ವರ್ಗ ಸೇರಿಸಿ</string>
+    <string name="categories_edit">ವರ್ಗ ಬದಲಿಸಿ</string>
+    <string name="categories_name">ವರ್ಗದ ಹೆಸರು</string>
+    <string name="categories_parent">ಇದರ ಅಡಿಯಲ್ಲಿ</string>
+    <string name="categories_none">ವರ್ಗ ಇಲ್ಲ</string>
+    <string name="categories_uncategorised">ವರ್ಗೀಕರಿಸಿಲ್ಲ</string>
+    <string name="categories_system_cannot_delete">ಅಂತರ್ನಿರ್ಮಿತ ವರ್ಗಗಳನ್ನು ಮರೆಮಾಡಬಹುದು, ಅಳಿಸಲಾಗದು — ಹಾಗಾಗಿ ಹಳೆಯ ವರದಿಗಳ ಲೇಬಲ್‌ಗಳು ಉಳಿಯುತ್ತವೆ.</string>
+    <string name="categories_search_hint">ವರ್ಗಗಳನ್ನು ಹುಡುಕಿ</string>
+    <string name="categories_group">ಗುಂಪು</string>
+    <string name="categories_icon">ಐಕಾನ್</string>
+    <string name="categories_colour">ಬಣ್ಣ</string>
+    <string name="categories_colour_selected">ಆಯ್ಕೆ ಮಾಡಿದ ಬಣ್ಣ</string>
+    <string name="categories_top_level">ಯಾವುದೂ ಇಲ್ಲ — ಇದು ಮುಖ್ಯ ವರ್ಗ</string>
+    <string name="categories_built_in">ಅಂತರ್ನಿರ್ಮಿತ</string>
+    <string name="categories_hide">ಮರೆಮಾಡಿ</string>
+    <string name="categories_show">ತೋರಿಸಿ</string>
+    <string name="categories_hidden_badge">ಮರೆಮಾಡಲಾಗಿದೆ</string>
+    <string name="categories_hide_named">%1$s ಮರೆಮಾಡಿ</string>
+    <string name="categories_show_hidden">ಮರೆಮಾಡಿದ ವರ್ಗಗಳನ್ನು ತೋರಿಸಿ</string>
+    <string name="categories_hide_hidden">ಮರೆಮಾಡಿದ ವರ್ಗಗಳನ್ನು ಅಡಗಿಸಿ</string>
+    <string name="categories_hidden_confirmation">ಮರೆಮಾಡಲಾಗಿದೆ. ಹಳೆಯ ವಹಿವಾಟುಗಳಲ್ಲಿ ಈ ಲೇಬಲ್ ಉಳಿಯುತ್ತದೆ.</string>
+    <string name="categories_shown_confirmation">ಮತ್ತೆ ತೋರಿಸಲಾಗುತ್ತಿದೆ.</string>
+    <string name="categories_empty_title">ಇನ್ನೂ ವರ್ಗಗಳಿಲ್ಲ</string>
+    <string name="categories_empty_body">ಒಂದನ್ನು ಸೇರಿಸಿ, ಅಥವಾ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಿಂದ ಅಂತರ್ನಿರ್ಮಿತ ವರ್ಗಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಿ.</string>
+    <string name="categories_no_matches_title">ಯಾವುದೂ ಹೊಂದಲಿಲ್ಲ</string>
+    <string name="categories_no_matches_body">ಚಿಕ್ಕ ಪದ ಪ್ರಯತ್ನಿಸಿ, ಅಥವಾ ಇದನ್ನು ಹೊಸ ವರ್ಗವಾಗಿ ಸೇರಿಸಿ.</string>
+    <string name="categories_delete_title">“%1$s” ಅಳಿಸಬೇಕೆ?</string>
+    <string name="categories_delete_body">ನಿಮ್ಮ ವಹಿವಾಟುಗಳು ಅಳಿಸುವುದಿಲ್ಲ, ಆದರೆ ಅವು ಈ ಲೇಬಲ್ ಕಳೆದುಕೊಳ್ಳುತ್ತವೆ ಮತ್ತು ಅದನ್ನು ಮರಳಿ ತರಲಾಗದು. ವರ್ಗವನ್ನು ಮರೆಮಾಡಿದರೆ ಲೇಬಲ್‌ಗಳು ಉಳಿಯುತ್ತವೆ ಮತ್ತು ಆಯ್ಕೆಪಟ್ಟಿಯಿಂದ ಹೊರಗಿರುತ್ತದೆ.</string>
+    <string name="categories_deleted">ವರ್ಗ ಅಳಿಸಲಾಗಿದೆ.</string>
+
+    <!-- Category groups -->
+    <string name="category_group_food">ಆಹಾರ &amp; ಪಾನೀಯ</string>
+    <string name="category_group_transport">ಸಾರಿಗೆ</string>
+    <string name="category_group_bills">ಬಿಲ್‌ಗಳು &amp; ಉಪಯುಕ್ತತೆಗಳು</string>
+    <string name="category_group_lifestyle">ಜೀವನಶೈಲಿ</string>
+    <string name="category_group_financial">ಹಣಕಾಸು</string>
+    <string name="category_group_family">ಮನೆ &amp; ಕುಟುಂಬ</string>
+    <string name="category_group_income">ಆದಾಯ</string>
+    <string name="category_group_transfer">ವರ್ಗಾವಣೆಗಳು</string>
+    <string name="category_group_other">ಇತರೆ</string>
+
+    <!-- Category validation -->
+    <string name="validation_category_name_required">ವರ್ಗಕ್ಕೆ ಹೆಸರು ನೀಡಿ</string>
+    <string name="validation_category_name_too_long">ಆ ಹೆಸರು ತುಂಬಾ ಉದ್ದವಾಗಿದೆ</string>
+    <string name="validation_category_name_duplicate">ಇಲ್ಲಿ ಆ ಹೆಸರಿನ ವರ್ಗ ಈಗಾಗಲೇ ಇದೆ</string>
+    <string name="validation_category_parent_too_deep">ವರ್ಗಗಳು ಎರಡು ಹಂತಗಳವರೆಗೆ ಮಾತ್ರ</string>
+    <string name="validation_category_parent_has_children">ಮೊದಲು ಈ ವರ್ಗದ ಉಪವರ್ಗಗಳನ್ನು ಸರಿಸಿ ಅಥವಾ ಅಳಿಸಿ</string>
+
+    <!-- Recurring -->
+    <string name="recurring_title">ಪುನರಾವರ್ತಿತ</string>
+    <string name="recurring_add">ಪುನರಾವರ್ತಿತ ಸೇರಿಸಿ</string>
+    <string name="recurring_edit">ಪುನರಾವರ್ತಿತ ಬದಲಿಸಿ</string>
+    <string name="recurring_name">ಹೆಸರು</string>
+    <string name="recurring_frequency">ಪುನರಾವರ್ತನೆ</string>
+    <string name="recurring_start_date">ಪ್ರಾರಂಭ</string>
+    <string name="recurring_end_date">ಮುಕ್ತಾಯ (ಐಚ್ಛಿಕ)</string>
+    <string name="recurring_auto_post">ಸ್ವಯಂಚಾಲಿತವಾಗಿ ದಾಖಲಿಸಿ</string>
+    <string name="recurring_auto_post_help">ಡೀಫಾಲ್ಟ್ ಆಗಿ ಆಫ್. ಆಫ್ ಇದ್ದಾಗ ನಾವು ನೆನಪಿಸುತ್ತೇವೆ, ನೀವು ದೃಢೀಕರಿಸುತ್ತೀರಿ — ಹಾಗಾಗಿ ನಿಮ್ಮ ಬ್ಯಾಲೆನ್ಸ್ ನಿಜವಾಗಿ ನಡೆದದ್ದಕ್ಕೆ ಹೊಂದುತ್ತದೆ.</string>
+    <string name="recurring_reminder_days">ಇಷ್ಟು ಮೊದಲು ನೆನಪಿಸಿ</string>
+    <string name="recurring_next_due">ಮುಂದಿನದು: %1$s</string>
+    <string name="recurring_overdue">ಗಡುವು ಮೀರಿದೆ</string>
+    <string name="recurring_due_today">ಇಂದು ಬಾಕಿ</string>
+    <string name="recurring_confirm_post">ದಾಖಲಿಸಿ</string>
+    <string name="recurring_skip">ನಡೆಯಲಿಲ್ಲ</string>
+    <string name="recurring_empty_title">ಇನ್ನೂ ಪುನರಾವರ್ತಿತವಿಲ್ಲ</string>
+    <string name="recurring_empty_body">ನಿಮ್ಮ ಬಾಡಿಗೆ, ಸಂಬಳ, ಇಎಂಐ ಮತ್ತು SIP ಸೇರಿಸಿ, ಅವು ಎಂದೂ ಅಚ್ಚರಿಯಾಗುವುದಿಲ್ಲ.</string>
+    <string name="recurring_active">ಸಕ್ರಿಯ</string>
+    <string name="recurring_paused">ವಿರಾಮದಲ್ಲಿದೆ</string>
+    <string name="recurring_paused_badge">ವಿರಾಮದಲ್ಲಿದೆ</string>
+    <string name="recurring_finished">ಮುಗಿದಿದೆ</string>
+    <string name="recurring_pause">%1$s ವಿರಾಮಗೊಳಿಸಿ</string>
+    <string name="recurring_resume">%1$s ಮುಂದುವರಿಸಿ</string>
+    <string name="recurring_was_due">%1$s ರಂದು ಬಾಕಿಯಿತ್ತು</string>
+    <string name="recurring_posted">ದಾಖಲಿಸಲಾಗಿದೆ.</string>
+    <string name="recurring_auto_post_badge">ಸ್ವಯಂಚಾಲಿತವಾಗಿ ದಾಖಲಾಗಿದೆ</string>
+    <string name="recurring_interval">ಎಷ್ಟು ಬಾರಿ</string>
+    <string name="recurring_interval_every_one">ಪ್ರತಿ ಬಾರಿ</string>
+    <string name="recurring_reminder_same_day">ಅದೇ ದಿನ</string>
+    <string name="recurring_commitment_title">ಪ್ರತಿ ತಿಂಗಳು, ಸುಮಾರು</string>
+    <string name="recurring_commitment_approximate">ವಾರದ ಮತ್ತು ದಿನದ ಅಂಶಗಳನ್ನು ಪರಿವರ್ತಿಸಲಾಗಿದೆ, ಹಾಗಾಗಿ ಇದು ನಿಖರವಲ್ಲ, ಹತ್ತಿರದ ಅಂದಾಜು.</string>
+    <string name="recurring_going_out">ಹೊರಹೋಗುವುದು</string>
+    <string name="recurring_coming_in">ಒಳಬರುವುದು</string>
+    <string name="recurring_delete_title">“%1$s” ಅಳಿಸಬೇಕೆ?</string>
+    <string name="recurring_delete_body">ನಿಯಮ ನಿಲ್ಲುತ್ತದೆ. ಅದು ಈಗಾಗಲೇ ದಾಖಲಿಸಿದ ವಹಿವಾಟುಗಳು ಹಾಗೆಯೇ ಇರುತ್ತವೆ.</string>
+    <string name="validation_end_before_start">ಮುಕ್ತಾಯ ದಿನಾಂಕ ಪ್ರಾರಂಭ ದಿನಾಂಕಕ್ಕಿಂತ ಮೊದಲಿದೆ</string>
+
+    <!-- Frequencies -->
+    <string name="frequency_daily">ಪ್ರತಿದಿನ</string>
+    <string name="frequency_weekly">ವಾರಕ್ಕೊಮ್ಮೆ</string>
+    <string name="frequency_fortnightly">ಪ್ರತಿ 2 ವಾರ</string>
+    <string name="frequency_monthly">ತಿಂಗಳಿಗೊಮ್ಮೆ</string>
+    <string name="frequency_quarterly">ಪ್ರತಿ 3 ತಿಂಗಳು</string>
+    <string name="frequency_half_yearly">ಪ್ರತಿ 6 ತಿಂಗಳು</string>
+    <string name="frequency_yearly">ವರ್ಷಕ್ಕೊಮ್ಮೆ</string>
+
+    <!-- Subscriptions -->
+    <string name="subscriptions_title">ಚಂದಾದಾರಿಕೆಗಳು</string>
+    <string name="subscriptions_add">ಚಂದಾದಾರಿಕೆ ಸೇರಿಸಿ</string>
+    <string name="subscriptions_edit">ಚಂದಾದಾರಿಕೆ ಬದಲಿಸಿ</string>
+    <string name="subscriptions_name">ಸೇವೆ</string>
+    <string name="subscriptions_billing_cycle">ಬಿಲ್ಲಿಂಗ್ ಅವಧಿ</string>
+    <string name="subscriptions_next_payment">ಮುಂದಿನ ಪಾವತಿ</string>
+    <string name="subscriptions_monthly_cost">ತಿಂಗಳಿಗೆ ಸುಮಾರು %1$s</string>
+    <string name="subscriptions_yearly_cost">ವರ್ಷಕ್ಕೆ %1$s</string>
+    <string name="subscriptions_total_monthly">ತಿಂಗಳಿಗೆ</string>
+    <string name="subscriptions_total_yearly">ವರ್ಷಕ್ಕೆ</string>
+    <string name="subscriptions_cancel">ರದ್ದಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ</string>
+    <string name="subscriptions_cancelled">ರದ್ದಾಗಿದೆ</string>
+    <string name="subscriptions_empty_title">ಯಾವುದೇ ಚಂದಾದಾರಿಕೆ ದಾಖಲಾಗಿಲ್ಲ</string>
+    <string name="subscriptions_empty_body">ನೀವು ತಿಂಗಳಿಗೊಮ್ಮೆ ಪಾವತಿಸುವ ಸೇವೆಗಳನ್ನು ಸೇರಿಸಿ. ವರ್ಷದ ಒಟ್ಟು ಮೊತ್ತ ನೋಡಿದಾಗ ಸಾಮಾನ್ಯವಾಗಿ ಅಚ್ಚರಿಯಾಗುತ್ತದೆ.</string>
+    <string name="subscriptions_renewing_soon">ಶೀಘ್ರದಲ್ಲೇ ನವೀಕರಣ</string>
+    <string name="subscriptions_next_payment_on">ಮುಂದಿನದು %1$s</string>
+    <string name="subscriptions_yearly_preview">ಅದು ವರ್ಷಕ್ಕೆ %1$s.</string>
+    <string name="subscriptions_cancel_title">“%1$s” ರದ್ದಾಗಿದೆ ಎಂದು ಗುರುತಿಸಬೇಕೆ?</string>
+    <string name="subscriptions_cancel_body">ಇದು ಇಲ್ಲಿನ ನಿಮ್ಮ ದಾಖಲೆಗಳನ್ನು ಮಾತ್ರ ಬದಲಿಸುತ್ತದೆ — ಸೇವೆಯಲ್ಲಿ ಏನನ್ನೂ ರದ್ದುಗೊಳಿಸುವುದಿಲ್ಲ. ಇದು ತಿಂಗಳ ಒಟ್ಟು ಮೊತ್ತದಲ್ಲಿ ಕಾಣುವುದು ನಿಲ್ಲುತ್ತದೆ, ಹಳೆಯ ತಿಂಗಳುಗಳ ವಾರ್ಷಿಕ ಅಂಕಿಗಳು ಸರಿಯಾಗಿರಲು ಪಟ್ಟಿಯಲ್ಲೇ ಇರುತ್ತದೆ.</string>
+    <string name="subscriptions_cancelled_on">%1$s ರಂದು ರದ್ದಾಗಿದೆ</string>
+
+    <!-- Credit cards -->
+    <string name="cards_title">ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್‌ಗಳು</string>
+    <string name="cards_add">ಕಾರ್ಡ್ ಸೇರಿಸಿ</string>
+    <string name="cards_edit">ಕಾರ್ಡ್ ಬದಲಿಸಿ</string>
+    <string name="cards_name">ಕಾರ್ಡ್ ಹೆಸರು</string>
+    <string name="cards_issuer">ಬ್ಯಾಂಕ್</string>
+    <string name="cards_limit">ಕ್ರೆಡಿಟ್ ಮಿತಿ</string>
+    <string name="cards_statement_day">ಸ್ಟೇಟ್‌ಮೆಂಟ್ ದಿನ</string>
+    <string name="cards_due_day">ಪಾವತಿ ಬಾಕಿ ದಿನ</string>
+    <string name="cards_outstanding">ಬಾಕಿ</string>
+    <string name="cards_available_credit">ಲಭ್ಯ ಕ್ರೆಡಿಟ್</string>
+    <string name="cards_utilisation">ಬಳಕೆ</string>
+    <string name="cards_statement_balance">ಈ ಸ್ಟೇಟ್‌ಮೆಂಟ್</string>
+    <string name="cards_minimum_due">ಕನಿಷ್ಠ ಬಾಕಿ</string>
+    <string name="cards_due_on">%1$s ರಂದು ಬಾಕಿ</string>
+    <string name="cards_overdue">ಪಾವತಿ ಗಡುವು ಮೀರಿದೆ</string>
+    <string name="cards_next_statement">ಮುಂದಿನ ಸ್ಟೇಟ್‌ಮೆಂಟ್ %1$s</string>
+    <string name="cards_spend_this_cycle">ಈ ಅವಧಿಯ ಖರ್ಚು</string>
+    <string name="cards_interest_note">ಕನಿಷ್ಠ ಮೊತ್ತ ಮಾತ್ರ ಪಾವತಿಸಿದರೆ ಉಳಿದದ್ದಕ್ಕೆ ಬಡ್ಡಿ ಬೀಳುತ್ತದೆ.</string>
+    <string name="cards_minimum_estimate">ಕನಿಷ್ಠ ಬಾಕಿ ಅಂದಾಜು ಮಾತ್ರ; ನಿಮ್ಮ ಸ್ಟೇಟ್‌ಮೆಂಟ್ ಅಂತಿಮ.</string>
+    <string name="cards_empty_title">ಯಾವುದೇ ಕಾರ್ಡ್ ಸೇರಿಸಿಲ್ಲ</string>
+    <string name="cards_empty_body">ಬಾಕಿ ದಿನಾಂಕ ಮತ್ತು ಬಳಕೆಯ ಮೇಲೆ ಕಣ್ಣಿಡಲು ಕಾರ್ಡ್ ಸೇರಿಸಿ.</string>
+
+    <string name="utilisation_healthy">ಆರೋಗ್ಯಕರ</string>
+    <string name="utilisation_elevated">ಹೆಚ್ಚಾಗುತ್ತಿದೆ</string>
+    <string name="utilisation_high">ಹೆಚ್ಚು</string>
+    <string name="utilisation_over_limit">ಮಿತಿ ಮೀರಿದೆ</string>
+
+    <!-- Loans -->
+    <string name="loans_emi_preview">ಅಂದಾಜು ಇಎಂಐ</string>
+    <string name="loans_emi_day_help">ಪ್ರತಿ ಕಂತು ಕಡಿತವಾಗುವ ದಿನ.</string>
+    <string name="loans_colour">ಬಣ್ಣ</string>
+    <string name="loans_closed">ಮುಚ್ಚಲಾಗಿದೆ</string>
+    <string name="loans_closed_help">ದಾಖಲೆ ಅಳಿಸದೆ ನಿಮ್ಮ ಒಟ್ಟು ಬಾಕಿಯಿಂದ ಹೊರಗಿಡುತ್ತದೆ.</string>
+    <string name="loans_delete_title">ಈ ಸಾಲ ಅಳಿಸಬೇಕೆ?</string>
+    <string name="loans_delete_body">ಸಾಲ ಮತ್ತು ಅದರ ವೇಳಾಪಟ್ಟಿ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ. ಇದನ್ನು ಹಿಂಪಡೆಯಲಾಗದು.</string>
+    <string name="cards_days_help">ಸ್ಟೇಟ್‌ಮೆಂಟ್ ಒಂದು ದಿನ, ಪಾವತಿ ಬಾಕಿ ಇನ್ನೊಂದು ದಿನ — ತಿಂಗಳಲ್ಲಿ ಮೊದಲೇ ಬರುವ ಬಾಕಿ ದಿನ ಮುಂದಿನ ತಿಂಗಳಿಗೆ ಬೀಳುತ್ತದೆ.</string>
+    <string name="cards_last_four">ಕೊನೆಯ ನಾಲ್ಕು ಅಂಕಿಗಳು (ಐಚ್ಛಿಕ)</string>
+    <string name="cards_last_four_help">ಕೊನೆಯ ನಾಲ್ಕು ಮಾತ್ರ ಉಳಿಸಲಾಗುತ್ತದೆ, ಕಾರ್ಡ್ ಅನ್ನು ಇನ್ನೊಂದರಿಂದ ಪ್ರತ್ಯೇಕಿಸಲು.</string>
+    <string name="cards_minimum_percent">ಕನಿಷ್ಠ ಬಾಕಿ</string>
+    <string name="cards_minimum_floor">ಕನಿಷ್ಠ ಮಿತಿ</string>
+    <string name="cards_account">ಖಾತೆ</string>
+    <string name="cards_account_new">ಹೊಸದನ್ನು ರಚಿಸಿ</string>
+    <string name="cards_linked_account">ಬಾಕಿಯನ್ನು %1$s ನಲ್ಲಿ ದಾಖಲಿಸಲಾಗುತ್ತದೆ</string>
+    <string name="cards_colour">ಬಣ್ಣ</string>
+    <string name="cards_active">ಸಕ್ರಿಯ</string>
+    <string name="cards_active_help">ನೀವು ಮುಚ್ಚಿದ ಕಾರ್ಡ್‌ಗೆ ಆಫ್ ಮಾಡಿ, ಅದರ ಇತಿಹಾಸ ಕಳೆದುಕೊಳ್ಳದೆ.</string>
+    <string name="cards_delete_title">ಈ ಕಾರ್ಡ್ ಅಳಿಸಬೇಕೆ?</string>
+    <string name="cards_delete_body">ಕಾರ್ಡ್ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ. ಅದರ ಖಾತೆ ಮತ್ತು ವಹಿವಾಟುಗಳು ಉಳಿಯುತ್ತವೆ.</string>
+    <string name="loans_title">ಸಾಲಗಳು</string>
+    <string name="loans_add">ಸಾಲ ಸೇರಿಸಿ</string>
+    <string name="loans_edit">ಸಾಲ ಬದಲಿಸಿ</string>
+    <string name="loans_name">ಸಾಲದ ಹೆಸರು</string>
+    <string name="loans_lender">ಸಾಲದಾತ</string>
+    <string name="loans_principal">ಸಾಲದ ಮೊತ್ತ</string>
+    <string name="loans_interest_rate">ಬಡ್ಡಿ ದರ (ವರ್ಷಕ್ಕೆ %)</string>
+    <string name="loans_tenure">ಅವಧಿ (ತಿಂಗಳುಗಳು)</string>
+    <string name="loans_start_date">ಪ್ರಾರಂಭವಾದದ್ದು</string>
+    <string name="loans_emi_day">ಇಎಂಐ ದಿನ (ತಿಂಗಳ)</string>
+    <string name="loans_emi_override">ಇಎಂಐ ಮೊತ್ತ (ಐಚ್ಛಿಕ)</string>
+    <string name="loans_emi_override_help">ಖಾಲಿ ಬಿಟ್ಟರೆ ನಾವು ಲೆಕ್ಕ ಹಾಕುತ್ತೇವೆ. ನಿಮ್ಮ ಸಾಲದಾತರ ಅಂಕಿ ಬೇರೆಯಾಗಿದ್ದರೆ ಅದನ್ನು ನಮೂದಿಸಿ.</string>
+    <string name="loans_emi">ಇಎಂಐ</string>
+    <string name="loans_outstanding">ಬಾಕಿ</string>
+    <string name="loans_repaid">ಮರುಪಾವತಿಸಿದ್ದು</string>
+    <string name="loans_interest_paid">ಪಾವತಿಸಿದ ಬಡ್ಡಿ</string>
+    <string name="loans_interest_remaining">ಉಳಿದ ಬಡ್ಡಿ</string>
+    <string name="loans_total_interest">ಒಟ್ಟು ಬಡ್ಡಿ</string>
+    <string name="loans_total_payable">ಒಟ್ಟು ಪಾವತಿಸಬೇಕಾದ್ದು</string>
+    <string name="loans_instalments">%2$d ರಲ್ಲಿ %1$d ಕಂತುಗಳು</string>
+    <string name="loans_next_emi">ಮುಂದಿನ ಇಎಂಐ %1$s</string>
+    <string name="loans_closes">%1$s ರಂದು ಮುಗಿಯುತ್ತದೆ</string>
+    <string name="loans_schedule">ಪಾವತಿ ವೇಳಾಪಟ್ಟಿ</string>
+    <string name="loans_schedule_note">ಪ್ರತಿ ಕಂತು ಸಮಯಕ್ಕೆ ಪಾವತಿಯಾಗುತ್ತದೆ ಎಂದು ಭಾವಿಸಲಾಗಿದೆ.</string>
+    <string name="loans_empty_title">ಯಾವುದೇ ಸಾಲ ದಾಖಲಾಗಿಲ್ಲ</string>
+    <string name="loans_empty_body">ಪ್ರತಿ ಇಎಂಐನಲ್ಲಿ ಎಷ್ಟು ಬಡ್ಡಿ ಮತ್ತು ಸಾಲ ಯಾವಾಗ ತೀರುತ್ತದೆ ಎಂದು ನೋಡಲು ಸಾಲ ಸೇರಿಸಿ.</string>
+    <string name="loans_no_advice">ನಿಮ್ಮ ಸಾಲಕ್ಕೆ ಎಷ್ಟು ವೆಚ್ಚವಾಗುತ್ತದೆ ಎಂದು ಖಾತಾ ತೋರಿಸುತ್ತದೆ. ಇದು ಹಣಕಾಸು ಸಲಹೆ ನೀಡುವುದಿಲ್ಲ.</string>
+
+    <!-- Investments -->
+    <string name="investments_title">ಹೂಡಿಕೆಗಳು</string>
+    <string name="investments_add">ಹೂಡಿಕೆ ಸೇರಿಸಿ</string>
+    <string name="investments_edit">ಹೂಡಿಕೆ ಬದಲಿಸಿ</string>
+    <string name="investments_name">ಹೆಸರು</string>
+    <string name="investments_kind">ಪ್ರಕಾರ</string>
+    <string name="investments_invested">ಹೂಡಿದ್ದು</string>
+    <string name="investments_current_value">ಪ್ರಸ್ತುತ ಮೌಲ್ಯ</string>
+    <string name="investments_update_value">ಮೌಲ್ಯ ನವೀಕರಿಸಿ</string>
+    <string name="investments_gain">ಲಾಭ</string>
+    <string name="investments_loss">ನಷ್ಟ</string>
+    <string name="investments_return">ಆದಾಯ</string>
+    <string name="investments_annualised">ವರ್ಷಕ್ಕೆ</string>
+    <string name="investments_valued_on">%1$s ರಂದು ಮೌಲ್ಯ</string>
+    <string name="investments_stale_value">ಈ ಮೌಲ್ಯ %1$d ದಿನಗಳಷ್ಟು ಹಳೆಯದು</string>
+    <string name="investments_portfolio_total">ಪೋರ್ಟ್‌ಫೋಲಿಯೊ</string>
+    <string name="investments_manual_note">ಮೌಲ್ಯಗಳು ನೀವು ಕೊನೆಯದಾಗಿ ನಮೂದಿಸಿದಂತೆಯೇ ಇರುತ್ತವೆ. ಖಾತಾ ಲೈವ್ ಬೆಲೆಗಳನ್ನು ತರುವುದಿಲ್ಲ.</string>
+    <string name="investments_empty_title">ಯಾವುದೇ ಹೂಡಿಕೆ ದಾಖಲಾಗಿಲ್ಲ</string>
+    <string name="investments_empty_body">ನಿಮ್ಮ ಫಂಡ್‌ಗಳು, ಠೇವಣಿಗಳು ಮತ್ತು ಚಿನ್ನವನ್ನು ಸೇರಿಸಿ, ಎಲ್ಲದರ ಜೊತೆ ನೋಡಿ.</string>
+
+    <string name="investments_started_on">ಪ್ರಾರಂಭ ದಿನಾಂಕ</string>
+    <string name="investments_valued_on_label">ಮೌಲ್ಯದ ದಿನಾಂಕ</string>
+    <string name="investments_current_value_help">ಇಂದು ಇದರ ಮೌಲ್ಯ. ಖಾತಾ ಎಂದಿಗೂ ಬೆಲೆ ತರುವುದಿಲ್ಲ, ಹಾಗಾಗಿ ನೀವು ನವೀಕರಿಸಿದಷ್ಟೇ ಹೊಸದು.</string>
+    <string name="investments_units">ಯೂನಿಟ್‌ಗಳು</string>
+    <string name="investments_folio">ಫೋಲಿಯೊ ಅಥವಾ ಚಿಹ್ನೆ</string>
+    <string name="investments_notes">ಟಿಪ್ಪಣಿಗಳು</string>
+    <string name="investments_colour">ಬಣ್ಣ</string>
+    <string name="investments_closed">ಮುಚ್ಚಲಾಗಿದೆ</string>
+    <string name="investments_closed_help">ದಾಖಲೆ ಅಳಿಸದೆ ಪೋರ್ಟ್‌ಫೋಲಿಯೊ ಒಟ್ಟಿನಿಂದ ಹೊರಗಿಡುತ್ತದೆ.</string>
+    <string name="investments_delete_title">ಈ ಹೂಡಿಕೆ ಅಳಿಸಬೇಕೆ?</string>
+    <string name="investments_delete_body">ಹೂಡಿಕೆ ಮತ್ತು ಅದರ ಇತಿಹಾಸ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ. ಇದನ್ನು ಹಿಂಪಡೆಯಲಾಗದು.</string>
+    <string name="investment_kind_mutual_fund">ಮ್ಯೂಚುವಲ್ ಫಂಡ್</string>
+    <string name="investment_kind_sip">SIP</string>
+    <string name="investment_kind_stock">ಷೇರುಗಳು</string>
+    <string name="investment_kind_fixed_deposit">ನಿಶ್ಚಿತ ಠೇವಣಿ (FD)</string>
+    <string name="investment_kind_recurring_deposit">ಆವರ್ತಕ ಠೇವಣಿ (RD)</string>
+    <string name="investment_kind_gold">ಚಿನ್ನ</string>
+    <string name="investment_kind_ppf">PPF</string>
+    <string name="investment_kind_nps">NPS</string>
+    <string name="investment_kind_epf">EPF</string>
+    <string name="investment_kind_other">ಇತರೆ</string>
+
+    <!-- Goals -->
+    <string name="goals_title">ಗುರಿಗಳು</string>
+    <string name="goals_add">ಗುರಿ ಸೇರಿಸಿ</string>
+    <string name="goals_edit">ಗುರಿ ಬದಲಿಸಿ</string>
+    <string name="goals_name">ನೀವು ಯಾವುದಕ್ಕಾಗಿ ಉಳಿಸುತ್ತಿದ್ದೀರಿ?</string>
+    <string name="goals_target">ಗುರಿ ಮೊತ್ತ</string>
+    <string name="goals_current">ಇದುವರೆಗೆ ಉಳಿಸಿದ್ದು</string>
+    <string name="goals_target_date">ಯಾವಾಗ ಒಳಗೆ? (ಐಚ್ಛಿಕ)</string>
+    <string name="goals_add_money">ಹಣ ಸೇರಿಸಿ</string>
+    <string name="goals_remaining">ಇನ್ನೂ %1$s ಬೇಕು</string>
+    <string name="goals_required_monthly">ತಿಂಗಳಿಗೆ %1$s ಉಳಿಸಿದರೆ ತಲುಪುತ್ತೀರಿ</string>
+    <string name="goals_achieved">ತಲುಪಿದೆ</string>
+    <string name="goals_on_track">ಹಾದಿಯಲ್ಲಿದೆ</string>
+    <string name="goals_behind">ವೇಳಾಪಟ್ಟಿಗಿಂತ ಹಿಂದಿದೆ</string>
+    <string name="goals_missed_deadline">ದಿನಾಂಕ ಮೀರಿದೆ</string>
+    <string name="goals_no_deadline">ಗಡುವು ಇಲ್ಲ</string>
+    <string name="goals_projected">ಈ ವೇಗದಲ್ಲಿ, ಸುಮಾರು %1$s</string>
+    <string name="goals_empty_title">ಇನ್ನೂ ಗುರಿಗಳಿಲ್ಲ</string>
+    <string name="goals_empty_body">ತುರ್ತು ನಿಧಿ, ಪ್ರವಾಸ, ಹೊಸ ಫೋನ್ — ನೀವು ಹಣ ಕೂಡಿಡುತ್ತಿರುವ ಯಾವುದೇ ವಿಷಯ.</string>
+    <string name="goals_notes">ಟಿಪ್ಪಣಿಗಳು (ಐಚ್ಛಿಕ)</string>
+    <string name="goals_add_money_amount">ಸೇರಿಸುವ ಮೊತ್ತ</string>
+    <string name="goals_delete_title">ಈ ಗುರಿ ಅಳಿಸಬೇಕೆ?</string>
+    <string name="goals_delete_body">ಗುರಿ ಮತ್ತು ಅದರ ಪ್ರಗತಿ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ. ನಿಮ್ಮ ವಹಿವಾಟುಗಳಿಗೆ ಏನೂ ಆಗುವುದಿಲ್ಲ.</string>
+
+    <!-- Reports -->
+    <string name="reports_title">ವರದಿಗಳು</string>
+    <string name="reports_monthly">ಮಾಸಿಕ ಸಾರಾಂಶ</string>
+    <string name="reports_income_vs_expense">ಆದಾಯ ಮತ್ತು ಖರ್ಚು</string>
+    <string name="reports_by_category">ವರ್ಗದ ಪ್ರಕಾರ</string>
+    <string name="reports_by_account">ಖಾತೆಯ ಪ್ರಕಾರ</string>
+    <string name="reports_by_merchant">ಪ್ರಮುಖ ವ್ಯಾಪಾರಿಗಳು</string>
+    <string name="reports_cash_flow">ನಗದು ಹರಿವು</string>
+    <string name="reports_savings_trend">ಕಾಲಕ್ರಮೇಣ ಉಳಿತಾಯ</string>
+    <string name="reports_net_worth_trend">ಕಾಲಕ್ರಮೇಣ ನಿವ್ವಳ ಆಸ್ತಿ</string>
+    <string name="reports_budget_performance">ಬಜೆಟ್ ಸಾಧನೆ</string>
+    <string name="reports_daily_spending">ದೈನಂದಿನ ಖರ್ಚು</string>
+    <string name="reports_period_this_month">ಈ ತಿಂಗಳು</string>
+    <string name="reports_period_last_month">ಕಳೆದ ತಿಂಗಳು</string>
+    <string name="reports_period_7_days">ಕಳೆದ 7 ದಿನಗಳು</string>
+    <string name="reports_period_30_days">ಕಳೆದ 30 ದಿನಗಳು</string>
+    <string name="reports_period_3_months">ಕಳೆದ 3 ತಿಂಗಳು</string>
+    <string name="reports_period_6_months">ಕಳೆದ 6 ತಿಂಗಳು</string>
+    <string name="reports_period_year">ಈ ವರ್ಷ</string>
+    <string name="reports_period_financial_year">ಈ ಹಣಕಾಸು ವರ್ಷ</string>
+    <string name="reports_period_custom">ಕಸ್ಟಮ್ ಅವಧಿ</string>
+    <string name="reports_empty_title">ಇನ್ನೂ ಸಾಕಷ್ಟು ಡೇಟಾ ಇಲ್ಲ</string>
+    <string name="reports_empty_body">ಕೆಲವು ವಹಿವಾಟುಗಳನ್ನು ದಾಖಲಿಸಿ, ನಿಮ್ಮ ವರದಿಗಳು ತುಂಬುತ್ತವೆ.</string>
+    <string name="reports_transfers_excluded">ನಿಮ್ಮದೇ ಖಾತೆಗಳ ನಡುವಿನ ವರ್ಗಾವಣೆಗಳನ್ನು ಖರ್ಚು ಎಂದು ಎಣಿಸುವುದಿಲ್ಲ.</string>
+    <string name="reports_average_daily">ದಿನದ ಸರಾಸರಿ</string>
+    <string name="reports_transaction_count">ವಹಿವಾಟುಗಳು</string>
+    <string name="reports_no_income">ಯಾವುದೇ ಆದಾಯ ದಾಖಲಾಗಿಲ್ಲ</string>
+    <string name="reports_more_than_previous">ಹಿಂದಿನ ಅವಧಿಗಿಂತ %1$s ಹೆಚ್ಚು.</string>
+    <string name="reports_less_than_previous">ಹಿಂದಿನ ಅವಧಿಗಿಂತ %1$s ಕಡಿಮೆ.</string>
+    <string name="reports_unknown_account">ಅಳಿಸಿದ ಖಾತೆ</string>
+    <string name="reports_export_pdf">PDF ರಫ್ತು ಮಾಡಿ</string>
+    <string name="reports_export_failed">ಸ್ಟೇಟ್‌ಮೆಂಟ್ ರಚಿಸಲಾಗಲಿಲ್ಲ.</string>
+    <string name="reports_custom_range">ಕಸ್ಟಮ್ ದಿನಾಂಕಗಳು</string>
+    <string name="reports_advanced_locked_title">ನಿಖರವಾಗಿ ಎಲ್ಲಿಗೆ ಹೋಯಿತು</string>
+    <string name="reports_advanced_locked_body">ವ್ಯಾಪಾರಿ ಮತ್ತು ಖಾತೆವಾರು ವಿವರಗಳು, ಜೊತೆಗೆ ಸ್ಟೇಟ್‌ಮೆಂಟ್ PDF, Pro ಭಾಗ.</string>
+
+    <!-- Statement PDF -->
+    <string name="statement_share_title">ಸ್ಟೇಟ್‌ಮೆಂಟ್ ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="statement_title">ಸ್ಟೇಟ್‌ಮೆಂಟ್</string>
+    <string name="statement_income">ಒಟ್ಟು ಆದಾಯ</string>
+    <string name="statement_expense">ಒಟ್ಟು ಖರ್ಚು</string>
+    <string name="statement_net">ನಿವ್ವಳ ಚಲನೆ</string>
+    <string name="statement_categories">ಎಲ್ಲಿಗೆ ಹೋಯಿತು</string>
+    <string name="statement_transactions">ವಹಿವಾಟುಗಳು</string>
+    <string name="statement_col_date">ದಿನಾಂಕ</string>
+    <string name="statement_col_description">ವಿವರಣೆ</string>
+    <string name="statement_col_amount">ಮೊತ್ತ</string>
+    <string name="statement_generated">%1$s ರಂದು ರಚಿಸಲಾಗಿದೆ</string>
+    <string name="statement_page">ಪುಟ %1$d</string>
+    <string name="statement_transfers_note">ಮೊತ್ತಗಳಲ್ಲಿ ನಿಮ್ಮದೇ ಖಾತೆಗಳ ನಡುವಿನ ವರ್ಗಾವಣೆಗಳು ಸೇರಿಲ್ಲ.</string>
+
+    <!-- Ads -->
+    <string name="ad_label">ಜಾಹೀರಾತು</string>
+
+    <!-- Insights -->
+    <string name="insights_title">ಒಳನೋಟಗಳು</string>
+    <string name="insights_empty_title">ಇನ್ನೂ ಹೇಳಲು ಏನೂ ಇಲ್ಲ</string>
+    <string name="insights_empty_body">ಒಂದೆರಡು ತಿಂಗಳ ದಾಖಲೆಗಳಾದ ನಂತರ, ಮಾದರಿಗಳು ಇಲ್ಲಿ ಕಾಣಿಸತೊಡಗುತ್ತವೆ.</string>
+    <string name="insights_dismiss">ವಜಾಗೊಳಿಸಿ</string>
+    <string name="insights_why">ನಾವು ಇದನ್ನು ಹೇಗೆ ಲೆಕ್ಕ ಹಾಕಿದೆವು</string>
+    <string name="insights_severity_action">ಗಮನ ಬೇಕು</string>
+    <string name="insights_severity_notable">ನೋಡಲು ಯೋಗ್ಯ</string>
+    <string name="insights_severity_info">ಮಾಹಿತಿಗಾಗಿ</string>
+
+    <!-- AI assistant -->
+    <string name="ai_title">ನಿಮ್ಮ ಹಣದ ಬಗ್ಗೆ ಕೇಳಿ</string>
+    <string name="ai_input_hint">ಪ್ರಶ್ನೆ ಕೇಳಿ</string>
+    <string name="ai_send_question">ಪ್ರಶ್ನೆ ಕಳುಹಿಸಿ</string>
+    <string name="ai_suggestions">ಇದನ್ನು ಕೇಳಿ ನೋಡಿ</string>
+    <string name="ai_thinking">ಲೆಕ್ಕ ಹಾಕುತ್ತಿದೆ</string>
+    <string name="ai_not_understood">ಅದು ಅರ್ಥವಾಗಲಿಲ್ಲ. ಇವುಗಳಲ್ಲಿ ಒಂದನ್ನು ಪ್ರಯತ್ನಿಸಿ:</string>
+    <string name="ai_no_data">ಅದಕ್ಕೆ ಉತ್ತರಿಸಲು ಇನ್ನೂ ಸಾಕಷ್ಟು ದಾಖಲೆಗಳಿಲ್ಲ.</string>
+    <string name="ai_unavailable">ಸಹಾಯಕ ಈಗ ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="ai_source_on_device">ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲೇ ಲೆಕ್ಕ ಹಾಕಲಾಗಿದೆ</string>
+    <string name="ai_source_cloud">ಕ್ಲೌಡ್ AI ಬಳಸಿ ಬರೆಯಲಾಗಿದೆ</string>
+    <string name="ai_evidence_title">ಇದರ ಆಧಾರದ ಮೇಲೆ</string>
+    <string name="ai_never_acts">ಸಹಾಯಕ ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸುತ್ತದೆ. ಅದು ತಾನಾಗಿ ಹಣವನ್ನು ಎಂದಿಗೂ ಸೇರಿಸುವುದಿಲ್ಲ, ಬದಲಿಸುವುದಿಲ್ಲ ಅಥವಾ ವರ್ಗಾಯಿಸುವುದಿಲ್ಲ.</string>
+    <string name="ai_cloud_disabled">ಕ್ಲೌಡ್ AI ಆಫ್ ಆಗಿದೆ. ಉತ್ತರಗಳನ್ನು ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲೇ ಲೆಕ್ಕ ಹಾಕಲಾಗುತ್ತದೆ.</string>
+    <string name="ai_cloud_enable_title">ಕ್ಲೌಡ್ AI ಬಳಸಬೇಕೆ?</string>
+    <string name="ai_cloud_enable_body">ನಿಮ್ಮ ಪ್ರಶ್ನೆಗಳು ಮತ್ತು ಸಂಬಂಧಿತ ಅಂಕಿಗಳ ಸಾರಾಂಶವನ್ನು AI ಸೇವಾದಾರರಿಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ. ನೀವು ಇದನ್ನು ಆನ್ ಮಾಡದ ಹೊರತು ಏನನ್ನೂ ಕಳುಹಿಸುವುದಿಲ್ಲ.</string>
+
+    <!-- SMS import -->
+    <string name="sms_import_title">ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳು</string>
+    <string name="sms_review_title">ಈ ವಹಿವಾಟುಗಳನ್ನು ದೃಢೀಕರಿಸಿ</string>
+    <string name="sms_review_body">ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳಲ್ಲಿ ಇವು ಸಿಕ್ಕಿವೆ. ಸರಿಪಡಿಸಲು ಒಂದನ್ನು ಒತ್ತಿ, ನಂತರ ಸರಿಯಾದವುಗಳನ್ನು ಸೇವ್ ಮಾಡಿ.</string>
+    <string name="sms_review_accept">ಸೇವ್ ಮಾಡಿ</string>
+    <string name="sms_review_reject">ತಿರಸ್ಕರಿಸಿ</string>
+    <string name="sms_review_check_fields">ಈ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ</string>
+    <string name="sms_permission_title">SMS ಓದಲು ಅನುಮತಿಸಬೇಕೆ?</string>
+    <string name="sms_permission_body">ಖಾತಾ ಬ್ಯಾಂಕ್ ವಹಿವಾಟುಗಳಂತೆ ಕಾಣುವ ಸಂದೇಶಗಳನ್ನು ಮಾತ್ರ ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲಿ ಓದುತ್ತದೆ. ಸಂದೇಶದ ಪಠ್ಯವನ್ನು ಎಂದಿಗೂ ಉಳಿಸುವುದಿಲ್ಲ ಅಥವಾ ಎಲ್ಲಿಗೂ ಕಳುಹಿಸುವುದಿಲ್ಲ, ಮತ್ತು ನೀವು ದೃಢೀಕರಿಸುವವರೆಗೆ ಏನೂ ಸೇವ್ ಆಗುವುದಿಲ್ಲ.</string>
+    <string name="sms_permission_denied">ಇದಿಲ್ಲದೆಯೂ ನೀವು ಕೈಯಿಂದ ವಹಿವಾಟು ಸೇರಿಸಬಹುದು ಅಥವಾ CSV ಆಮದು ಮಾಡಬಹುದು.</string>
+    <string name="sms_no_messages">ನಿಮ್ಮ ಸಂದೇಶಗಳಲ್ಲಿ ಹೊಸ ವಹಿವಾಟುಗಳು ಸಿಗಲಿಲ್ಲ.</string>
+
+    <!-- Backup and export -->
+    <string name="backup_title">ಬ್ಯಾಕಪ್ ಮತ್ತು ರಫ್ತು</string>
+    <string name="backup_create">ಬ್ಯಾಕಪ್ ರಚಿಸಿ</string>
+    <string name="backup_restore">ಬ್ಯಾಕಪ್‌ನಿಂದ ಮರುಸ್ಥಾಪಿಸಿ</string>
+    <string name="backup_export_csv">ವಹಿವಾಟುಗಳನ್ನು CSV ಆಗಿ ರಫ್ತು ಮಾಡಿ</string>
+    <string name="backup_import_csv">CSV ಇಂದ ಆಮದು ಮಾಡಿ</string>
+    <string name="backup_created">ಬ್ಯಾಕಪ್ ರಚಿಸಲಾಗಿದೆ</string>
+    <string name="backup_export_created">ರಫ್ತು ರಚಿಸಲಾಗಿದೆ</string>
+    <string name="backup_restore_title">ಈ ಬ್ಯಾಕಪ್ ಮರುಸ್ಥಾಪಿಸಬೇಕೆ?</string>
+    <string name="backup_restore_summary">%1$d ಖಾತೆಗಳು, %2$d ವಹಿವಾಟುಗಳು, %3$d ಬಜೆಟ್‌ಗಳು</string>
+    <string name="backup_restore_mode">ಈಗಾಗಲೇ ಇರುವುದನ್ನು ಏನು ಮಾಡಬೇಕು?</string>
+    <string name="backup_mode_merge_skip">ಹೊಸದನ್ನು ಸೇರಿಸಿ, ನನ್ನಲ್ಲಿರುವುದನ್ನು ಉಳಿಸಿ</string>
+    <string name="backup_mode_merge_overwrite">ಹೊಸದನ್ನು ಸೇರಿಸಿ, ಇರುವುದನ್ನು ನವೀಕರಿಸಿ</string>
+    <string name="backup_mode_replace">ಎಲ್ಲವನ್ನೂ ಬದಲಿಸಿ</string>
+    <string name="backup_mode_replace_warning">ಇದು ಆ್ಯಪ್‌ನಲ್ಲಿ ಈಗ ಇರುವ ಎಲ್ಲವನ್ನೂ ಶಾಶ್ವತವಾಗಿ ಅಳಿಸುತ್ತದೆ.</string>
+    <string name="backup_restore_done">%1$d ದಾಖಲೆ(ಗಳು) ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ</string>
+    <string name="backup_restore_rejected">%1$d ದಾಖಲೆ(ಗಳು) ಓದಲಾಗಲಿಲ್ಲ, ಬಿಟ್ಟುಬಿಡಲಾಗಿದೆ</string>
+    <string name="backup_invalid">ಈ ಫೈಲ್ ಅನ್ನು ಖಾತಾ ಬ್ಯಾಕಪ್ ಆಗಿ ಓದಲಾಗಲಿಲ್ಲ.</string>
+    <string name="backup_too_new">ಈ ಬ್ಯಾಕಪ್ ಖಾತಾದ ಹೊಸ ಆವೃತ್ತಿಯಲ್ಲಿ ಮಾಡಲಾಗಿದೆ. ಮರುಸ್ಥಾಪಿಸಲು ಆ್ಯಪ್ ಅಪ್‌ಡೇಟ್ ಮಾಡಿ.</string>
+    <string name="backup_local_only">ಬ್ಯಾಕಪ್‌ಗಳು ನಿಮ್ಮ ಸಾಧನದಲ್ಲೇ ಉಳಿಯುತ್ತವೆ. ಏನನ್ನೂ ಅಪ್‌ಲೋಡ್ ಮಾಡುವುದಿಲ್ಲ.</string>
+    <string name="backup_last_created">ಕೊನೆಯ ಬ್ಯಾಕಪ್: %1$s</string>
+    <string name="backup_never">ಇನ್ನೂ ಬ್ಯಾಕಪ್ ಇಲ್ಲ</string>
+    <string name="backup_section_export">ಪ್ರತಿ ಮಾಡಿ</string>
+    <string name="backup_section_files">ಈ ಸಾಧನದಲ್ಲಿರುವ ಫೈಲ್‌ಗಳು</string>
+    <string name="backup_section_restore">ಡೇಟಾ ತನ್ನಿ</string>
+    <string name="backup_create_help">ಎಲ್ಲವೂ, ನೀವು ಎಲ್ಲಿ ಬೇಕಾದರೂ ಇಡಬಹುದಾದ ಒಂದೇ ಫೈಲ್‌ನಲ್ಲಿ.</string>
+    <string name="backup_export_csv_help">ಸ್ಪ್ರೆಡ್‌ಶೀಟ್‌ಗಾಗಿ ವಹಿವಾಟುಗಳು ಮಾತ್ರ.</string>
+    <string name="backup_import_csv_help">ಖಾತೆಗಳು ಮತ್ತು ವರ್ಗಗಳನ್ನು ಹೆಸರಿನಿಂದ ಹೊಂದಿಸಲಾಗುತ್ತದೆ.</string>
+    <string name="backup_share_title">ಈ ಫೈಲ್ ಹಂಚಿಕೊಳ್ಳಿ</string>
+    <string name="backup_exported_on">%1$s ರಂದು ಮಾಡಲಾಗಿದೆ</string>
+    <string name="backup_exports_cleared">ರಫ್ತು ಮಾಡಿದ ಫೈಲ್‌ಗಳನ್ನು ಈ ಸಾಧನದಿಂದ ತೆಗೆಯಲಾಗಿದೆ.</string>
+    <string name="backup_failed">ಅದು ಕೆಲಸ ಮಾಡಲಿಲ್ಲ. ಏನೂ ಬದಲಾಗಿಲ್ಲ.</string>
+    <string name="backup_csv_ready">%1$d ಸಾಲುಗಳು ಆಮದಿಗೆ ಸಿದ್ಧವಾಗಿವೆ.</string>
+    <string name="backup_csv_rejected">%1$d ಸಾಲುಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ, ಬಿಟ್ಟುಬಿಡಲಾಗುತ್ತದೆ.</string>
+    <string name="backup_csv_choose_account">ಇಲ್ಲಿರುವ ಯಾವ ಖಾತೆಯನ್ನೂ ಹೆಸರಿಸದ ಸಾಲುಗಳು ಇಲ್ಲಿಗೆ ಹೋಗುತ್ತವೆ:</string>
+    <string name="backup_csv_duplicates_skipped">SMS, ಟೈಪಿಂಗ್ ಅಥವಾ ಹಿಂದಿನ ಆಮದಿನಿಂದ ಈಗಾಗಲೇ ಇಲ್ಲಿ ದಾಖಲಾದದ್ದನ್ನು ಬಿಟ್ಟುಬಿಡಲಾಗುತ್ತದೆ, ಹಾಗಾಗಿ ಯಾವುದೂ ಎರಡು ಬಾರಿ ಎಣಿಕೆಯಾಗುವುದಿಲ್ಲ.</string>
+    <string name="backup_section_scheduled">ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕಪ್‌ಗಳು</string>
+    <string name="backup_scheduled">ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಬ್ಯಾಕಪ್ ಮಾಡಿ</string>
+    <string name="backup_scheduled_help">ಒಂದು ಫೋಲ್ಡರ್ ಆರಿಸಿ, ಪ್ರತಿ ವಾರ ಅಲ್ಲಿ ಒಂದು ಪ್ರತಿ ಬರೆಯಲಾಗುತ್ತದೆ.</string>
+    <string name="backup_scheduled_folder">ಪ್ರತಿ ವಾರ, %1$s ಗೆ</string>
+    <string name="backup_scheduled_on">ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕಪ್ ಆನ್, %1$s ಗೆ</string>
+    <string name="backup_folder_unusable">ಆ ಫೋಲ್ಡರ್‌ಗೆ ಬರೆಯಲಾಗದು. ಬೇರೊಂದನ್ನು ಆರಿಸಿ.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">ಸೆಟ್ಟಿಂಗ್ಸ್</string>
+    <string name="settings_profile">ಪ್ರೊಫೈಲ್</string>
+    <string name="settings_display_name">ನಿಮ್ಮ ಹೆಸರು</string>
+    <string name="settings_currency">ಕರೆನ್ಸಿ</string>
+    <string name="settings_language">ಭಾಷೆ</string>
+    <string name="settings_month_start">ತಿಂಗಳು ಈ ದಿನದಿಂದ ಪ್ರಾರಂಭ</string>
+    <string name="settings_month_start_help">ನಿಮ್ಮ ತಿಂಗಳನ್ನು ಸಂಬಳದ ದಿನದಿಂದ ಎಣಿಸುತ್ತಿದ್ದರೆ ಅದನ್ನು ಹೊಂದಿಸಿ.</string>
+    <string name="settings_appearance">ನೋಟ</string>
+    <string name="settings_language_system">ಫೋನ್‌ನ ಭಾಷೆ</string>
+    <string name="settings_theme">ಥೀಮ್</string>
+    <string name="settings_theme_system">ಸಿಸ್ಟಮ್ ಅನುಸರಿಸಿ</string>
+    <string name="settings_theme_light">ಬೆಳಕು</string>
+    <string name="settings_theme_dark">ಗಾಢ</string>
+    <string name="settings_security">ಭದ್ರತೆ</string>
+    <string name="settings_app_lock">ಆ್ಯಪ್ ಲಾಕ್</string>
+    <string name="settings_lock_off">ಆಫ್</string>
+    <string name="settings_lock_biometric">ಬೆರಳಚ್ಚು ಅಥವಾ ಮುಖ</string>
+    <string name="settings_lock_pin">ಪಿನ್</string>
+    <string name="settings_change_pin">ಪಿನ್ ಬದಲಿಸಿ</string>
+    <string name="settings_lock_after">ಇಷ್ಟು ಸಮಯದ ನಂತರ ಲಾಕ್</string>
+    <string name="settings_lock_immediately">ತಕ್ಷಣ</string>
+    <string name="settings_lock_seconds">%1$d ಸೆಕೆಂಡುಗಳು</string>
+    <string name="settings_lock_minute">1 ನಿಮಿಷ</string>
+    <string name="settings_hide_amounts">ಲಾಕ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿ ಮೊತ್ತಗಳನ್ನು ಮರೆಮಾಡಿ</string>
+    <string name="settings_notifications">ಅಧಿಸೂಚನೆಗಳು</string>
+    <string name="settings_budget_alerts">ಬಜೆಟ್ ಎಚ್ಚರಿಕೆಗಳು</string>
+    <string name="settings_bill_reminders">ಬಿಲ್ ಮತ್ತು ಇಎಂಐ ಜ್ಞಾಪನೆಗಳು</string>
+    <string name="settings_daily_reminder">ಖರ್ಚು ದಾಖಲಿಸಲು ದೈನಂದಿನ ಜ್ಞಾಪನೆ</string>
+    <string name="settings_reminder_time">ಜ್ಞಾಪನೆಯ ಸಮಯ</string>
+    <string name="settings_data">ನಿಮ್ಮ ಡೇಟಾ</string>
+    <string name="settings_manage_categories">ವರ್ಗಗಳು</string>
+    <string name="settings_manage_accounts">ಖಾತೆಗಳು</string>
+    <string name="settings_recently_deleted">ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವು</string>
+    <string name="settings_merchant_rules">ಕಲಿತ ವ್ಯಾಪಾರಿಗಳು</string>
+    <string name="settings_forget_learned">ಖಾತಾ ಕಲಿತದ್ದನ್ನು ಮರೆತುಬಿಡಿ</string>
+    <string name="settings_ai">AI ಸಹಾಯಕ</string>
+    <string name="settings_privacy">ಗೌಪ್ಯತೆ</string>
+    <string name="settings_subscription">ಖಾತಾ Pro</string>
+    <string name="settings_help">ಸಹಾಯ</string>
+    <string name="settings_about">ಕುರಿತು</string>
+    <string name="settings_version">ಆವೃತ್ತಿ %1$s</string>
+    <string name="settings_privacy_policy">ಗೌಪ್ಯತಾ ನೀತಿ</string>
+    <string name="settings_terms">ಬಳಕೆಯ ನಿಯಮಗಳು</string>
+    <string name="settings_developer">ಡೆವಲಪರ್</string>
+    <string name="settings_developer_body">ಡೀಬಗ್ ಬಿಲ್ಡ್‌ಗಳಿಗೆ ಮಾತ್ರ. ಪಾವತಿಸಿದ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಸಾಧನದಲ್ಲಿ ತೆರೆಯಲು ಸ್ಥಳೀಯವಾಗಿ ಚಂದಾ ಹಂತ ನೀಡುತ್ತದೆ; ಯಾವುದೇ ಪಾವತಿ ಇಲ್ಲ ಮತ್ತು ಈ ವಿಭಾಗ ರಿಲೀಸ್ ಬಿಲ್ಡ್‌ನಲ್ಲಿ ಇರುವುದಿಲ್ಲ.</string>
+    <string name="settings_developer_tier">ಅನುಕರಿಸಿದ ಹಂತ</string>
+    <string name="settings_delete_all">ನನ್ನ ಎಲ್ಲಾ ಡೇಟಾ ಅಳಿಸಿ</string>
+    <string name="settings_delete_all_title">ಎಲ್ಲವನ್ನೂ ಅಳಿಸಬೇಕೆ?</string>
+    <string name="settings_delete_all_body">ಇದು ಈ ಸಾಧನದಿಂದ ಪ್ರತಿ ಖಾತೆ, ವಹಿವಾಟು, ಬಜೆಟ್ ಮತ್ತು ಗುರಿಯನ್ನು ಶಾಶ್ವತವಾಗಿ ತೆಗೆದುಹಾಕುತ್ತದೆ. ಹಿಂಪಡೆಯಲಾಗದು. ಮೊದಲು ಬ್ಯಾಕಪ್ ಮಾಡುವುದನ್ನು ಪರಿಗಣಿಸಿ.</string>
+    <string name="settings_delete_all_confirm">ಹೌದು, ಎಲ್ಲವನ್ನೂ ಅಳಿಸಿ</string>
+    <string name="settings_delete_all_done">ಎಲ್ಲಾ ಡೇಟಾ ಅಳಿಸಲಾಗಿದೆ</string>
+    <string name="settings_demo_mode">ಮಾದರಿ ಡೇಟಾ</string>
+    <string name="settings_demo_enable">ಮಾದರಿ ಡೇಟಾ ಲೋಡ್ ಮಾಡಿ</string>
+    <string name="settings_demo_disable">ಮಾದರಿ ಡೇಟಾ ತೆರವುಗೊಳಿಸಿ</string>
+    <string name="settings_demo_body">ಆ್ಯಪ್ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ ಎಂದು ನೋಡಲು ನೈಜ ರೀತಿಯ ಮಾದರಿ ಡೇಟಾ ತುಂಬುತ್ತದೆ. ಸ್ಪಷ್ಟವಾಗಿ ಗುರುತಿಸಲಾಗಿದೆ, ಒಂದೇ ಟ್ಯಾಪ್‌ನಲ್ಲಿ ತೆಗೆಯಬಹುದು.</string>
+    <string name="settings_demo_loaded">ಮಾದರಿ ಡೇಟಾ ಲೋಡ್ ಆಗಿದೆ. ಎಲ್ಲೆಡೆ ಗುರುತಿಸಲಾಗಿದೆ, ಯಾವಾಗ ಬೇಕಾದರೂ ತೆರವುಗೊಳಿಸಬಹುದು.</string>
+    <string name="settings_demo_cleared">ಮಾದರಿ ಡೇಟಾ ತೆರವುಗೊಳಿಸಲಾಗಿದೆ.</string>
+    <string name="settings_demo_blocked">ನಿಮ್ಮ ಸ್ವಂತ ದಾಖಲೆಗಳು ಈಗಾಗಲೇ ಇವೆ. ಮೊದಲು ಅವನ್ನು ತೆರವುಗೊಳಿಸಿ, ಅಥವಾ ಹೊಸ ಇನ್‌ಸ್ಟಾಲ್‌ನಲ್ಲಿ ಮಾದರಿ ಡೇಟಾ ಪ್ರಯತ್ನಿಸಿ.</string>
+
+    <!-- Privacy dashboard -->
+    <string name="privacy_title">ಗೌಪ್ಯತೆ</string>
+    <string name="privacy_summary">ನಿಮ್ಮ ಹಣಕಾಸು ಡೇಟಾ ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲೇ ಇರುವಂತೆ ಖಾತಾವನ್ನು ನಿರ್ಮಿಸಲಾಗಿದೆ.</string>
+    <string name="privacy_stored_title">ಈ ಸಾಧನದಲ್ಲಿ ಏನು ಉಳಿಸಲಾಗಿದೆ</string>
+    <string name="privacy_stored_body">ನಿಮ್ಮ ಖಾತೆಗಳು, ವಹಿವಾಟುಗಳು, ಬಜೆಟ್‌ಗಳು, ಗುರಿಗಳು ಮತ್ತು ಸೆಟ್ಟಿಂಗ್ಸ್. ಎಲ್ಲವೂ ಆ್ಯಪ್‌ನ ಖಾಸಗಿ ಸಂಗ್ರಹದಲ್ಲಿ, ಇತರ ಆ್ಯಪ್‌ಗಳು ಓದಲಾಗದಲ್ಲಿ.</string>
+    <string name="privacy_local_title">ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲಿ ಏನು ಸಂಸ್ಕರಿಸಲಾಗುತ್ತದೆ</string>
+    <string name="privacy_local_body">ಪ್ರತಿ ಲೆಕ್ಕಾಚಾರ, ಪ್ರತಿ ಒಳನೋಟ, ವರ್ಗ ಸಲಹೆಗಳು, ಬರೆದು ಸೇರಿಸುವುದು ಮತ್ತು ಬ್ಯಾಂಕ್ SMS ವಿಶ್ಲೇಷಣೆ. ಇವುಗಳಲ್ಲಿ ಯಾವುದಕ್ಕೂ ಇಂಟರ್ನೆಟ್ ಬೇಕಿಲ್ಲ.</string>
+    <string name="privacy_leaves_title">ನಿಮ್ಮ ಸಾಧನದಿಂದ ಏನು ಹೊರಹೋಗಬಹುದು</string>
+    <string name="privacy_leaves_none">ಸದ್ಯಕ್ಕೆ: ಏನೂ ಇಲ್ಲ.</string>
+    <string name="privacy_leaves_ads">ನೀವು ಉಚಿತ ಪ್ಲಾನ್‌ನಲ್ಲಿದ್ದರೆ ಜಾಹೀರಾತು ವಿನಂತಿಗಳು. ಇವುಗಳಲ್ಲಿ ನಿಮ್ಮ ಹಣಕಾಸು ಡೇಟಾ ಇರುವುದಿಲ್ಲ.</string>
+    <string name="privacy_leaves_billing">ನೀವು ಚಂದಾದಾರರಾದರೆ Google Play ಜೊತೆ ಖರೀದಿ ಪರಿಶೀಲನೆ.</string>
+    <string name="privacy_leaves_ai">ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಮತ್ತು ಉತ್ತರಿಸಲು ಬೇಕಾದ ಅಂಕಿಗಳು, ನೀವು ಕ್ಲೌಡ್ AI ಆನ್ ಮಾಡಿದರೆ ಮಾತ್ರ.</string>
+    <string name="privacy_never_title">ನಿಮ್ಮ ಸಾಧನದಿಂದ ಎಂದಿಗೂ ಹೊರಹೋಗದ್ದು</string>
+    <string name="privacy_never_body">ನಿಮ್ಮ ವಹಿವಾಟು ಮೊತ್ತಗಳು, ವ್ಯಾಪಾರಿಗಳು, ಬ್ಯಾಲೆನ್ಸ್‌ಗಳು, ಖಾತೆ ಸಂಖ್ಯೆಗಳು ಮತ್ತು ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳು. ಇವನ್ನು ನಮಗೆ ಅಥವಾ ಬೇರೆ ಯಾರಿಗೂ ಎಂದಿಗೂ ಕಳುಹಿಸುವುದಿಲ್ಲ.</string>
+    <string name="privacy_controls_title">ನಿಮ್ಮ ನಿಯಂತ್ರಣಗಳು</string>
+    <string name="privacy_analytics">ಬಳಕೆ ವಿಶ್ಲೇಷಣೆ</string>
+    <string name="privacy_analytics_help">ಯಾವ ವೈಶಿಷ್ಟ್ಯಗಳು ಬಳಕೆಯಾಗುತ್ತವೆ ಎಂಬ ಅನಾಮಧೇಯ ಎಣಿಕೆಗಳು. ಮೊತ್ತಗಳು, ವ್ಯಾಪಾರಿಗಳು ಅಥವಾ ಬ್ಯಾಲೆನ್ಸ್ ಎಂದಿಗೂ ಇಲ್ಲ. ಡೀಫಾಲ್ಟ್ ಆಗಿ ಆಫ್.</string>
+    <string name="privacy_crash_reporting">ಕ್ರ್ಯಾಶ್ ವರದಿಗಳು</string>
+    <string name="privacy_crash_help">ಕ್ರ್ಯಾಶ್‌ಗಳನ್ನು ಸರಿಪಡಿಸಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ. ನಿಮ್ಮ ಹಣಕಾಸು ಡೇಟಾ ಎಂದಿಗೂ ಇರುವುದಿಲ್ಲ. ಡೀಫಾಲ್ಟ್ ಆಗಿ ಆಫ್.</string>
+    <string name="privacy_cloud_ai">ಕ್ಲೌಡ್ AI ಸಂಸ್ಕರಣೆ</string>
+    <string name="privacy_cloud_ai_help">ಸಹಾಯಕ ಕ್ಲೌಡ್ ಮಾದರಿ ಬಳಸಲು ಬಿಡುತ್ತದೆ. ಡೀಫಾಲ್ಟ್ ಆಗಿ ಆಫ್; ಸಾಧನದಲ್ಲಿನ ಸಹಾಯಕ ಇದಿಲ್ಲದೆಯೂ ಕೆಲಸ ಮಾಡುತ್ತದೆ.</string>
+    <string name="privacy_sms_access">ಬ್ಯಾಂಕ್ SMS ಓದಿ</string>
+    <string name="privacy_sms_help">ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲೇ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತದೆ, ಎಂದಿಗೂ ಅಪ್‌ಲೋಡ್ ಆಗುವುದಿಲ್ಲ. ಡೀಫಾಲ್ಟ್ ಆಗಿ ಆಫ್.</string>
+    <string name="privacy_sms_permission_denied">SMS ಅನುಮತಿ ನಿರಾಕರಿಸಲಾಗಿದೆ. ಇದನ್ನು ಆನ್ ಮಾಡಲು ಫೋನ್‌ನ ಆ್ಯಪ್ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ಅನುಮತಿಸಿ.</string>
+    <string name="privacy_sms_import_recent">ಇತ್ತೀಚಿನ ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳನ್ನು ಆಮದು ಮಾಡಿ</string>
+    <string name="privacy_sms_import_recent_help">ಕಳೆದ 90 ದಿನಗಳನ್ನು ಒಮ್ಮೆ ಓದುತ್ತದೆ. ನೀವು ದೃಢೀಕರಿಸುವವರೆಗೆ ಏನೂ ಸೇವ್ ಆಗುವುದಿಲ್ಲ, ಈಗಾಗಲೇ ಇರುವುದನ್ನು ಬಿಟ್ಟುಬಿಡುತ್ತದೆ.</string>
+    <string name="privacy_sms_import_running">ನಿಮ್ಮ ಸಂದೇಶಗಳನ್ನು ಓದುತ್ತಿದೆ…</string>
+    <string name="privacy_sms_import_found">%1$d ವಹಿವಾಟು(ಗಳು) ಸಿಕ್ಕಿವೆ. ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ನಿಂದ ದೃಢೀಕರಿಸಿ.</string>
+    <string name="privacy_sms_import_nothing">ಕಳೆದ 90 ದಿನಗಳಲ್ಲಿ ಹೊಸ ವಹಿವಾಟುಗಳಿಲ್ಲ.</string>
+    <string name="privacy_sms_import_unavailable">SMS ಓದುವಿಕೆ ಆಫ್ ಆಗಿದೆ ಅಥವಾ ಅನುಮತಿ ಇಲ್ಲ, ಹಾಗಾಗಿ ಏನನ್ನೂ ಓದಿಲ್ಲ.</string>
+    <string name="action_open_settings">ಸೆಟ್ಟಿಂಗ್ಸ್ ತೆರೆಯಿರಿ</string>
+    <string name="privacy_export_data">ಎಲ್ಲವನ್ನೂ ರಫ್ತು ಮಾಡಿ</string>
+    <string name="privacy_delete_data">ಎಲ್ಲವನ್ನೂ ಅಳಿಸಿ</string>
+    <string name="privacy_leaves_analytics">ನೀವು ಬಳಕೆ ವಿಶ್ಲೇಷಣೆ ಆನ್ ಮಾಡಿದ್ದರಿಂದ ಅನಾಮಧೇಯ ವೈಶಿಷ್ಟ್ಯ ಎಣಿಕೆಗಳು.</string>
+    <string name="privacy_leaves_crashes">ನೀವು ಕ್ರ್ಯಾಶ್ ವರದಿಗಳನ್ನು ಆನ್ ಮಾಡಿದ್ದರಿಂದ ಕ್ರ್ಯಾಶ್ ಮಾಹಿತಿ.</string>
+    <string name="privacy_cloud_ai_requires_plan">AI Pro ಭಾಗ. ಸಾಧನದಲ್ಲಿನ ಸಹಾಯಕ ಎಲ್ಲಾ ಪ್ಲಾನ್‌ಗಳಲ್ಲೂ ಕೆಲಸ ಮಾಡುತ್ತದೆ.</string>
+    <string name="privacy_no_account">ಖಾತಾದಲ್ಲಿ ಲಾಗಿನ್ ಅಥವಾ ಸೈನ್-ಇನ್ ಇಲ್ಲ. ನಿಮ್ಮ ಡೇಟಾ ಇಡುವ ಯಾವುದೇ ಸರ್ವರ್ ಇಲ್ಲ.</string>
+
+    <!-- Learned merchants -->
+    <string name="merchant_rules_explanation">ನೀವು ವಹಿವಾಟು ದಾಖಲಿಸಿದಾಗ, ಮುಂದಿನ ಬಾರಿ ಅದೇ ವರ್ಗ ಸೂಚಿಸಲು ಖಾತಾ ವ್ಯಾಪಾರಿಯನ್ನು ನೆನಪಿಟ್ಟುಕೊಳ್ಳುತ್ತದೆ. ಅದು ಕಲಿತದ್ದೆಲ್ಲಾ ಇಲ್ಲಿದೆ, ಯಾವುದನ್ನಾದರೂ ತೆಗೆಯಬಹುದು.</string>
+    <string name="merchant_rules_search">ವ್ಯಾಪಾರಿಗಳನ್ನು ಹುಡುಕಿ</string>
+    <string name="merchant_rules_set_by_you">ಇದನ್ನು ನೀವು ಹೊಂದಿಸಿದ್ದೀರಿ</string>
+    <string name="merchant_rules_delete_named">%1$s ಮರೆತುಬಿಡಿ</string>
+    <string name="merchant_rules_empty_title">ಇನ್ನೂ ಏನೂ ಕಲಿತಿಲ್ಲ</string>
+    <string name="merchant_rules_empty_body">ಕೆಲವು ವಹಿವಾಟುಗಳನ್ನು ದಾಖಲಿಸಿ, ನೀವು ಬಳಸುವ ವ್ಯಾಪಾರಿಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತಾರೆ.</string>
+    <string name="merchant_rules_forget_title">ಕಲಿತದ್ದೆಲ್ಲಾ ಮರೆಯಬೇಕೆ?</string>
+    <string name="merchant_rules_forget_body">ನೀವು ಇದುವರೆಗೆ ದಾಖಲಿಸಿದ್ದರ ಆಧಾರದ ಮೇಲೆ ಖಾತಾ ವರ್ಗ ಸೂಚಿಸುವುದನ್ನು ನಿಲ್ಲಿಸುತ್ತದೆ. ಮೊದಲೇ ಇದ್ದ ವ್ಯಾಪಾರಿಗಳು ಉಳಿಯುತ್ತಾರೆ, ನಿಮ್ಮ ಯಾವುದೇ ವಹಿವಾಟು ಬದಲಾಗುವುದಿಲ್ಲ.</string>
+
+    <!-- About -->
+    <string name="about_version_detail">ಆವೃತ್ತಿ %1$s (%2$d) · %3$s</string>
+    <string name="about_licences">ಮುಕ್ತ-ಮೂಲ ಪರವಾನಗಿಗಳು</string>
+    <string name="about_licences_show">ಖಾತಾ ನಿರ್ಮಿಸಿರುವ ಲೈಬ್ರರಿಗಳನ್ನು ತೋರಿಸಿ</string>
+    <string name="about_contact">ಸಹಾಯವಾಣಿ ಸಂಪರ್ಕಿಸಿ</string>
+    <string name="about_contact_subject">ಖಾತಾ %1$s — ಸಹಾಯ</string>
+    <string name="about_no_browser">ಈ ಸಾಧನದಲ್ಲಿ ಅದನ್ನು ತೆರೆಯುವ ಆ್ಯಪ್ ಇಲ್ಲ.</string>
+    <string name="about_no_advice">ಖಾತಾ ನಿಮ್ಮ ಸ್ವಂತ ಹಣವನ್ನು ನೋಡಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ. ಇದು ಹಣಕಾಸು, ಹೂಡಿಕೆ ಅಥವಾ ತೆರಿಗೆ ಸಲಹೆ ನೀಡುವುದಿಲ್ಲ, ಇದರಲ್ಲಿರುವ ಯಾವುದೂ ಖರೀದಿಸಲು, ಮಾರಲು ಅಥವಾ ಸಾಲ ಪಡೆಯಲು ಶಿಫಾರಸು ಅಲ್ಲ.</string>
+
+    <!-- Paywall -->
+    <string name="paywall_title">ಖಾತಾ Pro</string>
+    <string name="paywall_subtitle">ಖಾತಾದ ಮೂಲ ಭಾಗ ಎಂದೆಂದಿಗೂ ಉಚಿತ. Pro ಹೆಚ್ಚುವರಿಗಳನ್ನು ಸೇರಿಸುತ್ತದೆ.</string>
+    <string name="paywall_free_always">ವಹಿವಾಟು ದಾಖಲಿಸುವುದು, ಬಜೆಟ್‌ಗಳು, ಗುರಿಗಳು, ವರದಿಗಳು ಮತ್ತು ಡೇಟಾ ರಫ್ತು ಯಾವಾಗಲೂ ಉಚಿತ.</string>
+    <string name="paywall_restore">ಖರೀದಿಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಿ</string>
+    <string name="paywall_unavailable">ಈ ಸಾಧನದಲ್ಲಿ ಖರೀದಿಗಳು ಲಭ್ಯವಿಲ್ಲ.</string>
+    <string name="paywall_pending">ನಿಮ್ಮ ಪಾವತಿ ಪ್ರಕ್ರಿಯೆಯಲ್ಲಿದೆ. UPI ಯಲ್ಲಿ ಸ್ವಲ್ಪ ಸಮಯ ಹಿಡಿಯಬಹುದು — ಪೂರ್ಣಗೊಂಡ ಕೂಡಲೇ ತೆರೆಯುತ್ತೇವೆ.</string>
+    <string name="paywall_current_plan">ನಿಮ್ಮ ಪ್ಲಾನ್</string>
+    <string name="paywall_manage">ಚಂದಾದಾರಿಕೆ ನಿರ್ವಹಿಸಿ</string>
+    <string name="paywall_tier_free">ಉಚಿತ</string>
+    <string name="paywall_tier_pro">Pro</string>
+    <string name="paywall_tier_ai_pro">AI Pro</string>
+    <string name="paywall_tier_family">ಕುಟುಂಬ</string>
+    <string name="paywall_feature_ad_free">ಜಾಹೀರಾತು ಇಲ್ಲ</string>
+    <string name="paywall_feature_unlimited_accounts">ಅನಿಯಮಿತ ಖಾತೆಗಳು</string>
+    <string name="paywall_feature_advanced_reports">ಸುಧಾರಿತ ವರದಿಗಳು</string>
+    <string name="paywall_feature_receipts">ರಸೀದಿ ಲಗತ್ತುಗಳು</string>
+    <string name="paywall_feature_scheduled_backup">ನಿಗದಿತ ಬ್ಯಾಕಪ್‌ಗಳು</string>
+    <string name="paywall_feature_rollover">ಬಜೆಟ್ ಮುಂದುವರಿಕೆ</string>
+    <string name="paywall_feature_ai_assistant">ಕ್ಲೌಡ್ AI ಸಹಾಯಕ</string>
+    <string name="paywall_feature_ai_insights">AI ಸುಧಾರಿತ ಒಳನೋಟಗಳು</string>
+    <string name="paywall_feature_ai_categorisation">ಜಾಣ ವರ್ಗೀಕರಣ</string>
+    <string name="paywall_feature_shared">ಹಂಚಿಕೊಂಡ ಮನೆಯ ಹಣಕಾಸು</string>
+    <string name="paywall_feature_family_budgets">ಕುಟುಂಬ ಬಜೆಟ್‌ಗಳು</string>
+    <string name="paywall_feature_shared_goals">ಹಂಚಿಕೊಂಡ ಗುರಿಗಳು</string>
+    <string name="paywall_feature_custom_ranges">ಯಾವುದೇ ದಿನಾಂಕ ಅವಧಿ</string>
+    <string name="paywall_feature_dashboard">ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಮರುಜೋಡಿಸಿ</string>
+    <string name="paywall_feature_included">ಸೇರಿದೆ</string>
+    <string name="paywall_choose">ಈ ಪ್ಲಾನ್ ಆರಿಸಿ</string>
+    <string name="paywall_purchase_done">ಎಲ್ಲಾ ಸಿದ್ಧ. ಧನ್ಯವಾದಗಳು.</string>
+    <string name="paywall_purchase_failed">ಖರೀದಿ ಪೂರ್ಣಗೊಳ್ಳಲಿಲ್ಲ. ನಿಮಗೆ ಶುಲ್ಕ ವಿಧಿಸಿಲ್ಲ.</string>
+    <string name="paywall_restore_done">ಖರೀದಿಗಳನ್ನು ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ.</string>
+    <string name="paywall_restore_none">ಈ Google ಖಾತೆಯಲ್ಲಿ ಹಿಂದಿನ ಖರೀದಿಗಳು ಸಿಗಲಿಲ್ಲ.</string>
+    <string name="paywall_terms_note">Google Play ಮೂಲಕ ವಾರ್ಷಿಕ ಬಿಲ್ಲಿಂಗ್. Play Store ಚಂದಾದಾರಿಕೆಗಳಲ್ಲಿ ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದುಗೊಳಿಸಿ; ಅವಧಿ ಮುಗಿಯುವವರೆಗೆ ಬಳಸಬಹುದು.</string>
+
+    <!-- App lock -->
+    <string name="lock_title">ಖಾತಾ ಲಾಕ್ ಆಗಿದೆ</string>
+    <string name="lock_unlock">ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
+    <string name="lock_enter_pin">ನಿಮ್ಮ ಪಿನ್ ನಮೂದಿಸಿ</string>
+    <string name="lock_set_pin">ಪಿನ್ ಹೊಂದಿಸಿ</string>
+    <string name="lock_pin_length_hint">%1$d ರಿಂದ %2$d ಅಂಕಿಗಳು. ಖಾತಾ ತೆರೆಯಲು ಇದು ಬೇಕು, ಹಾಗಾಗಿ ಮರೆಯದಂತಹದನ್ನು ಆರಿಸಿ.</string>
+    <string name="lock_confirm_pin">ಮತ್ತೊಮ್ಮೆ ನಮೂದಿಸಿ</string>
+    <string name="lock_pin_mismatch">ಅವು ಹೊಂದಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="lock_pin_incorrect">ತಪ್ಪು ಪಿನ್</string>
+    <string name="lock_pin_attempts_left">ತಪ್ಪು ಪಿನ್. ವಿರಾಮಕ್ಕೆ ಮೊದಲು %1$d ಪ್ರಯತ್ನ(ಗಳು) ಉಳಿದಿವೆ.</string>
+    <string name="lock_locked_out">ತುಂಬಾ ಪ್ರಯತ್ನಗಳು. %1$d ಸೆಕೆಂಡು(ಗಳ) ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
+    <string name="lock_use_pin">ಬದಲಿಗೆ ಪಿನ್ ಬಳಸಿ</string>
+    <string name="lock_use_biometric">ಬೆರಳಚ್ಚು ಬಳಸಿ</string>
+    <string name="lock_storage_unavailable">ಈ ಸಾಧನದಲ್ಲಿ ಸುರಕ್ಷಿತ ಸಂಗ್ರಹ ಲಭ್ಯವಿಲ್ಲ, ಹಾಗಾಗಿ ಪಿನ್ ಹೊಂದಿಸಲಾಗದು.</string>
+    <string name="biometric_prompt_title">ಖಾತಾ ಅನ್‌ಲಾಕ್ ಮಾಡಿ</string>
+    <string name="biometric_prompt_subtitle">ಇದು ನೀವೇ ಎಂದು ದೃಢೀಕರಿಸಿ</string>
+    <string name="biometric_not_enrolled">ಮೊದಲು ಫೋನ್‌ನ ಸೆಟ್ಟಿಂಗ್ಸ್‌ನಲ್ಲಿ ಬೆರಳಚ್ಚು ಅಥವಾ ಸ್ಕ್ರೀನ್ ಲಾಕ್ ಹೊಂದಿಸಿ.</string>
+    <string name="biometric_no_hardware">ಈ ಸಾಧನ ಬೆರಳಚ್ಚು ಅನ್‌ಲಾಕ್ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ. ಬದಲಿಗೆ ಪಿನ್ ಬಳಸಬಹುದು.</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_bills">ಬಿಲ್ ಜ್ಞಾಪನೆಗಳು</string>
+    <string name="notification_channel_bills_description">ಬಿಲ್, ಇಎಂಐ ಅಥವಾ ಚಂದಾ ಬಾಕಿಯಾಗುವ ಮೊದಲು ಜ್ಞಾಪನೆಗಳು</string>
+    <string name="notification_channel_budgets">ಬಜೆಟ್ ಎಚ್ಚರಿಕೆಗಳು</string>
+    <string name="notification_channel_budgets_description">ಬಜೆಟ್ ಬಹುತೇಕ ಮುಗಿದಾಗ ಅಥವಾ ಮೀರಿದಾಗ</string>
+    <string name="notification_channel_imports">ದೃಢೀಕರಿಸಬೇಕಾದ ವಹಿವಾಟುಗಳು</string>
+    <string name="notification_channel_imports_description">ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳಿಂದ ಓದಿದ ಪಾವತಿಗಳು, ನಿಮ್ಮ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತಿವೆ.</string>
+    <string name="notification_channel_reminders">ದೈನಂದಿನ ಜ್ಞಾಪನೆಗಳು</string>
+    <string name="notification_channel_reminders_description">ಇಂದು ಖರ್ಚು ಮಾಡಿದ್ದನ್ನು ದಾಖಲಿಸಲು ಒಂದು ನೆನಪು</string>
+    <string name="notification_bill_title">%1$s ಬಾಕಿ %2$s</string>
+    <string name="notification_bill_body">%1$s</string>
+    <string name="notification_budget_title">%1$s ಬಜೆಟ್</string>
+    <string name="notification_budget_nearing">ನೀವು ಅದರ %1$d%% ಬಳಸಿದ್ದೀರಿ</string>
+    <string name="notification_budget_over">ನೀವು %1$s ಮೀರಿದ್ದೀರಿ</string>
+    <string name="notification_import_title">ದೃಢೀಕರಿಸಲು ಹೊಸ ವಹಿವಾಟು</string>
+    <string name="notification_import_unknown_merchant">ಅಪರಿಚಿತ ವ್ಯಾಪಾರಿ</string>
+    <string name="notification_import_expense">%2$s ನಲ್ಲಿ %1$s ಖರ್ಚು</string>
+    <string name="notification_import_income">%2$s ಇಂದ %1$s ಬಂದಿದೆ</string>
+    <string name="notification_import_transfer">%1$s ವರ್ಗಾಯಿಸಲಾಗಿದೆ</string>
+    <string name="notification_import_confirm_hint">ದೃಢೀಕರಿಸಲು ಅಥವಾ ಬದಲಿಸಲು ಒತ್ತಿ</string>
+    <string name="notification_import_new_account">%1$s ಅನ್ನು ಹೊಸ ಖಾತೆಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ. ದೃಢೀಕರಿಸಲು ಅಥವಾ ಬದಲಿಸಲು ಒತ್ತಿ.</string>
+    <string name="notification_import_no_account_title">ಒಂದು ಪಾವತಿಯನ್ನು ದಾಖಲಿಸಲಾಗಲಿಲ್ಲ</string>
+    <string name="notification_import_no_account_body">ಬ್ಯಾಂಕ್ ಸಂದೇಶ ಓದಿದೆವು, ಆದರೆ ಅದು ನಿಮ್ಮ ಯಾವ ಖಾತೆಗೆ ಸೇರಿದ್ದು ಎಂದು ತಿಳಿಯಲಿಲ್ಲ. ಇವನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಹೊಂದಿಸಲು ಖಾತೆಗೆ ಕೊನೆಯ ನಾಲ್ಕು ಅಂಕಿಗಳನ್ನು ಸೇರಿಸಿ.</string>
+    <string name="notification_daily_title">ಇಂದು ದಾಖಲಿಸಲು ಏನಾದರೂ ಇದೆಯೇ?</string>
+    <string name="notification_daily_body">ಒಂದೆರಡು ಸೆಕೆಂಡು ಸಾಕು.</string>
+    <string name="notification_action_record">ದಾಖಲಿಸಿ</string>
+    <string name="notification_action_dismiss">ವಜಾಗೊಳಿಸಿ</string>
+    <string name="notification_permission_rationale">ಬಿಲ್‌ಗಳು ಬಾಕಿಯಾಗುವ ಮೊದಲು ನೆನಪಿಸಲು ಅಧಿಸೂಚನೆಗಳನ್ನು ಅನುಮತಿಸಿ.</string>
+
+    <!-- Misc -->
+    <string name="more_title">ಇನ್ನಷ್ಟು</string>
+    <string name="demo_badge">ಮಾದರಿ ಡೇಟಾ</string>
+    <string name="offline_badge">ಆಫ್‌ಲೈನ್</string>
+    <string name="currency_inr">ಭಾರತೀಯ ರೂಪಾಯಿ</string>
+    <string name="language_english">English</string>
+    <string name="language_hindi">हिन्दी</string>
+
+    <!-- Counted phrases -->
+    <plurals name="categories_subcategory_count">
+        <item quantity="one">%1$d ಉಪವರ್ಗ</item>
+        <item quantity="other">%1$d ಉಪವರ್ಗಗಳು</item>
+    </plurals>
+    <plurals name="categories_delete_children">
+        <item quantity="one">ಇದರ %1$d ಉಪವರ್ಗವೂ ಅಳಿಸಲಾಗುತ್ತದೆ.</item>
+        <item quantity="other">ಇದರ %1$d ಉಪವರ್ಗಗಳೂ ಅಳಿಸಲಾಗುತ್ತವೆ.</item>
+    </plurals>
+    <plurals name="categories_delete_orphan_warning">
+        <item quantity="one">%1$d ವಹಿವಾಟು ವರ್ಗರಹಿತವಾಗುತ್ತದೆ.</item>
+        <item quantity="other">%1$d ವಹಿವಾಟುಗಳು ವರ್ಗರಹಿತವಾಗುತ್ತವೆ.</item>
+    </plurals>
+    <plurals name="categories_deleted_with_orphans">
+        <item quantity="one">ಅಳಿಸಲಾಗಿದೆ. %1$d ವಹಿವಾಟು ಈಗ ವರ್ಗರಹಿತ.</item>
+        <item quantity="other">ಅಳಿಸಲಾಗಿದೆ. %1$d ವಹಿವಾಟುಗಳು ಈಗ ವರ್ಗರಹಿತ.</item>
+    </plurals>
+    <plurals name="recurring_due_in_days">
+        <item quantity="one">%1$d ದಿನದಲ್ಲಿ</item>
+        <item quantity="other">%1$d ದಿನಗಳಲ್ಲಿ</item>
+    </plurals>
+    <plurals name="recurring_awaiting_confirmation">
+        <item quantity="one">%1$d ನಿಮಗಾಗಿ ಕಾಯುತ್ತಿದೆ</item>
+        <item quantity="other">%1$d ನಿಮಗಾಗಿ ಕಾಯುತ್ತಿವೆ</item>
+    </plurals>
+    <plurals name="recurring_reminder_days_before">
+        <item quantity="one">%1$d ದಿನ ಮೊದಲು</item>
+        <item quantity="other">%1$d ದಿನಗಳ ಮೊದಲು</item>
+    </plurals>
+    <plurals name="recurring_interval_days">
+        <item quantity="one">ಪ್ರತಿದಿನ</item>
+        <item quantity="other">ಪ್ರತಿ %1$d ದಿನಗಳಿಗೊಮ್ಮೆ</item>
+    </plurals>
+    <plurals name="recurring_interval_weeks">
+        <item quantity="one">ಪ್ರತಿ ವಾರ</item>
+        <item quantity="other">ಪ್ರತಿ %1$d ವಾರಗಳಿಗೊಮ್ಮೆ</item>
+    </plurals>
+    <plurals name="recurring_interval_fortnights">
+        <item quantity="one">ಪ್ರತಿ ಹದಿನೈದು ದಿನ</item>
+        <item quantity="other">ಪ್ರತಿ %1$d ಹದಿನೈದು ದಿನಗಳಿಗೊಮ್ಮೆ</item>
+    </plurals>
+    <plurals name="recurring_interval_months">
+        <item quantity="one">ಪ್ರತಿ ತಿಂಗಳು</item>
+        <item quantity="other">ಪ್ರತಿ %1$d ತಿಂಗಳಿಗೊಮ್ಮೆ</item>
+    </plurals>
+    <plurals name="recurring_interval_years">
+        <item quantity="one">ಪ್ರತಿ ವರ್ಷ</item>
+        <item quantity="other">ಪ್ರತಿ %1$d ವರ್ಷಗಳಿಗೊಮ್ಮೆ</item>
+    </plurals>
+    <plurals name="subscriptions_tracked_count">
+        <item quantity="one">%1$d ಚಂದಾದಾರಿಕೆ</item>
+        <item quantity="other">%1$d ಚಂದಾದಾರಿಕೆಗಳು</item>
+    </plurals>
+    <plurals name="reports_transactions">
+        <item quantity="one">%1$d ವಹಿವಾಟು</item>
+        <item quantity="other">%1$d ವಹಿವಾಟುಗಳು</item>
+    </plurals>
+    <plurals name="reports_deficit_months">
+        <item quantity="one">%1$d ತಿಂಗಳು ಬಂದದ್ದಕ್ಕಿಂತ ಹೆಚ್ಚು ಖರ್ಚಾಯಿತು.</item>
+        <item quantity="other">%1$d ತಿಂಗಳುಗಳಲ್ಲಿ ಬಂದದ್ದಕ್ಕಿಂತ ಹೆಚ್ಚು ಖರ್ಚಾಯಿತು.</item>
+    </plurals>
+    <plurals name="merchant_rules_learned_from">
+        <item quantity="one">%1$d ವಹಿವಾಟಿನಿಂದ ಕಲಿತದ್ದು</item>
+        <item quantity="other">%1$d ವಹಿವಾಟುಗಳಿಂದ ಕಲಿತದ್ದು</item>
+    </plurals>
+    <plurals name="merchant_rules_seeded_count">
+        <item quantity="one">%1$d ವ್ಯಾಪಾರಿ ಮೊದಲೇ ಇದ್ದರು, ಇಲ್ಲಿ ಪಟ್ಟಿಯಲ್ಲಿಲ್ಲ.</item>
+        <item quantity="other">%1$d ವ್ಯಾಪಾರಿಗಳು ಮೊದಲೇ ಇದ್ದರು, ಇಲ್ಲಿ ಪಟ್ಟಿಯಲ್ಲಿಲ್ಲ.</item>
+    </plurals>
+    <plurals name="paywall_free_trial">
+        <item quantity="one">%1$d ದಿನ ಉಚಿತ</item>
+        <item quantity="other">%1$d ದಿನಗಳು ಉಚಿತ</item>
+    </plurals>
+
+    <string name="nav_activity">ಚಟುವಟಿಕೆ</string>
+    <string name="nav_plan">ಯೋಜನೆ</string>
+    <string name="nav_money">ಹಣ</string>
+    <string name="nav_add_hold_hint">ಬದಲಿಗೆ ಮಾತನಾಡಲು ಒತ್ತಿ ಹಿಡಿಯಿರಿ</string>
+    <string name="activity_view_list">ಪಟ್ಟಿ</string>
+    <string name="activity_view_analysis">ವಿಶ್ಲೇಷಣೆ</string>
+    <string name="activity_in">ಒಳಗೆ</string>
+    <string name="activity_out">ಹೊರಗೆ</string>
+    <string name="activity_net">ನಿವ್ವಳ</string>
+    <string name="activity_open_insights">ಒಳನೋಟಗಳನ್ನು ನೋಡಿ</string>
+    <string name="home_safe_today">ಇಂದು ಖರ್ಚು ಮಾಡಬಹುದಾದ್ದು</string>
+    <string name="home_left_of">%2$s ರಲ್ಲಿ %1$s ಉಳಿದಿದೆ</string>
+    <string name="home_on_track">ಹಿಡಿತದಲ್ಲಿದೆ</string>
+    <string name="home_ahead_of_pace">ವೇಗವಾಗಿ ಖರ್ಚಾಗುತ್ತಿದೆ</string>
+    <string name="home_over_budget">ಬಜೆಟ್ ಮೀರಿದೆ</string>
+    <string name="home_spent">ಖರ್ಚು</string>
+    <string name="home_received">ಬಂದದ್ದು</string>
+    <string name="home_needs_you">ನಿಮ್ಮ ಗಮನ ಬೇಕು</string>
+    <string name="home_review">ಪರಿಶೀಲಿಸಿ</string>
+    <string name="home_open">ತೆರೆಯಿರಿ</string>
+    <string name="home_budget_used">%1$s ಬಜೆಟ್ %2$d%% ಬಳಸಲಾಗಿದೆ</string>
+    <string name="home_card_bill_due">%1$s ಬಿಲ್ %2$s ಬಾಕಿ</string>
+    <string name="home_all_clear">ಎಲ್ಲವೂ ಸರಿಯಾಗಿದೆ</string>
+    <string name="home_set_budget">ದಿನದ ಅಂಕಿ ನೋಡಲು ತಿಂಗಳ ಬಜೆಟ್ ಹೊಂದಿಸಿ</string>
+    <string name="home_insight">ನೋಡಲು ಯೋಗ್ಯ</string>
+    <string name="money_you_have">ನಿಮ್ಮ ಬಳಿ ಇರುವುದು</string>
+    <string name="money_you_owe">ನೀವು ಕೊಡಬೇಕಾದ್ದು</string>
+    <string name="money_bank_cash">ಬ್ಯಾಂಕ್ ಮತ್ತು ನಗದು</string>
+    <string name="money_other_accounts">ಇತರ ಖಾತೆಗಳು</string>
+    <string name="money_manage">ನಿರ್ವಹಿಸಿ</string>
+    <string name="money_card_due">%1$s ಬಾಕಿ</string>
+    <string name="money_card_used">ಮಿತಿಯ %1$d%% ಬಳಸಲಾಗಿದೆ</string>
+    <string name="money_loan_emi">ಇಎಂಐ %1$s</string>
+    <string name="money_loan_repaid">%1$d%% ಮರುಪಾವತಿ</string>
+    <string name="money_invested">ಹೂಡಿದ್ದು %1$s</string>
+    <string name="money_holdings">%1$d ಹೂಡಿಕೆಗಳು</string>
+    <string name="money_nothing_here">ಇನ್ನೂ ಏನೂ ಸೇರಿಸಿಲ್ಲ</string>
+    <string name="plan_bills">ಬಿಲ್‌ಗಳು ಮತ್ತು ಪಾವತಿಗಳು</string>
+    <string name="plan_bills_empty">ಮುಂದಿನ 30 ದಿನಗಳಲ್ಲಿ ಯಾವುದೂ ಬಾಕಿ ಇಲ್ಲ.</string>
+    <string name="plan_did_it_go_out">ಇದು ಪಾವತಿಯಾಯಿತೇ?</string>
+    <string name="plan_all_bills">ಎಲ್ಲಾ ಬಿಲ್‌ಗಳು</string>
+    <string name="plan_budgets_on_track">%2$d ರಲ್ಲಿ %1$d ಹಿಡಿತದಲ್ಲಿವೆ</string>
+    <string name="plan_spent_of_budget">ಬಜೆಟ್‌ನಲ್ಲಿ ಖರ್ಚಾದದ್ದು</string>
+    <string name="plan_previous_month">ಹಿಂದಿನ ತಿಂಗಳು</string>
+    <string name="plan_next_month">ಮುಂದಿನ ತಿಂಗಳು</string>
+    <string name="plan_final_figures">%1$s ರ ಅಂತಿಮ ಅಂಕಿಗಳು</string>
+
+    <string name="activity_matching">%1$d ಹೊಂದಿವೆ</string>
+
+    <string name="transaction_save_amount">%1$s ಸೇವ್ ಮಾಡಿ</string>
+    <string name="a11y_decimal_point">ದಶಮಾಂಶ ಬಿಂದು</string>
+    <string name="a11y_backspace">ಕೊನೆಯ ಅಂಕಿ ಅಳಿಸಿ</string>
+
+    <string name="sms_review_looks_right">ಸರಿಯಾಗಿದೆ</string>
+    <string name="sms_review_confirm_all">ಎಲ್ಲಾ %1$d ದೃಢೀಕರಿಸಿ</string>
+    <string name="sms_review_edit_hint">ಮೊತ್ತ, ವರ್ಗ ಅಥವಾ ಖಾತೆ ಬದಲಿಸಲು ಕಾರ್ಡ್ ಒತ್ತಿ</string>
+    <string name="sms_review_transfer_matched">ಎರಡೂ ಸಂದೇಶಗಳು ಹೊಂದಿವೆ · ಒಮ್ಮೆ ಎಣಿಸಲಾಗಿದೆ</string>
+
+    <string name="onboarding_step_of">ಹಂತ %1$d / %2$d</string>
+
+    <string name="settings_monthly_income">ಮಾಸಿಕ ಆದಾಯ (ಐಚ್ಛಿಕ)</string>
+    <string name="settings_monthly_income_help">ಯಾವುದು ಕೈಗೆಟುಕುತ್ತದೆ ಎಂದು ನಿರ್ಧರಿಸಲು ಸಹಾಯಕ ಇದನ್ನು ಬಳಸುತ್ತದೆ</string>
+    <plurals name="home_more_waiting">
+        <item quantity="one">ಇನ್ನೂ %1$d ಕಾಯುತ್ತಿದೆ</item>
+        <item quantity="other">ಇನ್ನೂ %1$d ಕಾಯುತ್ತಿವೆ</item>
+    </plurals>
+    <plurals name="home_more_bills">
+        <item quantity="one">ದೃಢೀಕರಿಸಲು ಇನ್ನೂ %1$d ಬಿಲ್</item>
+        <item quantity="other">ದೃಢೀಕರಿಸಲು ಇನ್ನೂ %1$d ಬಿಲ್‌ಗಳು</item>
+    </plurals>
+
+    <string name="activity_filter_all">ಎಲ್ಲಾ</string>
+
+    <string name="privacy_sms_auto_add">ಬ್ಯಾಂಕ್ ಸಂದೇಶಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸೇರಿಸಿ</string>
+    <string name="privacy_sms_auto_add_on">ಸಂದೇಶಗಳು ಬಂದ ಕೂಡಲೇ ಖರ್ಚು ಮತ್ತು ಜಮೆಗಳು ಸೇರುತ್ತವೆ. ಬೇಡವಾದುದನ್ನು ತೆಗೆದುಹಾಕಿ.</string>
+    <string name="privacy_sms_auto_add_off">ಪ್ರತಿ ಸಂದೇಶ ಎಣಿಕೆಯಾಗುವ ಮೊದಲು ನಿಮ್ಮ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತದೆ.</string>
+    <string name="notification_import_added_title">ವಹಿವಾಟು ಸೇರಿಸಲಾಗಿದೆ</string>
+    <string name="notification_import_added_hint">ನಿಮ್ಮ ಬ್ಯಾಂಕ್ ಸಂದೇಶದಿಂದ ಸೇರಿಸಲಾಗಿದೆ. ಬದಲಿಸಲು ಅಥವಾ ತೆಗೆಯಲು ಒತ್ತಿ.</string>
+    <string name="notification_import_new_account_added">%1$s ಅನ್ನು ಹೊಸ ಖಾತೆಯಾಗಿ ಸೇರಿಸಲಾಗಿದೆ. ಬದಲಿಸಲು ಅಥವಾ ತೆಗೆಯಲು ಒತ್ತಿ.</string>
+</resources>

@@ -17,6 +17,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
@@ -219,7 +220,29 @@ class AppWalkthroughTest {
      */
     @Test
     @Config(qualifiers = "hi-rIN-w393dp-h851dp-xhdpi")
-    fun theMainScreensInHindi() {
+    fun theMainScreensInHindi() = walkTheMainScreensInThisLanguage()
+
+    /** Kannada: tall stacked consonants below the line, where tight line heights clip first. */
+    @Test
+    @Config(qualifiers = "kn-rIN-w393dp-h851dp-xhdpi")
+    fun theMainScreensInKannada() = walkTheMainScreensInThisLanguage()
+
+    /** Telugu: marks above and below every line, like Kannada. */
+    @Test
+    @Config(qualifiers = "te-rIN-w393dp-h851dp-xhdpi")
+    fun theMainScreensInTelugu() = walkTheMainScreensInThisLanguage()
+
+    /** Tamil: the longest words of any language here, so chips and buttons are tested hardest. */
+    @Test
+    @Config(qualifiers = "ta-rIN-w393dp-h851dp-xhdpi")
+    fun theMainScreensInTamil() = walkTheMainScreensInThisLanguage()
+
+    /**
+     * Every main tab, the add screen and Settings with its language picker, in whatever language
+     * the test's qualifiers set. Each wait is on a translated string, so a screen that fell back
+     * to English, or failed to show, fails here rather than only looking wrong in a screenshot.
+     */
+    private fun walkTheMainScreensInThisLanguage() {
         startWithSampleData()
         assertBottomBarAtTheBottom()
         snap("home")
@@ -232,6 +255,19 @@ class AppWalkthroughTest {
         tab(R.string.nav_money).performClick()
         waitForText(R.string.money_you_have)
         snap("money")
+
+        tab(R.string.nav_home).performClick()
+        compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(0)
+        val avatar = hasContentDescription(str(R.string.settings_title)) and hasClickAction()
+        compose.waitUntil(TIMEOUT_MS) { compose.onAllNodes(avatar).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(avatar).performClick()
+        waitForText(R.string.settings_title)
+        compose.onNode(hasText(str(R.string.settings_appearance))).performScrollTo()
+        compose.onNode(hasText(str(R.string.settings_language_system)) and hasClickAction()).assertIsDisplayed()
+        snap("settings-language")
+        pressBack()
+        compose.waitUntil(TIMEOUT_MS) { compose.onAllNodes(avatar).fetchSemanticsNodes().isNotEmpty() }
+
         compose.onNode(hasContentDescription(str(R.string.nav_add_transaction), substring = true)).performClick()
         waitForText(R.string.transaction_add_title)
         compose.waitUntil(TIMEOUT_MS) {

@@ -738,6 +738,7 @@
     <string name="settings_month_start">Month starts on day</string>
     <string name="settings_month_start_help">Set this to your salary date if you think of your month that way.</string>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_language_system">Phone\'s language</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">Follow system</string>
     <string name="settings_theme_light">Light</string>

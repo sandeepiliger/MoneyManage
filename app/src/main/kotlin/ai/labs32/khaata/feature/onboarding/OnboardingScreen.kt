@@ -49,6 +49,13 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import ai.labs32.khaata.core.locale.AppLanguage
+import ai.labs32.khaata.core.locale.AppLocales
+import ai.labs32.khaata.feature.settings.languageLabel
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -228,6 +235,43 @@ private fun WelcomeStep(onTryDemo: () -> Unit) {
             .fillMaxWidth()
             .heightIn(min = 48.dp),
     ) { Text(stringResource(R.string.onboarding_try_demo)) }
+
+    Spacer(Modifier.height(KhaataTheme.spacing.large))
+    WelcomeLanguagePicker()
+}
+
+/**
+ * The language, chosen before any setup: a new user whose phone is in English may still read the
+ * app more easily in Kannada, Telugu, Tamil or Hindi. The same choice lives in Settings later.
+ */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun WelcomeLanguagePicker() {
+    val context = LocalContext.current
+    var language by remember { mutableStateOf(AppLocales.current(context)) }
+    Text(
+        text = stringResource(R.string.settings_language),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(KhaataTheme.spacing.small))
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small),
+    ) {
+        AppLanguage.entries.forEach { option ->
+            FilterChip(
+                selected = option == language,
+                onClick = {
+                    if (option != language) {
+                        language = option
+                        AppLocales.set(context, option)
+                    }
+                },
+                label = { Text(languageLabel(option)) },
+                colors = selectedChipColors(),
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)

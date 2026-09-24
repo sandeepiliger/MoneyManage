@@ -719,6 +719,7 @@
     <string name="settings_month_start">महीना किस तारीख़ से शुरू हो</string>
     <string name="settings_month_start_help">अगर आप सैलरी की तारीख़ से महीना गिनते हैं तो इसे वही तारीख़ बना दें।</string>
     <string name="settings_appearance">दिखावट</string>
+    <string name="settings_language_system">फ़ोन की भाषा</string>
     <string name="settings_theme">थीम</string>
     <string name="settings_theme_system">सिस्टम के अनुसार</string>
     <string name="settings_theme_light">लाइट</string>
