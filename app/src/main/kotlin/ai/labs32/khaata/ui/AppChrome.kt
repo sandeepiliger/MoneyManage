@@ -4,7 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -122,10 +122,13 @@ private fun RowScope.AddButton(onAdd: () -> Unit, onAddByVoice: () -> Unit) {
     val voiceLabel = stringResource(R.string.voice_input)
     val hint = stringResource(R.string.nav_add_hold_hint)
 
+    // A fixed height, not fillMaxHeight: NavigationBar's row only sets a minimum height, so a
+    // child asking for the maximum stretches the bar over the whole screen and leaves the
+    // content above it with no room at all.
     Box(
         modifier = Modifier
             .weight(1f)
-            .fillMaxHeight(),
+            .height(AddSlotHeight),
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -166,3 +169,6 @@ private fun RowScope.AddButton(onAdd: () -> Unit, onAddByVoice: () -> Unit) {
 }
 
 private val AddButtonShape = RoundedCornerShape(18.dp)
+
+/** The bar's own height, so the add button's slot lines up with the tabs either side. */
+private val AddSlotHeight = 80.dp
