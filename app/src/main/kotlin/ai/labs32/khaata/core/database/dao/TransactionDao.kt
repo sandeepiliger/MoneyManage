@@ -351,7 +351,7 @@ interface TransactionDao {
         maxMinor: Long?,
         query: String?,
         tagPattern: String?,
-    ): Flow<List<DailyTotalRow>>
+    ): Flow<List<DayInOutRow>>
 
     // ---- Aggregates --------------------------------------------------------------------------
 
@@ -699,8 +699,8 @@ data class FilteredTotalRow(
     val count: Int,
 )
 
-/** One day's totals for the Activity list's date headers; see [TransactionDao.observeDailyTotals]. */
-data class DailyTotalRow(
+/** One day's money out and in, for the Activity list's date headers; see [TransactionDao.observeDailyTotals]. */
+data class DayInOutRow(
     val day: LocalDate,
     val spentMinor: Long,
     val incomeMinor: Long,
