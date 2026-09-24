@@ -386,7 +386,9 @@ private fun ProductRow(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    // Two lines: "Payment overdue · 31% of limit used" is the point of the row,
+                    // and cut to one it lost exactly the figure that mattered.
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }

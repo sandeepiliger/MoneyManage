@@ -141,13 +141,20 @@ class PlanViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    fun previousMonth() {
-        month.value = month.value.minusMonths(1)
-    }
+    fun previousMonth() = showMonth(month.value.minusMonths(1))
 
     /** Never past the current month: a budget has nothing to say about a month not yet started. */
     fun nextMonth() {
-        if (month.value < currentMonth) month.value = month.value.plusMonths(1)
+        if (month.value < currentMonth) showMonth(month.value.plusMonths(1))
+    }
+
+    /**
+     * The heading changes on the tap, not when that month's figures arrive: the budgets are read
+     * off the main thread, and a heading that lagged behind the arrow looked like a missed tap.
+     */
+    private fun showMonth(target: YearMonth) {
+        month.value = target
+        _uiState.update { it.copy(month = target, isCurrentMonth = target == currentMonth) }
     }
 
     /** Records the bill as paid, the same as "Record it" on the Recurring screen. */

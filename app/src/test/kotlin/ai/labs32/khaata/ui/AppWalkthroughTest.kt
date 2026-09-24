@@ -104,7 +104,10 @@ class AppWalkthroughTest {
         snap("plan-scrolled")
         compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(0)
         compose.onNode(hasContentDescription(str(R.string.plan_previous_month))).performClick()
-        compose.waitForIdle()
+        val lastMonth = java.time.YearMonth.now().minusMonths(1)
+            .format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy"))
+        waitForText(lastMonth)
+        waitForText(str(R.string.plan_final_figures, lastMonth.substringBefore(' ')))
         snap("plan-last-month")
 
         // Money: net worth split into what you have and what you owe.
@@ -116,14 +119,17 @@ class AppWalkthroughTest {
         scrollMainList()
         snap("money-scrolled")
 
-        // Settings, from Home's avatar.
+        // Settings, from Home's avatar. Home comes back scrolled where it was left, so wait for
+        // the avatar at the top rather than for a card that may be scrolled out of the list.
         tab(R.string.nav_home).performClick()
-        waitForText(R.string.home_needs_you)
-        compose.onNode(hasContentDescription(str(R.string.settings_title)) and hasClickAction()).performClick()
+        compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(0)
+        val avatar = hasContentDescription(str(R.string.settings_title)) and hasClickAction()
+        compose.waitUntil(TIMEOUT_MS) { compose.onAllNodes(avatar).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(avatar).performClick()
         waitForText(R.string.settings_title)
         snap("settings")
         pressBack()
-        waitForText(R.string.home_needs_you)
+        compose.waitUntil(TIMEOUT_MS) { compose.onAllNodes(avatar).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
