@@ -29,6 +29,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import ai.labs32.khaata.core.common.DateRange
+import ai.labs32.khaata.core.money.CurrencyCode
+import ai.labs32.khaata.data.repository.TransactionRepository
+import ai.labs32.khaata.widget.AppShortcuts
+import ai.labs32.khaata.widget.SpendWidget
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 
 /**
@@ -52,6 +61,7 @@ class KhaataApplication : Application(), Configuration.Provider {
     @Inject lateinit var appLockManager: AppLockManager
     @Inject lateinit var workScheduler: WorkScheduler
     @Inject lateinit var notifier: KhaataNotifier
+    @Inject lateinit var transactionRepository: TransactionRepository
 
     /**
      * Scope for startup work.
@@ -71,6 +81,11 @@ class KhaataApplication : Application(), Configuration.Provider {
     override fun onConfigurationChanged(newConfig: AndroidConfiguration) {
         super.onConfigurationChanged(newConfig)
         AppLocales.applyStored(this)
+        // A new language or dark mode: the widget and the launcher shortcuts are drawn from
+        // resources, so they redraw in it.
+        SpendWidget.refresh(this)
+        runCatching { AppShortcuts.publish(this) }
+            .onFailure { KhaataLog.w(TAG, "Launcher shortcuts unavailable") }
     }
 
     override val workManagerConfiguration: Configuration
@@ -91,6 +106,7 @@ class KhaataApplication : Application(), Configuration.Provider {
         NotificationChannels.createAll(this)
 
         observeAppLifecycle()
+        keepWidgetCurrent()
 
         applicationScope.launch {
             val settings = settingsRepository.settings.first()
@@ -117,9 +133,36 @@ class KhaataApplication : Application(), Configuration.Provider {
 
             workScheduler.scheduleAll(settings)
 
+            runCatching { AppShortcuts.publish(this@KhaataApplication) }
+                .onFailure { KhaataLog.w(TAG, "Launcher shortcuts unavailable") }
+
             // Deliberately no inbox scan here. Reading past messages is something the user asks
             // for (onboarding, or the privacy dashboard), never something a launch does to them:
             // a silent scan landed a year of history on top of a balance they had just stated.
+        }
+    }
+
+    /**
+     * Redraws the home-screen widget whenever this month's spending or the privacy settings
+     * change: a spend added in the app, by a bank message, or deleted shows on the home screen
+     * at once rather than at the widget's next half-hourly refresh. Cheap when no widget is
+     * placed -- the refresh finds none and returns.
+     */
+    private fun keepWidgetCurrent() {
+        applicationScope.launch {
+            combine(
+                transactionRepository.observeTotalSpend(
+                    DateRange.ofMonth(java.time.LocalDate.now()),
+                    CurrencyCode.DEFAULT,
+                ),
+                settingsRepository.settings,
+            ) { spend, settings -> Triple(spend, settings.lockMode, settings.hideAmountsWhenLocked) }
+                .distinctUntilChanged()
+                .collectLatest {
+                    // Coalesces a burst of writes (an import, a restore) into one redraw.
+                    delay(WIDGET_REFRESH_DELAY_MS)
+                    SpendWidget.refresh(this@KhaataApplication)
+                }
         }
     }
 
@@ -182,5 +225,6 @@ class KhaataApplication : Application(), Configuration.Provider {
 
     private companion object {
         const val TAG = "KhaataApplication"
+        const val WIDGET_REFRESH_DELAY_MS = 500L
     }
 }

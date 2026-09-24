@@ -1158,4 +1158,16 @@
     <string name="category_name_refund">Refunds &amp; Cashback</string>
     <string name="category_name_other_income">Other Income</string>
     <string name="category_name_uncategorised">Uncategorised</string>
+
+    <!-- Home-screen widget and launcher shortcuts -->
+    <string name="widget_name">Khaata spends</string>
+    <string name="widget_description">Today\'s and this month\'s spending, with one-tap add and speak.</string>
+    <string name="widget_spent_today">Spent today</string>
+    <string name="widget_this_month">This month</string>
+    <string name="widget_add">+ Add</string>
+    <string name="widget_speak">Speak</string>
+    <string name="shortcut_add_short">Add</string>
+    <string name="shortcut_add_long">Add an expense</string>
+    <string name="shortcut_speak_short">Speak</string>
+    <string name="shortcut_speak_long">Say what you spent</string>
 </resources>

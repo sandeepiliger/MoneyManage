@@ -92,6 +92,19 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Home-screen widget: today's and this month's spend, with add and speak buttons. -->
+        <receiver
+            android:name=".widget.SpendWidgetProvider"
+            android:exported="false"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_spend_info" />
+        </receiver>
+
         <!--
           Receives bank SMS when the user has granted the permission and enabled import.
           Disabled at install time and enabled programmatically only after consent, so a user

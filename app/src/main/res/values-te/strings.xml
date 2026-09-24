@@ -1152,4 +1152,16 @@
     <string name="category_name_refund">రీఫండ్ &amp; క్యాష్‌బ్యాక్</string>
     <string name="category_name_other_income">ఇతర ఆదాయం</string>
     <string name="category_name_uncategorised">వర్గీకరించనివి</string>
+
+    <!-- Home-screen widget and launcher shortcuts -->
+    <string name="widget_name">ఖాతా ఖర్చులు</string>
+    <string name="widget_description">ఈరోజు, ఈ నెల ఖర్చు, ఒక్క ట్యాప్‌తో జోడించండి లేదా చెప్పండి.</string>
+    <string name="widget_spent_today">ఈరోజు ఖర్చు</string>
+    <string name="widget_this_month">ఈ నెల</string>
+    <string name="widget_add">+ జోడించండి</string>
+    <string name="widget_speak">మాట్లాడండి</string>
+    <string name="shortcut_add_short">జోడించండి</string>
+    <string name="shortcut_add_long">ఖర్చు జోడించండి</string>
+    <string name="shortcut_speak_short">మాట్లాడండి</string>
+    <string name="shortcut_speak_long">మీరు ఏమి ఖర్చు చేశారో చెప్పండి</string>
 </resources>

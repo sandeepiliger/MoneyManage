@@ -137,12 +137,16 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val ACTION_QUICK_ADD_ALIAS = "ai.labs32.khaata.action.QUICK_ADD"
+
+        /** Opens straight into listening: the widget's and the launcher shortcut's "Speak". */
+        const val ACTION_VOICE_ADD = "ai.labs32.khaata.action.VOICE_ADD"
     }
 }
 
 /** Where a tapped notification or shortcut should take the user once the app is on screen. */
 private sealed interface DeepLink {
     data object QuickAdd : DeepLink
+    data object VoiceAdd : DeepLink
     data object ReviewImports : DeepLink
 
     /** A transaction added from a bank message, opened from its notification to check or remove. */
@@ -151,6 +155,7 @@ private sealed interface DeepLink {
     companion object {
         fun from(intent: Intent?): DeepLink? = when (intent?.action) {
             KhaataNotifier.ACTION_QUICK_ADD, MainActivity.ACTION_QUICK_ADD_ALIAS -> QuickAdd
+            MainActivity.ACTION_VOICE_ADD -> VoiceAdd
             KhaataNotifier.ACTION_REVIEW_IMPORTS -> ReviewImports
             KhaataNotifier.ACTION_OPEN_TRANSACTION ->
                 intent.getStringExtra(KhaataNotifier.EXTRA_TRANSACTION_ID)?.let { OpenTransaction(it) }
@@ -188,6 +193,7 @@ private fun KhaataApp(
     LaunchedEffect(deepLink) {
         when (deepLink) {
             DeepLink.QuickAdd -> navController.navigate(Routes.ADD_TRANSACTION)
+            DeepLink.VoiceAdd -> navController.navigate(Routes.naturalLanguageEntry(listen = true))
             DeepLink.ReviewImports -> navController.navigate(Routes.PENDING_IMPORTS)
             is DeepLink.OpenTransaction -> navController.navigate(Routes.transactionDetail(deepLink.transactionId))
             null -> return@LaunchedEffect

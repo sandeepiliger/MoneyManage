@@ -1152,4 +1152,16 @@
     <string name="category_name_refund">ரீஃபண்ட் &amp; கேஷ்பேக்</string>
     <string name="category_name_other_income">பிற வருமானம்</string>
     <string name="category_name_uncategorised">வகைப்படுத்தப்படாதவை</string>
+
+    <!-- Home-screen widget and launcher shortcuts -->
+    <string name="widget_name">காத்தா செலவுகள்</string>
+    <string name="widget_description">இன்றைய மற்றும் இந்த மாதச் செலவு, ஒரே தட்டலில் சேர்க்கவும் அல்லது சொல்லவும்.</string>
+    <string name="widget_spent_today">இன்றைய செலவு</string>
+    <string name="widget_this_month">இந்த மாதம்</string>
+    <string name="widget_add">+ சேர்</string>
+    <string name="widget_speak">பேசு</string>
+    <string name="shortcut_add_short">சேர்</string>
+    <string name="shortcut_add_long">செலவைச் சேர்</string>
+    <string name="shortcut_speak_short">பேசு</string>
+    <string name="shortcut_speak_long">என்ன செலவு செய்தீர்கள் என்று சொல்லுங்கள்</string>
 </resources>

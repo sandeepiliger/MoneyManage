@@ -1157,4 +1157,16 @@
     <string name="category_name_refund">रिफ़ंड और कैशबैक</string>
     <string name="category_name_other_income">अन्य आमदनी</string>
     <string name="category_name_uncategorised">बिना श्रेणी</string>
+
+    <!-- Home-screen widget and launcher shortcuts -->
+    <string name="widget_name">खाता खर्च</string>
+    <string name="widget_description">आज और इस महीने का खर्च, एक टैप में जोड़ें या बोलें।</string>
+    <string name="widget_spent_today">आज का खर्च</string>
+    <string name="widget_this_month">इस महीने</string>
+    <string name="widget_add">+ जोड़ें</string>
+    <string name="widget_speak">बोलें</string>
+    <string name="shortcut_add_short">जोड़ें</string>
+    <string name="shortcut_add_long">खर्च जोड़ें</string>
+    <string name="shortcut_speak_short">बोलें</string>
+    <string name="shortcut_speak_long">बताएं आपने क्या खर्च किया</string>
 </resources>
