@@ -67,12 +67,17 @@ object AppLocales {
     fun set(context: Context, language: AppLanguage) {
         val appContext = context.applicationContext
         prefs(appContext).edit(commit = true) { putString(KEY_TAG, language.tag) }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // The platform directly. AndroidX forwards here too, but only once it can find an
+            // AppCompat activity to reach the service through; this works from anywhere.
+            appContext.getSystemService(LocaleManager::class.java)?.applicationLocales =
+                if (language == AppLanguage.SYSTEM) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(language.tag)
+        } else {
             // Before the activities are recreated, so the first frame they draw already reads the
             // new language from the application context too.
             applyToProcess(appContext.resources, language)
+            AppCompatDelegate.setApplicationLocales(localeList(language))
         }
-        AppCompatDelegate.setApplicationLocales(localeList(language))
     }
 
     /**
