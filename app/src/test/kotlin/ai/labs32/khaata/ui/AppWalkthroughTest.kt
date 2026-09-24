@@ -265,7 +265,7 @@ class AppWalkthroughTest {
             .fetchSemanticsNodes()
             .firstOrNull()
             ?.config
-            ?.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)
+            ?.getOrElseNullable(androidx.compose.ui.semantics.SemanticsProperties.Text) { null }
             ?.joinToString()
 
     private fun str(id: Int, vararg args: Any): String = compose.activity.getString(id, *args)
