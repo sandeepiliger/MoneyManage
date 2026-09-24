@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.loans
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -144,7 +146,9 @@ fun LoansScreen(
                 verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
             ) {
                 items(state.statuses, key = { it.loan.id }) { status ->
-                    LoanCard(status = status, onClick = { onOpenLoan(status.loan.id) })
+                    AnimatedListItem {
+                        LoanCard(status = status, onClick = { onOpenLoan(status.loan.id) })
+                    }
                 }
                 item {
                     Text(
@@ -253,7 +257,7 @@ fun LoanDetailScreen(
     viewModel: LoanDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM yyyy")
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM yyyy") }
 
     LaunchedEffect(loanId) { viewModel.load(loanId) }
 

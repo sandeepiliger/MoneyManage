@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.accounts
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -182,7 +183,9 @@ fun AccountsScreen(
                 item { NetWorthCard(state) }
 
                 items(state.active, key = { it.account.id }) { balance ->
-                    AccountCard(balance = balance, onClick = { onOpenAccount(balance.account.id) })
+                    AnimatedListItem {
+                        AccountCard(balance = balance, onClick = { onOpenAccount(balance.account.id) })
+                    }
                 }
 
                 if (state.archived.isNotEmpty()) {
@@ -195,10 +198,12 @@ fun AccountsScreen(
                         )
                     }
                     items(state.archived, key = { it.account.id }) { balance ->
-                        AccountCard(
-                            balance = balance,
-                            onClick = { onOpenAccount(balance.account.id) },
-                        )
+                        AnimatedListItem {
+                            AccountCard(
+                                balance = balance,
+                                onClick = { onOpenAccount(balance.account.id) },
+                            )
+                        }
                     }
                 }
 

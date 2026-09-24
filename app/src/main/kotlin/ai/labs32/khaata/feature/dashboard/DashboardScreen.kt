@@ -1,5 +1,8 @@
 package ai.labs32.khaata.feature.dashboard
 
+import ai.labs32.khaata.ui.ScrollToTopOnReselect
+import androidx.compose.foundation.lazy.rememberLazyListState
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -182,7 +185,11 @@ private fun DashboardContent(
 ) {
     val spacing = KhaataTheme.spacing
 
+    val listState = rememberLazyListState()
+    ScrollToTopOnReselect(Routes.HOME, listState)
+
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(
             start = spacing.screenHorizontal,
@@ -201,12 +208,16 @@ private fun DashboardContent(
 
         if (state.isDemoMode) {
             item("demo-banner") {
-                DemoBanner(onManage = { onNavigate(Routes.SETTINGS) })
+                AnimatedListItem {
+                    DemoBanner(onManage = { onNavigate(Routes.SETTINGS) })
+                }
             }
         }
 
         item("needs-you") {
-            NeedsYouCard(state = state, onNavigate = onNavigate, onBillPaid = onBillPaid)
+            AnimatedListItem {
+                NeedsYouCard(state = state, onNavigate = onNavigate, onBillPaid = onBillPaid)
+            }
         }
 
         items(state.visibleCards, key = { it.name }) { card ->

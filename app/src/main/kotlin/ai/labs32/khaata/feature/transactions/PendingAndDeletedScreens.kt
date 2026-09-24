@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.transactions
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.heightIn
@@ -469,21 +470,23 @@ fun RecentlyDeletedScreen(
             contentPadding = PaddingValues(vertical = KhaataTheme.spacing.small),
         ) {
             items(state.transactions, key = { it.id }) { transaction ->
-                val category = categoriesById[transaction.categoryId]
+                AnimatedListItem {
+                    val category = categoriesById[transaction.categoryId]
 
-                Column {
-                    TransactionRow(
-                        transaction = transaction,
-                        categoryName = category?.name,
-                        accountName = accountsById[transaction.accountId]?.name,
-                        transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
-                        categoryColorSeed = category?.colorSeed ?: 0,
-                        categoryIconKey = category?.iconKey,
-                    )
-                    TextButton(
-                        onClick = { viewModel.restore(transaction.id) },
-                        modifier = Modifier.padding(start = 12.dp, bottom = 8.dp),
-                    ) { Text(stringResource(R.string.action_restore)) }
+                    Column {
+                        TransactionRow(
+                            transaction = transaction,
+                            categoryName = category?.name,
+                            accountName = accountsById[transaction.accountId]?.name,
+                            transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
+                            categoryColorSeed = category?.colorSeed ?: 0,
+                            categoryIconKey = category?.iconKey,
+                        )
+                        TextButton(
+                            onClick = { viewModel.restore(transaction.id) },
+                            modifier = Modifier.padding(start = 12.dp, bottom = 8.dp),
+                        ) { Text(stringResource(R.string.action_restore)) }
+                    }
                 }
             }
         }

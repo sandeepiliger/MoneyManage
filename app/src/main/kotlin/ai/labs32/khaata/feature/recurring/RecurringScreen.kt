@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.recurring
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -469,11 +470,13 @@ fun RecurringScreen(
                         )
                     }
                     items(state.due, key = { "${it.rule.id}-${it.dueOn}" }) { occurrence ->
-                        DueCard(
-                            occurrence = occurrence,
-                            onConfirm = { viewModel.confirm(occurrence) },
-                            onSkip = { viewModel.skip(occurrence) },
-                        )
+                        AnimatedListItem {
+                            DueCard(
+                                occurrence = occurrence,
+                                onConfirm = { viewModel.confirm(occurrence) },
+                                onSkip = { viewModel.skip(occurrence) },
+                            )
+                        }
                     }
                 }
 
@@ -486,11 +489,13 @@ fun RecurringScreen(
                         SectionHeader(stringResource(R.string.recurring_active))
                     }
                     items(state.active, key = { it.rule.id }) { item ->
-                        RuleCard(
-                            item = item,
-                            onClick = { viewModel.startEdit(item.rule) },
-                            onTogglePaused = { viewModel.togglePaused(item.rule) },
-                        )
+                        AnimatedListItem {
+                            RuleCard(
+                                item = item,
+                                onClick = { viewModel.startEdit(item.rule) },
+                                onTogglePaused = { viewModel.togglePaused(item.rule) },
+                            )
+                        }
                     }
                 }
 
@@ -499,11 +504,13 @@ fun RecurringScreen(
                         SectionHeader(stringResource(R.string.recurring_paused))
                     }
                     items(state.paused, key = { it.rule.id }) { item ->
-                        RuleCard(
-                            item = item,
-                            onClick = { viewModel.startEdit(item.rule) },
-                            onTogglePaused = { viewModel.togglePaused(item.rule) },
-                        )
+                        AnimatedListItem {
+                            RuleCard(
+                                item = item,
+                                onClick = { viewModel.startEdit(item.rule) },
+                                onTogglePaused = { viewModel.togglePaused(item.rule) },
+                            )
+                        }
                     }
                 }
             }

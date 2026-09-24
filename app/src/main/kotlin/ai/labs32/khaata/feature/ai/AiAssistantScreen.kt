@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.ai
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -116,7 +117,9 @@ fun AiAssistantScreen(
                 }
 
                 items(state.exchanges, key = { it.id }) { exchange ->
-                    ExchangeBlock(exchange)
+                    AnimatedListItem {
+                        ExchangeBlock(exchange)
+                    }
                 }
 
                 if (state.isThinking) {

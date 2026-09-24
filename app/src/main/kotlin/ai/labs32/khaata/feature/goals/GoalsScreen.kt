@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.goals
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -193,11 +194,13 @@ fun GoalsScreen(
                 verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
             ) {
                 items(state.goals, key = { it.goal.id }) { progress ->
-                    GoalCard(
-                        progress = progress,
-                        onEdit = { onEditGoal(progress.goal.id) },
-                        onAddMoney = { contributingTo = progress },
-                    )
+                    AnimatedListItem {
+                        GoalCard(
+                            progress = progress,
+                            onEdit = { onEditGoal(progress.goal.id) },
+                            onAddMoney = { contributingTo = progress },
+                        )
+                    }
                 }
             }
         }

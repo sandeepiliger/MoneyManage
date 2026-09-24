@@ -7,6 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
+import kotlinx.coroutines.flow.MutableSharedFlow
+import ai.labs32.khaata.ui.LocalTabReselect
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -172,6 +178,7 @@ private fun KhaataApp(
 
     val topLevel = remember(currentRoute) { TopLevelDestination.fromRoute(currentRoute) }
     val showChrome = topLevel != null
+    val tabReselects = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
 
     // A notification's "Record it" action opens straight into entry, and "new transaction to
     // confirm" opens straight into the review list, rather than making the user find either.
@@ -193,18 +200,27 @@ private fun KhaataApp(
             bottomBar = {
                 AnimatedVisibility(
                     visible = showChrome,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
+                    // The bar's height animates with it, so the screen above grows and shrinks
+                    // smoothly. A plain fade kept the space until the end and then gave it back in
+                    // one frame, which jumped a detail screen's bottom edge -- the Add screen's
+                    // Save button -- down by the height of the bar just as it settled.
+                    enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
+                    exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
                 ) {
                     KhaataBottomBar(
                         currentDestination = topLevel,
                         onSelect = { destination ->
-                            navController.navigate(destination.route) {
-                                // Tapping a tab returns to its root rather than stacking copies,
-                                // and preserves each tab's own scroll position.
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (destination == topLevel) {
+                                // Already here: the open screen scrolls back to its top.
+                                tabReselects.tryEmit(destination.route)
+                            } else {
+                                navController.navigate(destination.route) {
+                                    // Tapping a tab returns to its root rather than stacking
+                                    // copies, and preserves each tab's own scroll position.
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         onAdd = { navController.navigate(Routes.ADD_TRANSACTION) },
@@ -218,11 +234,13 @@ private fun KhaataApp(
                 }
             },
         ) { padding ->
-            KhaataNavHost(
-                navController = navController,
-                startDestination = Routes.HOME,
-                modifier = Modifier.padding(padding),
-            )
+            CompositionLocalProvider(LocalTabReselect provides tabReselects) {
+                KhaataNavHost(
+                    navController = navController,
+                    startDestination = Routes.HOME,
+                    modifier = Modifier.padding(padding),
+                )
+            }
         }
 
         // Drawn last so it covers everything, including the bottom bar and any open sheet.

@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.subscriptions
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -397,10 +399,12 @@ fun SubscriptionsScreen(
                 }
 
                 items(state.active, key = { it.subscription.id }) { item ->
-                    SubscriptionCard(
-                        item = item,
-                        onClick = { viewModel.startEdit(item.subscription) },
-                    )
+                    AnimatedListItem {
+                        SubscriptionCard(
+                            item = item,
+                            onClick = { viewModel.startEdit(item.subscription) },
+                        )
+                    }
                 }
 
                 if (state.cancelled.isNotEmpty()) {
@@ -413,11 +417,13 @@ fun SubscriptionsScreen(
                         )
                     }
                     items(state.cancelled, key = { it.subscription.id }) { item ->
-                        CancelledCard(
-                            item = item,
-                            onResume = { viewModel.resume(item.subscription) },
-                            onDelete = { viewModel.delete(item.subscription.id) },
-                        )
+                        AnimatedListItem {
+                            CancelledCard(
+                                item = item,
+                                onResume = { viewModel.resume(item.subscription) },
+                                onDelete = { viewModel.delete(item.subscription.id) },
+                            )
+                        }
                     }
                 }
             }
@@ -483,7 +489,7 @@ private fun CostCard(cost: SubscriptionTotals) {
 @Composable
 private fun SubscriptionCard(item: SubscriptionItem, onClick: () -> Unit) {
     val subscription = item.subscription
-    val dateFormatter = DateTimeFormatter.ofPattern("d MMM")
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("d MMM") }
     val isRenewingSoon = item.daysUntilRenewal in 0..RENEWAL_SOON_DAYS
 
     KhaataCard(onClick = onClick) {

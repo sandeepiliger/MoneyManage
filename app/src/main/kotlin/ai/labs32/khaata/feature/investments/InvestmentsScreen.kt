@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.investments
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -148,10 +149,12 @@ fun InvestmentsScreen(
                 item { AllocationCard(portfolio) }
 
                 items(portfolio.performances, key = { it.investment.id }) { performance ->
-                    HoldingCard(
-                        performance = performance,
-                        onClick = { onEditInvestment(performance.investment.id) },
-                    )
+                    AnimatedListItem {
+                        HoldingCard(
+                            performance = performance,
+                            onClick = { onEditInvestment(performance.investment.id) },
+                        )
+                    }
                 }
 
                 item {

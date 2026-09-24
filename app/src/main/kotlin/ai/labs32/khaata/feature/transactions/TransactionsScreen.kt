@@ -1,5 +1,9 @@
 package ai.labs32.khaata.feature.transactions
 
+import ai.labs32.khaata.navigation.Routes
+import ai.labs32.khaata.ui.ScrollToTopOnReselect
+import androidx.compose.foundation.lazy.rememberLazyListState
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Delete
@@ -301,6 +305,8 @@ private fun TransactionList(
     // Indexed once per change of the underlying lists rather than scanned per row. Looking these
     // up with `firstOrNull` inside the row made every visible row walk the whole category and
     // account list on every frame, which is what a long ledger felt slow scrolling through.
+    val listState = rememberLazyListState()
+    ScrollToTopOnReselect(Routes.TRANSACTIONS, listState)
     val categoriesById = remember(state.categories) { state.categories.associateBy { it.id } }
     val accountsById = remember(state.accounts) { state.accounts.associateBy { it.id } }
 
@@ -329,6 +335,7 @@ private fun TransactionList(
         )
 
         else -> LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = KhaataTheme.spacing.bottomBarClearance),
         ) {
@@ -337,41 +344,43 @@ private fun TransactionList(
                 key = pagedTransactions.itemKey { it.id },
             ) { index ->
                 val transaction = pagedTransactions[index] ?: return@items
+                AnimatedListItem {
 
-                // A date header whenever the day changes. Computed from the neighbouring row
-                // rather than by pre-grouping, so it works with paging.
-                val previous = if (index > 0) pagedTransactions.peek(index - 1) else null
-                if (previous == null || previous.occurredOn != transaction.occurredOn) {
-                    DateHeader(
-                        date = transaction.occurredOn,
-                        // Only when sorted by date: sorted by amount, one day's rows are scattered
-                        // and a day total above one of them would describe rows that are not there.
-                        net = if (state.filter.sort == TransactionSort.DATE_DESC) {
-                            state.dailyNet[transaction.occurredOn]
-                        } else {
-                            null
-                        },
-                    )
-                }
+                    // A date header whenever the day changes. Computed from the neighbouring row
+                    // rather than by pre-grouping, so it works with paging.
+                    val previous = if (index > 0) pagedTransactions.peek(index - 1) else null
+                    if (previous == null || previous.occurredOn != transaction.occurredOn) {
+                        DateHeader(
+                            date = transaction.occurredOn,
+                            // Only when sorted by date: sorted by amount, one day's rows are scattered
+                            // and a day total above one of them would describe rows that are not there.
+                            net = if (state.filter.sort == TransactionSort.DATE_DESC) {
+                                state.dailyNet[transaction.occurredOn]
+                            } else {
+                                null
+                            },
+                        )
+                    }
 
-                val category = categoriesById[transaction.categoryId]
+                    val category = categoriesById[transaction.categoryId]
 
-                SwipeableRow(
-                    canRecategorise = transaction.type != TransactionType.TRANSFER,
-                    onDelete = { onDelete(transaction.id) },
-                    onRecategorise = { onRecategorise(transaction) },
-                ) {
-                    TransactionRow(
-                        transaction = transaction,
-                        categoryName = category?.name,
-                        accountName = accountsById[transaction.accountId]?.name,
-                        transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
-                        categoryColorSeed = category?.colorSeed ?: 0,
-                        categoryIconKey = category?.iconKey,
-                        onClick = { onOpenTransaction(transaction.id) },
-                        showDate = false,
-                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
-                    )
+                    SwipeableRow(
+                        canRecategorise = transaction.type != TransactionType.TRANSFER,
+                        onDelete = { onDelete(transaction.id) },
+                        onRecategorise = { onRecategorise(transaction) },
+                    ) {
+                        TransactionRow(
+                            transaction = transaction,
+                            categoryName = category?.name,
+                            accountName = accountsById[transaction.accountId]?.name,
+                            transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
+                            categoryColorSeed = category?.colorSeed ?: 0,
+                            categoryIconKey = category?.iconKey,
+                            onClick = { onOpenTransaction(transaction.id) },
+                            showDate = false,
+                            modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                        )
+                    }
                 }
             }
 

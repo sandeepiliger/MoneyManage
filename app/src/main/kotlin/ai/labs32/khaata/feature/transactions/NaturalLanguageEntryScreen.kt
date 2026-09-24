@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.transactions
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
@@ -280,13 +281,15 @@ private fun DraftList(
             verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small),
         ) {
             items(state.drafts, key = { it.id }) { draft ->
-                DraftCard(
-                    draft = draft,
-                    state = state,
-                    onToggle = { viewModel.toggleDraft(draft.id) },
-                    onCategoryChange = { viewModel.setDraftCategory(draft.id, it) },
-                    onAccountChange = { viewModel.setDraftAccount(draft.id, it) },
-                )
+                AnimatedListItem {
+                    DraftCard(
+                        draft = draft,
+                        state = state,
+                        onToggle = { viewModel.toggleDraft(draft.id) },
+                        onCategoryChange = { viewModel.setDraftCategory(draft.id, it) },
+                        onAccountChange = { viewModel.setDraftAccount(draft.id, it) },
+                    )
+                }
             }
         }
 

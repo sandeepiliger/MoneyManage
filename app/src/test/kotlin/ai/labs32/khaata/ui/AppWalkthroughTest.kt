@@ -279,6 +279,24 @@ class AppWalkthroughTest {
         snap("add")
     }
 
+    /** Tapping the tab you are already on takes the list back to its top, as in every big app. */
+    @Test
+    fun tappingTheOpenTabAgainScrollsBackToTheTop() {
+        startWithSampleData()
+        val avatar = hasContentDescription(str(R.string.settings_title)) and hasClickAction()
+        fun avatarOnScreen() = compose.onAllNodes(avatar).fetchSemanticsNodes()
+            .any { it.boundsInRoot.top >= 0f && it.boundsInRoot.bottom > 0f }
+        assertThat(avatarOnScreen()).isTrue()
+
+        repeat(3) { scrollMainList() }
+        compose.waitUntil(TIMEOUT_MS) { !avatarOnScreen() }
+
+        tab(R.string.nav_home).performClick()
+        compose.waitUntil(TIMEOUT_MS) { avatarOnScreen() }
+        // Still on Home: the tap scrolled, it did not navigate anywhere.
+        onText(R.string.home_needs_you).assertExists()
+    }
+
     /** A small phone (360dp x 640dp): the add screen's keypad and fields must still fit. */
     @Test
     @Config(qualifiers = "w360dp-h640dp-xhdpi")

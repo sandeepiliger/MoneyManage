@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.settings
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -229,7 +230,9 @@ fun MerchantRulesScreen(
                     verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small),
                 ) {
                     items(state.rules, key = { it.rule.id }) { item ->
-                        RuleRow(item = item, onDelete = { viewModel.delete(item.rule.id) })
+                        AnimatedListItem {
+                            RuleRow(item = item, onDelete = { viewModel.delete(item.rule.id) })
+                        }
                     }
 
                     item(key = "footer") {

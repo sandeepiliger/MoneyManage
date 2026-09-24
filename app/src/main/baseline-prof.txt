@@ -1,0 +1,8 @@
+# Baseline profile: code compiled ahead of time on install, so the first launch and the first
+# scroll run at full speed instead of waiting for the JIT.
+#
+# The whole app is small enough to compile outright, so every class and method in it is listed.
+# Compose, navigation, Room and the other libraries ship their own profiles, merged in by the
+# build. ProfileInstaller applies the result on devices that did not install from Play.
+HSPLai/labs32/khaata/**->**(**)**
+Lai/labs32/khaata/**;

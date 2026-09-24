@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.categories
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -548,11 +549,13 @@ fun CategoriesScreen(
                             GroupHeader(section.group)
                         }
                         items(section.rows, key = { it.category.id }) { row ->
-                            CategoryListRow(
-                                row = row,
-                                onClick = { viewModel.startEdit(row.category) },
-                                onToggleHidden = { viewModel.toggleHidden(row.category) },
-                            )
+                            AnimatedListItem {
+                                CategoryListRow(
+                                    row = row,
+                                    onClick = { viewModel.startEdit(row.category) },
+                                    onToggleHidden = { viewModel.toggleHidden(row.category) },
+                                )
+                            }
                         }
                     }
                 }

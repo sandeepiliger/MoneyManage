@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.creditcards
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,7 +107,7 @@ fun CreditCardsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val today = viewModel.clock.today()
-    val dateFormatter = DateTimeFormatter.ofPattern("d MMM")
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("d MMM") }
 
     Scaffold(
         topBar = {
@@ -151,12 +153,14 @@ fun CreditCardsScreen(
                 verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
             ) {
                 items(state.statuses, key = { it.card.id }) { status ->
-                    CreditCardCard(
-                        status = status,
-                        dueLabel = status.paymentDueOn.format(dateFormatter),
-                        isOverdue = status.isOverdue(today),
-                        onClick = { onEditCard(status.card.id) },
-                    )
+                    AnimatedListItem {
+                        CreditCardCard(
+                            status = status,
+                            dueLabel = status.paymentDueOn.format(dateFormatter),
+                            isOverdue = status.isOverdue(today),
+                            onClick = { onEditCard(status.card.id) },
+                        )
+                    }
                 }
 
                 item {

@@ -1,5 +1,7 @@
 package ai.labs32.khaata.feature.money
 
+import ai.labs32.khaata.ui.ScrollToTopOnReselect
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -81,7 +83,11 @@ fun MoneyScreen(
         return
     }
 
+    val listState = rememberLazyListState()
+    ScrollToTopOnReselect(Routes.MONEY, listState)
+
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = spacing.screenHorizontal,

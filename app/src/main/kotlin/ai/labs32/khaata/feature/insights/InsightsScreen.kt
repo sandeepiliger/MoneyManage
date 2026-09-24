@@ -1,5 +1,6 @@
 package ai.labs32.khaata.feature.insights
 
+import ai.labs32.khaata.core.ui.components.AnimatedListItem
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -218,11 +219,13 @@ fun InsightsScreen(
                     verticalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.medium),
                 ) {
                     items(state.insights, key = { it.id }) { insight ->
-                        InsightCard(
-                            insight = insight,
-                            onDismiss = { viewModel.dismiss(insight.id) },
-                            onOpenBudget = onOpenBudget,
-                        )
+                        AnimatedListItem {
+                            InsightCard(
+                                insight = insight,
+                                onDismiss = { viewModel.dismiss(insight.id) },
+                                onOpenBudget = onOpenBudget,
+                            )
+                        }
                     }
                 }
             }

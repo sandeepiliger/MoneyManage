@@ -862,7 +862,7 @@ private fun CategoryCard(categories: List<CategorySpend>) {
 
 @Composable
 private fun IncomeExpenseCard(series: List<CashflowSummary>) {
-    val formatter = DateTimeFormatter.ofPattern("MMM")
+    val formatter = remember { DateTimeFormatter.ofPattern("MMM") }
     val groups = series.map { summary ->
         BarGroup(
             label = summary.period.start.format(formatter),
@@ -918,7 +918,7 @@ private fun LegendEntry(color: androidx.compose.ui.graphics.Color, label: String
 
 @Composable
 private fun SavingsTrendCard(series: List<CashflowSummary>) {
-    val formatter = DateTimeFormatter.ofPattern("MMM")
+    val formatter = remember { DateTimeFormatter.ofPattern("MMM") }
     val currency = series.first().net.currency
     val points = series.map {
         ChartPoint(label = it.period.start.format(formatter), value = it.net.amount.toFloat())

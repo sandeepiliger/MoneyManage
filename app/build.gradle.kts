@@ -298,6 +298,11 @@ dependencies {
     // Reads the orientation tag phone cameras write instead of rotating pixels; without it a
     // receipt photographed in portrait is stored and shown on its side.
     implementation(libs.androidx.exifinterface)
+    // Installs the baseline profile (src/main/baseline-prof.txt, and the ones Compose and the
+    // other libraries ship) on a sideloaded APK too. Play does this from the cloud; an APK from
+    // the releases page otherwise runs interpreted and JIT-compiled for its first several
+    // launches, which is where first-scroll stutter comes from.
+    implementation(libs.androidx.profileinstaller)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
