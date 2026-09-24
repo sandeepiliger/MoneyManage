@@ -16,7 +16,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.outlined.ShowChart
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,6 +43,7 @@ import ai.labs32.khaata.core.calc.CreditCardStatus
 import ai.labs32.khaata.core.calc.LoanStatus
 import ai.labs32.khaata.core.calc.NetWorthSummary
 import ai.labs32.khaata.core.model.AccountBalance
+import ai.labs32.khaata.core.model.AccountType
 import ai.labs32.khaata.core.money.Money
 import ai.labs32.khaata.core.money.MoneyFormatter
 import ai.labs32.khaata.core.ui.components.CardHeader
@@ -289,7 +293,7 @@ private fun RowDivider() {
 private fun AccountRow(balance: AccountBalance, onClick: () -> Unit) {
     val account = balance.account
     ProductRow(
-        icon = CategoryIcons[account.iconKey],
+        icon = accountIcon(balance),
         colorSeed = account.colorSeed,
         title = account.name,
         subtitle = listOfNotNull(account.institution, account.maskedIdentifier?.let { "••$it" })
@@ -308,8 +312,15 @@ private fun CardRow(status: CreditCardStatus, onClick: () -> Unit) {
         icon = Icons.Outlined.CreditCard,
         colorSeed = card.colorSeed,
         title = card.cardName,
-        subtitle = stringResource(R.string.money_card_due, relativeDateLabel(status.paymentDueOn)) +
-            " · " + stringResource(R.string.money_card_used, status.utilisationPercentClamped),
+        // The same wording as the Cards screen: a due date already passed with a statement still
+        // unpaid is "Overdue", not a date in the past presented as if it were still coming.
+        subtitle = (
+            if (status.isOverdue(java.time.LocalDate.now())) {
+                stringResource(R.string.cards_overdue)
+            } else {
+                stringResource(R.string.money_card_due, relativeDateLabel(status.paymentDueOn))
+            }
+            ) + " · " + stringResource(R.string.money_card_used, status.utilisationPercentClamped),
         amount = status.outstanding,
         owed = status.outstanding.isPositive,
         onClick = onClick,
@@ -331,7 +342,7 @@ private fun CardRow(status: CreditCardStatus, onClick: () -> Unit) {
 @Composable
 private fun LoanRow(status: LoanStatus, onClick: () -> Unit) {
     ProductRow(
-        icon = Icons.Outlined.Payments,
+        icon = Icons.Outlined.RequestQuote,
         colorSeed = status.loan.colorSeed,
         title = status.loan.name,
         subtitle = stringResource(R.string.money_loan_emi, MoneyFormatter.plain(status.emi)) +
@@ -395,3 +406,18 @@ private const val HIGH_UTILISATION = 30
 
 /** A fixed seed for the portfolio row, which has no colour of its own. */
 private const val INVESTMENT_SEED = 3
+
+/**
+ * An account's badge, from its type. Account icon keys are not category keys -- "bank" happens to
+ * be both, "savings" and "cash" are not -- so looking them up as categories drew the generic
+ * shapes glyph for most accounts.
+ */
+private fun accountIcon(balance: AccountBalance): ImageVector = when (balance.account.type) {
+    AccountType.BANK, AccountType.SAVINGS, AccountType.CURRENT -> Icons.Outlined.AccountBalance
+    AccountType.CASH -> Icons.Outlined.Payments
+    AccountType.WALLET -> Icons.Outlined.AccountBalanceWallet
+    AccountType.CREDIT_CARD -> Icons.Outlined.CreditCard
+    AccountType.LOAN -> Icons.Outlined.RequestQuote
+    AccountType.INVESTMENT -> Icons.AutoMirrored.Outlined.ShowChart
+    AccountType.OTHER -> CategoryIcons[balance.account.iconKey]
+}

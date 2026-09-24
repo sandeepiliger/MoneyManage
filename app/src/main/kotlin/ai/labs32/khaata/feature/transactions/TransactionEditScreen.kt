@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -332,8 +333,15 @@ private fun TransactionEditContent(
                 )
             } else {
                 Spacer(Modifier.height(spacing.default))
+                // A category chosen from the merchant, or picked from the full list, may not be in
+                // the quick row at all; it goes first so the choice is always visible.
+                val chosen = state.relevantCategories.firstOrNull { it.id == state.categoryId }
                 CategorySelector(
-                    quick = state.quickCategories,
+                    quick = if (chosen != null && state.quickCategories.none { it.id == chosen.id }) {
+                        listOf(chosen) + state.quickCategories
+                    } else {
+                        state.quickCategories
+                    },
                     selectedId = state.categoryId,
                     hint = state.categoryHint,
                     onSelect = viewModel::onCategoryChange,
@@ -604,7 +612,20 @@ private fun CategorySelector(
             }
         }
         Spacer(Modifier.height(6.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // When the selection changes to a chip off the edge -- the merchant suggested it, say --
+        // the row scrolls to it rather than leaving the chosen category out of sight.
+        val rowState = rememberLazyListState()
+        LaunchedEffect(selectedId, quick) {
+            val index = quick.indexOfFirst { it.id == selectedId }
+            val info = rowState.layoutInfo
+            val fullyVisible = info.visibleItemsInfo.any {
+                it.index == index && it.offset >= 0 && it.offset + it.size <= info.viewportEndOffset
+            }
+            if (index >= 0 && !fullyVisible) {
+                rowState.animateScrollToItem(index)
+            }
+        }
+        LazyRow(state = rowState, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(quick, key = { it.id }) { category ->
                 FilterChip(
                     selected = category.id == selectedId,

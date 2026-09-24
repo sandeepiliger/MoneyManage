@@ -95,7 +95,7 @@ data class DashboardUiState(
     val topInsight: Insight? = null,
     /** Manual bills whose date has passed, waiting for "did this go out?". */
     val awaitingBills: List<DueOccurrence> = emptyList(),
-    /** Cards with something owed and a payment due within [CARD_DUE_WINDOW_DAYS]. */
+    /** Cards overdue, or with something owed and a payment due within [CARD_DUE_WINDOW_DAYS]. */
     val cardsDueSoon: List<CreditCardStatus> = emptyList(),
 
     val categories: List<Category> = emptyList(),
@@ -351,7 +351,12 @@ class DashboardViewModel @Inject constructor(
         ) { awaiting, cards ->
             val today = clock.today()
             awaiting to cards
-                .filter { it.outstanding.isPositive && it.daysUntilDue(today) in 0..CARD_DUE_WINDOW_DAYS }
+                // Overdue first of all: a missed card payment is the most expensive thing on the
+                // list, and it used to be left off because its due date had already passed.
+                .filter {
+                    it.isOverdue(today) ||
+                        (it.outstanding.isPositive && it.daysUntilDue(today) in 0..CARD_DUE_WINDOW_DAYS)
+                }
                 .sortedBy { it.paymentDueOn }
         }
             .catch { error -> KhaataLog.e(TAG, "Needs-you stream failed", error) }

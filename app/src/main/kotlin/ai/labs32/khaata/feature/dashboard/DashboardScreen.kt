@@ -645,14 +645,19 @@ private fun NeedsYouRows(
 
     state.cardsDueSoon.forEach { status ->
         if (shown++ > 0) HorizontalDivider(color = divider)
+        val overdue = status.isOverdue(LocalDate.now())
         NeedsYouRow(
             icon = Icons.Outlined.CreditCard,
-            tint = money.warning,
-            title = stringResource(
-                R.string.home_card_bill_due,
-                status.card.cardName,
-                relativeDateLabel(status.paymentDueOn),
-            ),
+            tint = if (overdue) money.expense else money.warning,
+            title = if (overdue) {
+                "${status.card.cardName} · ${stringResource(R.string.cards_overdue)}"
+            } else {
+                stringResource(
+                    R.string.home_card_bill_due,
+                    status.card.cardName,
+                    relativeDateLabel(status.paymentDueOn),
+                )
+            },
             subtitle = MoneyFormatter.plain(status.statementBalance.takeIf { it.isPositive } ?: status.outstanding),
             actionLabel = stringResource(R.string.home_open),
             onAction = { onNavigate(Routes.creditCardDetail(status.card.id)) },

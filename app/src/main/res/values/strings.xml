@@ -1084,4 +1084,6 @@
         <item quantity="one">%1$d more bill to confirm</item>
         <item quantity="other">%1$d more bills to confirm</item>
     </plurals>
+
+    <string name="activity_filter_all">All</string>
 </resources>

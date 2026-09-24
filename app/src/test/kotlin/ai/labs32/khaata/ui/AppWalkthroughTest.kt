@@ -69,6 +69,17 @@ class AppWalkthroughTest {
         onText(R.string.home_needs_you).assertIsDisplayed()
         assertBottomBarAtTheBottom()
         snap("home")
+
+        // "Record it" on a bill in Needs you records the oldest missed date, so the count of
+        // dates still waiting behind it goes down.
+        // "Was due 3 Apr · 5 more waiting" becomes "Was due 3 May · 4 more waiting".
+        val wasDue = str(R.string.recurring_was_due, "").trim()
+        val waitingBefore = firstTextContaining(wasDue)
+        assertThat(waitingBefore).isNotNull()
+        compose.onAllNodes(hasText(str(R.string.recurring_confirm_post)) and hasClickAction())[0].performClick()
+        compose.waitUntil(TIMEOUT_MS) { firstTextContaining(wasDue) != waitingBefore }
+        snap("home-after-record")
+
         scrollMainList()
         snap("home-scrolled")
 
@@ -91,6 +102,7 @@ class AppWalkthroughTest {
         snap("plan")
         scrollMainList()
         snap("plan-scrolled")
+        compose.onAllNodes(hasScrollToIndexAction())[0].performScrollToIndex(0)
         compose.onNode(hasContentDescription(str(R.string.plan_previous_month))).performClick()
         compose.waitForIdle()
         snap("plan-last-month")
@@ -246,6 +258,15 @@ class AppWalkthroughTest {
         compose.onNode(hasText(str(R.string.onboarding_try_demo)) and hasClickAction()).performClick()
         waitForText(R.string.home_needs_you)
     }
+
+    /** The text of the first node whose text contains [fragment], or null. */
+    private fun firstTextContaining(fragment: String): String? =
+        compose.onAllNodes(hasText(fragment, substring = true), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .firstOrNull()
+            ?.config
+            ?.getOrNull(androidx.compose.ui.semantics.SemanticsProperties.Text)
+            ?.joinToString()
 
     private fun str(id: Int, vararg args: Any): String = compose.activity.getString(id, *args)
 

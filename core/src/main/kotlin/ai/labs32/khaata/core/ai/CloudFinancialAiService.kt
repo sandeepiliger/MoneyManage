@@ -202,7 +202,7 @@ object CloudAiPrompt {
         if (budgets.isNotEmpty()) {
             appendLine("Budgets this period:")
             budgets.forEach { budget ->
-                val progress = BudgetCalculator.evaluate(budget, effective, context.today, rollup)
+                val progress = BudgetCalculator.evaluateWithCarryOver(budget, effective, context.today, rollup)
                 appendLine(
                     "- ${budget.name}: spent ${money(progress.spent)} of ${money(progress.limit)}, " +
                         "${progress.daysRemaining} days left",

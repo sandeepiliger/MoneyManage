@@ -360,10 +360,17 @@ private fun BillsCard(
             onAction = onSeeAll,
         )
 
-        state.awaiting.forEach { occurrence ->
+        // One card per bill, oldest date first: a rent left unconfirmed for three months is
+        // answered a month at a time, in order, and the card shows how many are still behind it
+        // rather than stacking three near-identical cards.
+        val byRule = remember(state.awaiting) {
+            state.awaiting.groupBy { it.rule.id }.values.map { it.first() to it.size - 1 }
+        }
+        byRule.forEach { (occurrence, more) ->
             Spacer(Modifier.height(KhaataTheme.spacing.small))
             AwaitingBill(
                 occurrence = occurrence,
+                moreWaiting = more,
                 onMarkPaid = { onMarkPaid(occurrence) },
                 onSkip = { onSkip(occurrence) },
             )
@@ -399,6 +406,7 @@ private fun BillsCard(
 @Composable
 private fun AwaitingBill(
     occurrence: DueOccurrence,
+    moreWaiting: Int,
     onMarkPaid: () -> Unit,
     onSkip: () -> Unit,
 ) {
@@ -415,8 +423,13 @@ private fun AwaitingBill(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                val due = stringResource(R.string.recurring_was_due, occurrence.dueOn.format(dateFormatter))
                 Text(
-                    text = stringResource(R.string.recurring_was_due, occurrence.dueOn.format(dateFormatter)),
+                    text = if (moreWaiting > 0) {
+                        due + " · " + pluralStringResource(R.plurals.home_more_waiting, moreWaiting, moreWaiting)
+                    } else {
+                        due
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

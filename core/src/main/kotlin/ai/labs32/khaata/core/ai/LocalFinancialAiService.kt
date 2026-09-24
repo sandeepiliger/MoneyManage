@@ -230,7 +230,7 @@ class LocalFinancialAiService : FinancialAiService {
         }
 
         val struggling = active
-            .map { BudgetCalculator.evaluate(it, context.transactions, context.today, rollup) }
+            .map { BudgetCalculator.evaluateWithCarryOver(it, context.transactions, context.today, rollup) }
             .filter { it.status.needsAttention }
             .sortedByDescending { it.percentUsed }
 
@@ -238,7 +238,7 @@ class LocalFinancialAiService : FinancialAiService {
             return AiAnswer.Answered(
                 summary = "Every budget is on track this period.",
                 evidence = active.map { budget ->
-                    val progress = BudgetCalculator.evaluate(budget, context.transactions, context.today, rollup)
+                    val progress = BudgetCalculator.evaluateWithCarryOver(budget, context.transactions, context.today, rollup)
                     Evidence(budget.name, progress.spent)
                 },
                 source = AnswerSource.ON_DEVICE,

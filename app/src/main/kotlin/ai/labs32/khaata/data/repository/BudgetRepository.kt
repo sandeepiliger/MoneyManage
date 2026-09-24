@@ -66,12 +66,7 @@ class BudgetRepository @Inject constructor(
         ) { budgets, transactions, categories ->
             val rollup = BudgetCalculator.buildCategoryRollup(categories)
             budgets.map { budget ->
-                val carried = if (budget.rollsOver) {
-                    BudgetCalculator.carryOverInto(budget, transactions, today, rollup)
-                } else {
-                    Money.zero(budget.limit.currency)
-                }
-                BudgetCalculator.evaluate(budget, transactions, today, rollup, carried)
+                BudgetCalculator.evaluateWithCarryOver(budget, transactions, today, rollup)
             }
         }
             // Each budget is evaluated by folding the whole evaluation window, and rollover
@@ -90,12 +85,7 @@ class BudgetRepository @Inject constructor(
         val today = clock.today()
         val transactions = transactionRepository.getInRange(evaluationWindow(today))
         val rollup = categoryRepository.categoryRollup()
-        val carried = if (budget.rollsOver) {
-            BudgetCalculator.carryOverInto(budget, transactions, today, rollup)
-        } else {
-            Money.zero(budget.limit.currency)
-        }
-        return BudgetCalculator.evaluate(budget, transactions, today, rollup, carried)
+        return BudgetCalculator.evaluateWithCarryOver(budget, transactions, today, rollup)
     }
 
     // ---- Writes ------------------------------------------------------------------------------

@@ -555,7 +555,7 @@ private fun QuickTypeFilters(
     onSelect: (TransactionType?) -> Unit,
 ) {
     val options = listOf(
-        null to R.string.budgets_all_spending,
+        null to R.string.activity_filter_all,
         TransactionType.EXPENSE to R.string.transaction_expense,
         TransactionType.INCOME to R.string.transaction_income,
         TransactionType.TRANSFER to R.string.transaction_transfer,

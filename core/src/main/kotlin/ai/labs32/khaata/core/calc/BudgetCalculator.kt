@@ -192,6 +192,28 @@ object BudgetCalculator {
     }
 
     /**
+     * [evaluate] with the carry-over worked out from [transactions], the way every screen shows a
+     * budget.
+     *
+     * The one to call. A rollover budget judged without its carry-over reads as overspent while
+     * the Budgets screen, which includes it, says on track -- the insight card and the assistant
+     * both did that, calling a ₹8,000 + ₹6,700 carried budget "overspent" at ₹8,400.
+     * [transactions] must reach back into the previous period for the carry-over to be right.
+     */
+    fun evaluateWithCarryOver(
+        budget: Budget,
+        transactions: List<Transaction>,
+        asOf: LocalDate,
+        categoryRollup: Map<String, String> = emptyMap(),
+    ): BudgetProgress = evaluate(
+        budget = budget,
+        transactions = transactions,
+        asOf = asOf,
+        categoryRollup = categoryRollup,
+        carriedOver = carryOverInto(budget, transactions, asOf, categoryRollup),
+    )
+
+    /**
      * Unspent remainder of the period before the one containing [asOf], for rollover budgets.
      *
      * Returns zero when the budget does not roll over or the previous period overspent — debt

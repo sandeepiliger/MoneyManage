@@ -1086,4 +1086,6 @@
         <item quantity="one">%1$d और बिल की पुष्टि करनी है</item>
         <item quantity="other">%1$d और बिलों की पुष्टि करनी है</item>
     </plurals>
+
+    <string name="activity_filter_all">सभी</string>
 </resources>

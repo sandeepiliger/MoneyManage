@@ -243,4 +243,42 @@ class InsightEngineTest {
         assertThat(engine.generate(transactions, categories, emptyList(), emptyList(), asOf, limit = 3))
             .hasSize(3)
     }
+
+    /**
+     * A rollover budget is judged against its limit plus what carried in, exactly as the Budgets
+     * screen shows it. Judged on the bare limit, a budget on track at ₹8,400 of ₹14,700 was
+     * announced as overspent on Home.
+     */
+    @Test
+    fun `a rollover budget within its carried-over limit is not called overspent`() {
+        val budget = Fixtures.budget(limit = "8000", rollsOver = true)
+        val transactions = listOf(
+            // February spent 1,300 of 8,000, so 6,700 carries into March.
+            Fixtures.expense(amount = "1300", categoryId = "cat-food", on = LocalDate.of(2026, 2, 10)),
+            // March has spent 8,400: over the bare 8,000, well inside 14,700.
+            Fixtures.expense(amount = "8400", categoryId = "cat-food", on = LocalDate.of(2026, 3, 5)),
+        )
+        val budgetInsights = generate(transactions, budgets = listOf(budget))
+            .filter { it.budgetId == budget.id }
+        assertThat(budgetInsights.map { it.title }.none { it.contains("overspent") }).isTrue()
+
+        val progress = ai.labs32.khaata.core.calc.BudgetCalculator
+            .evaluateWithCarryOver(budget, transactions, asOf)
+        assertThat(progress.limit).isEqualTo(Money.of("14700"))
+        assertThat(progress.isOverspent).isFalse()
+    }
+
+    @Test
+    fun `a rollover budget past its carried-over limit is still called overspent`() {
+        val budget = Fixtures.budget(limit = "8000", rollsOver = true)
+        val transactions = listOf(
+            Fixtures.expense(amount = "7000", categoryId = "cat-food", on = LocalDate.of(2026, 2, 10)),
+            // 1,000 carried in, so the limit is 9,000 and 9,500 is over it.
+            Fixtures.expense(amount = "9500", categoryId = "cat-food", on = LocalDate.of(2026, 3, 5)),
+        )
+        val overspent = generate(transactions, budgets = listOf(budget))
+            .single { it.budgetId == budget.id }
+        assertThat(overspent.title).contains("overspent")
+        assertThat(overspent.evidence.first { it.label == "Over by" }.amount).isEqualTo(Money.of("500"))
+    }
 }

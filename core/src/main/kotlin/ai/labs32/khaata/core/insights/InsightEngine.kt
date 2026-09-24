@@ -141,7 +141,7 @@ class InsightEngine(
         rollup: Map<String, String>,
         asOf: LocalDate,
     ): List<Insight> = budgets.filter { it.isActive }.mapNotNull { budget ->
-        val progress = BudgetCalculator.evaluate(budget, transactions, asOf, rollup)
+        val progress = BudgetCalculator.evaluateWithCarryOver(budget, transactions, asOf, rollup)
         when (progress.status) {
             BudgetStatus.OVERSPENT -> overspentInsight(budget, progress)
             BudgetStatus.EXHAUSTED -> exhaustedInsight(budget, progress)
