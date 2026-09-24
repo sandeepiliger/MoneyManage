@@ -80,7 +80,8 @@ private fun RowScope.DestinationItem(
 ) {
     NavigationBarItem(
         selected = selected,
-        onClick = { if (!selected) onSelect(destination) },
+        // Also on the open tab: the caller scrolls that screen back to its top.
+        onClick = { onSelect(destination) },
         icon = {
             Icon(
                 imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
