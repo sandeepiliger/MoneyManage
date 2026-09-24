@@ -183,6 +183,16 @@ object DefaultCategories {
         )
     }
 
+    /**
+     * The name a built-in category was seeded with, by id; null for a category the user made.
+     *
+     * Stored rows keep this English name. The app shows it translated, and keeps any name the user
+     * typed over it -- see the app's BuiltInCategoryNames.
+     */
+    fun defaultName(id: String): String? = DEFAULT_NAMES[id]
+
+    private val DEFAULT_NAMES: Map<String, String> by lazy { ALL.associate { it.id to it.name } }
+
     /** Top-level categories only, for the first level of the picker. */
     val TOP_LEVEL: List<Category> = ALL.filter { it.parentId == null }
 

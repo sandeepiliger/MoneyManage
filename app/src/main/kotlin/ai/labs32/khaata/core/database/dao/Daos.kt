@@ -105,6 +105,13 @@ interface CategoryDao {
     @Query("UPDATE categories SET isArchived = :archived WHERE id = :id")
     suspend fun setArchived(id: String, archived: Boolean)
 
+    /**
+     * Rewrites one row unchanged. Nothing is different on disk, but every screen watching the
+     * categories reads them again -- which is how built-in names follow a change of language.
+     */
+    @Query("UPDATE categories SET sortOrder = sortOrder WHERE id = (SELECT id FROM categories LIMIT 1)")
+    suspend fun touch()
+
     @Query("SELECT * FROM categories WHERE isArchived = 0 ORDER BY group_name, sortOrder, name")
     fun observeActive(): Flow<List<CategoryEntity>>
 

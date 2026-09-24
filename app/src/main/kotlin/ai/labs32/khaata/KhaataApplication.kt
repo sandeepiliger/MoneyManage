@@ -10,6 +10,7 @@ import androidx.work.Configuration
 import ai.labs32.khaata.core.analytics.AnalyticsEvent
 import ai.labs32.khaata.core.analytics.AnalyticsProvider
 import ai.labs32.khaata.core.locale.AppLocales
+import ai.labs32.khaata.core.locale.BuiltInCategoryNames
 import ai.labs32.khaata.core.logging.KhaataLog
 import ai.labs32.khaata.core.model.AppSettings
 import ai.labs32.khaata.core.notifications.KhaataNotifier
@@ -84,6 +85,7 @@ class KhaataApplication : Application(), Configuration.Provider {
         // The in-app language, before anything reads a string: notification channels below are
         // named in it.
         AppLocales.applyStored(this)
+        BuiltInCategoryNames.install(this)
 
         // Channels must exist before any notification is posted, and creating them is cheap.
         NotificationChannels.createAll(this)

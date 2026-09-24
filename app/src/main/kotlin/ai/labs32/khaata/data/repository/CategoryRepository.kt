@@ -1,6 +1,7 @@
 package ai.labs32.khaata.data.repository
 
 import ai.labs32.khaata.core.categorize.DefaultCategories
+import ai.labs32.khaata.core.locale.BuiltInCategoryNames
 import ai.labs32.khaata.core.categorize.MerchantCategorizer
 import ai.labs32.khaata.core.categorize.SeedMerchantRules
 import ai.labs32.khaata.core.categorize.CategorySuggestion
@@ -185,6 +186,14 @@ class CategoryRepository @Inject constructor(
      * Both use insert-if-absent keyed on stable ids, so re-running on upgrade adds anything new
      * without overwriting a user's renames or duplicating what is already there.
      */
+    /**
+     * After the app's language changes, has every open screen read its categories again, so the
+     * built-in names appear in the new language rather than the one they were first read in.
+     */
+    suspend fun refreshNamesIfLanguageChanged() {
+        if (BuiltInCategoryNames.languageChangedSinceLastCheck()) categoryDao.touch()
+    }
+
     suspend fun seedIfEmpty() {
         if (categoryDao.count() == 0) {
             categoryDao.insertIfAbsent(DefaultCategories.ALL.map { it.toEntity() })

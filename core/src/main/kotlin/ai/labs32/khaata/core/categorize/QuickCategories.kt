@@ -58,15 +58,21 @@ object QuickCategories {
      *
      * A subcategory also matches its parent's name, so typing "food" finds Groceries and Swiggy
      * rather than only the parent — which is what someone means when they type it.
+     *
+     * A built-in category also matches its English name, so "fuel" still finds it while the app is
+     * shown in Kannada, Telugu, Tamil or Hindi: people often type the English word for these.
      */
     fun search(available: List<Category>, query: String): List<Category> {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return available
 
-        val parentNames = available.filter { it.parentId == null }.associate { it.id to it.name }
+        fun Category.matches(): Boolean =
+            name.contains(trimmed, ignoreCase = true) ||
+                (isSystem && DefaultCategories.defaultName(id)?.contains(trimmed, ignoreCase = true) == true)
+
+        val parents = available.filter { it.parentId == null }.associateBy { it.id }
         return available.filter { category ->
-            category.name.contains(trimmed, ignoreCase = true) ||
-                parentNames[category.parentId]?.contains(trimmed, ignoreCase = true) == true
+            category.matches() || parents[category.parentId]?.matches() == true
         }
     }
 }

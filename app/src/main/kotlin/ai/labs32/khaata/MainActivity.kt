@@ -23,12 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ai.labs32.khaata.core.ads.AdMobAdProvider
 import ai.labs32.khaata.core.ads.AdProvider
 import ai.labs32.khaata.core.notifications.KhaataNotifier
 import ai.labs32.khaata.core.security.LockState
+import ai.labs32.khaata.data.repository.CategoryRepository
 import ai.labs32.khaata.core.ui.theme.KhaataTheme
 import ai.labs32.khaata.feature.lock.LockScreen
 import ai.labs32.khaata.feature.onboarding.OnboardingScreen
@@ -37,6 +39,7 @@ import ai.labs32.khaata.navigation.Routes
 import ai.labs32.khaata.navigation.TopLevelDestination
 import ai.labs32.khaata.ui.KhaataBottomBar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -63,6 +66,7 @@ class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var adProvider: AdProvider
     @Inject lateinit var notifier: KhaataNotifier
+    @Inject lateinit var categoryRepository: CategoryRepository
 
     private var pendingDeepLink by mutableStateOf<DeepLink?>(null)
 
@@ -77,6 +81,11 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         pendingDeepLink = DeepLink.from(intent)
+
+        // A change of language recreates this activity; the lists screens already hold were read
+        // in the old one. Built-in category names are translated as they are read, so have them
+        // read again.
+        lifecycleScope.launch { categoryRepository.refreshNamesIfLanguageChanged() }
 
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()

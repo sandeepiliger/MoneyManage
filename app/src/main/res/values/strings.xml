@@ -1095,4 +1095,67 @@
     <string name="notification_import_added_title">Transaction added</string>
     <string name="notification_import_added_hint">Added from your bank message. Tap to change or remove.</string>
     <string name="notification_import_new_account_added">Added %1$s as a new account. Tap to change or remove.</string>
+
+    <!--
+      The built-in categories, shown in the app's language. Stored rows keep the English name;
+      see BuiltInCategoryNames. The English values must match DefaultCategories exactly.
+    -->
+    <string name="category_name_food">Food &amp; Drink</string>
+    <string name="category_name_groceries">Groceries</string>
+    <string name="category_name_restaurants">Restaurants</string>
+    <string name="category_name_food_delivery">Food Delivery</string>
+    <string name="category_name_tea_coffee">Tea &amp; Coffee</string>
+    <string name="category_name_snacks">Snacks</string>
+    <string name="category_name_transport">Transport</string>
+    <string name="category_name_fuel">Fuel</string>
+    <string name="category_name_cab">Cabs</string>
+    <string name="category_name_auto">Auto</string>
+    <string name="category_name_public_transport">Metro &amp; Bus</string>
+    <string name="category_name_parking">Parking</string>
+    <string name="category_name_toll">Toll &amp; FASTag</string>
+    <string name="category_name_vehicle_maintenance">Vehicle Service</string>
+    <string name="category_name_bills">Bills &amp; Utilities</string>
+    <string name="category_name_electricity">Electricity</string>
+    <string name="category_name_water">Water</string>
+    <string name="category_name_internet">Internet</string>
+    <string name="category_name_mobile">Mobile</string>
+    <string name="category_name_gas">Cooking Gas</string>
+    <string name="category_name_dth">DTH &amp; Cable</string>
+    <string name="category_name_society_maintenance">Society Maintenance</string>
+    <string name="category_name_home">Home</string>
+    <string name="category_name_rent">Rent</string>
+    <string name="category_name_household_help">Household Help</string>
+    <string name="category_name_repairs">Repairs</string>
+    <string name="category_name_lifestyle">Lifestyle</string>
+    <string name="category_name_shopping">Shopping</string>
+    <string name="category_name_entertainment">Entertainment</string>
+    <string name="category_name_subscriptions">Subscriptions</string>
+    <string name="category_name_travel">Travel</string>
+    <string name="category_name_fitness">Fitness</string>
+    <string name="category_name_personal_care">Personal Care</string>
+    <string name="category_name_gifts_festivals">Gifts &amp; Festivals</string>
+    <string name="category_name_health">Health</string>
+    <string name="category_name_medicines">Medicines</string>
+    <string name="category_name_doctor">Doctor &amp; Tests</string>
+    <string name="category_name_health_insurance">Health Insurance</string>
+    <string name="category_name_financial">Financial</string>
+    <string name="category_name_emi">EMI</string>
+    <string name="category_name_loan_repayment">Loan Repayment</string>
+    <string name="category_name_insurance">Insurance</string>
+    <string name="category_name_investment">Investments</string>
+    <string name="category_name_sip">SIP</string>
+    <string name="category_name_bank_charges">Bank Charges</string>
+    <string name="category_name_tax">Tax</string>
+    <string name="category_name_family">Family</string>
+    <string name="category_name_children">Children</string>
+    <string name="category_name_education">Education &amp; Fees</string>
+    <string name="category_name_parents">Parents</string>
+    <string name="category_name_salary">Salary</string>
+    <string name="category_name_business_income">Business</string>
+    <string name="category_name_freelance">Freelance</string>
+    <string name="category_name_interest_income">Interest &amp; Dividend</string>
+    <string name="category_name_rental_income">Rental Income</string>
+    <string name="category_name_refund">Refunds &amp; Cashback</string>
+    <string name="category_name_other_income">Other Income</string>
+    <string name="category_name_uncategorised">Uncategorised</string>
 </resources>

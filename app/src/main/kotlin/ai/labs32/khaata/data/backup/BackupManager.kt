@@ -1,5 +1,7 @@
 package ai.labs32.khaata.data.backup
 
+import ai.labs32.khaata.core.categorize.DefaultCategories
+import ai.labs32.khaata.core.locale.BuiltInCategoryNames
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -103,7 +105,11 @@ class BackupManager @Inject constructor(
             profile = profileRepository.getOrCreate(),
             settings = settingsRepository.current(),
             accounts = accountRepository.getAll(),
-            categories = categoryRepository.getAll(),
+            // Built-in categories as stored, in English, so the file restores the same way
+            // whatever language either phone is set to.
+            categories = categoryRepository.getAll().map {
+                it.copy(name = BuiltInCategoryNames.stored(it.id, it.name, it.isSystem))
+            },
             // Soft-deleted rows are included: a backup is meant to be able to restore the state
             // the user had, and that includes what is still recoverable from the trash.
             transactions = transactionRepository.getAllForExport(),
@@ -426,7 +432,13 @@ class BackupManager @Inject constructor(
         val accounts = accountRepository.getAll()
         val accountsByName = accounts.associateBy { it.name.lowercase() }
         val fallbackAccount = fallbackAccountId?.let { id -> accounts.firstOrNull { it.id == id } }
-        val categoriesByName = categoryRepository.getAll().associateBy { it.name.lowercase() }
+        // A built-in category answers to its shown name and to its English one, so a CSV written
+        // in either language finds it.
+        val categories = categoryRepository.getAll()
+        val categoriesByName = categories.associateBy { it.name.lowercase() } +
+            categories.filter { it.isSystem }.mapNotNull { category ->
+                DefaultCategories.defaultName(category.id)?.let { it.lowercase() to category }
+            }.filter { (name, _) -> categories.none { it.name.lowercase() == name && !it.isSystem } }
 
         val rejected = ArrayList<RejectedRecord>()
         val transactions = ArrayList<Transaction>()

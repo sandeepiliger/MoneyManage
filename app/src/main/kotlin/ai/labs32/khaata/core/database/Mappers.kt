@@ -1,5 +1,6 @@
 package ai.labs32.khaata.core.database
 
+import ai.labs32.khaata.core.locale.BuiltInCategoryNames
 import ai.labs32.khaata.core.categorize.MerchantNormaliser
 import ai.labs32.khaata.core.database.entity.AccountEntity
 import ai.labs32.khaata.core.database.entity.BudgetEntity
@@ -92,7 +93,7 @@ fun Account.toEntity(): AccountEntity = AccountEntity(
 
 fun CategoryEntity.toDomain(): Category = Category(
     id = id,
-    name = name,
+    name = BuiltInCategoryNames.display(id, name, isSystem),
     group = group,
     parentId = parentId,
     kind = kind,
@@ -105,7 +106,7 @@ fun CategoryEntity.toDomain(): Category = Category(
 
 fun Category.toEntity(): CategoryEntity = CategoryEntity(
     id = id,
-    name = name,
+    name = BuiltInCategoryNames.stored(id, name, isSystem),
     group = group,
     parentId = parentId,
     kind = kind,
