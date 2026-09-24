@@ -326,6 +326,56 @@ class TransactionRepository @Inject constructor(
         )
     }
 
+    /** [filteredTotal] as a stream that follows every change to the ledger. */
+    fun observeFilteredTotal(
+        filter: TransactionFilter,
+        currency: ai.labs32.khaata.core.money.CurrencyCode,
+    ): Flow<FilteredTransactionTotal> =
+        transactionDao.observeFilteredSpendTotal(
+            fromDate = filter.dateRange?.start,
+            toDate = filter.dateRange?.endInclusive,
+            type = filter.type,
+            accountIds = filter.accountIds.toList(),
+            accountCount = filter.accountIds.size,
+            categoryIds = filter.categoryIds.toList(),
+            categoryCount = filter.categoryIds.size,
+            minMinor = filter.minAmount?.minorUnits,
+            maxMinor = filter.maxAmount?.minorUnits,
+            query = filter.query?.takeIf { it.isNotBlank() },
+            tagPattern = filter.tagPattern(),
+        ).map { row ->
+            FilteredTransactionTotal(
+                total = Money.ofMinor(row.totalMinor, currency),
+                income = Money.ofMinor(row.incomeMinor, currency),
+                count = row.count,
+            )
+        }
+
+    /**
+     * Each day's net -- money in less money out -- for the rows [filter] matches, keyed by date.
+     * Days with no effective spending or income (only transfers, say) are absent.
+     */
+    fun observeDailyNet(
+        filter: TransactionFilter,
+        currency: ai.labs32.khaata.core.money.CurrencyCode,
+    ): Flow<Map<LocalDate, Money>> =
+        transactionDao.observeDailyTotals(
+            fromDate = filter.dateRange?.start,
+            toDate = filter.dateRange?.endInclusive,
+            type = filter.type,
+            accountIds = filter.accountIds.toList(),
+            accountCount = filter.accountIds.size,
+            categoryIds = filter.categoryIds.toList(),
+            categoryCount = filter.categoryIds.size,
+            minMinor = filter.minAmount?.minorUnits,
+            maxMinor = filter.maxAmount?.minorUnits,
+            query = filter.query?.takeIf { it.isNotBlank() },
+            tagPattern = filter.tagPattern(),
+        ).map { rows ->
+            rows.filter { it.spentMinor != 0L || it.incomeMinor != 0L }
+                .associate { it.day to Money.ofMinor(it.incomeMinor - it.spentMinor, currency) }
+        }
+
     fun observeTotalSpend(range: DateRange, currency: ai.labs32.khaata.core.money.CurrencyCode): Flow<Money> =
         transactionDao.observeTotalSpend(range.start, range.endInclusive)
             .map { Money.ofMinor(it, currency) }

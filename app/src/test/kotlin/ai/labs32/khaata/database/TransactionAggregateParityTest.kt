@@ -282,6 +282,42 @@ class TransactionAggregateParityTest {
         assertThat(filtered.totalMinor).isEqualTo(sumOf(onHdfc.filter { it.type == TransactionType.EXPENSE }).minorUnits)
         assertThat(filtered.incomeMinor).isEqualTo(sumOf(onHdfc.filter { it.type == TransactionType.INCOME }).minorUnits)
 
+        // Activity's streaming strip is the same query as a flow, and must give the same answer.
+        val streamed = transactionDao.observeFilteredSpendTotal(
+            fromDate = march.start,
+            toDate = march.endInclusive,
+            type = null,
+            accountIds = listOf(hdfc.id),
+            accountCount = 1,
+            categoryIds = emptyList(),
+            categoryCount = 0,
+            minMinor = null,
+            maxMinor = null,
+            query = null,
+            tagPattern = null,
+        ).first()
+        assertThat(streamed).isEqualTo(filtered)
+
+        // Activity's day headers: money out and money in per day, transfers in neither.
+        val sqlDays = transactionDao.observeDailyTotals(
+            fromDate = march.start,
+            toDate = march.endInclusive,
+            type = null,
+            accountIds = listOf(hdfc.id),
+            accountCount = 1,
+            categoryIds = emptyList(),
+            categoryCount = 0,
+            minMinor = null,
+            maxMinor = null,
+            query = null,
+            tagPattern = null,
+        ).first().associate { it.day to (it.spentMinor to it.incomeMinor) }
+        val calculatedDays = onHdfc.groupBy { it.occurredOn }.mapValues { (_, rows) ->
+            sumOf(rows.filter { it.countsAsSpending }).minorUnits to
+                sumOf(rows.filter { it.countsAsIncome }).minorUnits
+        }
+        assertThat(sqlDays).isEqualTo(calculatedDays)
+
         // Net worth and available-to-spend from the SQL balances equal the calculator's.
         val sqlTotals = transactionDao.observeAccountTotals().first().associateBy { it.accountId }
         val sqlBalances = dated.map { account ->

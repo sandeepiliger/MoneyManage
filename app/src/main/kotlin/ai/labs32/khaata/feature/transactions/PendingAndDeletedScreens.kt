@@ -1,5 +1,24 @@
 package ai.labs32.khaata.feature.transactions
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Sms
+import androidx.compose.material3.AssistChip
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import ai.labs32.khaata.core.model.TransactionType
+import ai.labs32.khaata.core.ui.components.CategoryIcons
+import ai.labs32.khaata.core.ui.components.TransactionAmountText
+import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
+import ai.labs32.khaata.feature.shared.relativeDateLabel
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,6 +48,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -144,14 +164,37 @@ fun PendingImportsScreen(
                         )
                     }
                 },
-                actions = {
-                    if (state.transactions.size > 1) {
-                        TextButton(onClick = viewModel::acceptAll) {
-                            Text(stringResource(R.string.action_confirm))
-                        }
-                    }
-                },
             )
+        },
+        // "Confirm all" sits under the thumb at the bottom rather than as a word in the top bar,
+        // and says how many it will confirm, so nobody accepts twelve rows thinking it was two.
+        bottomBar = {
+            if (state.transactions.size > 1) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(horizontal = KhaataTheme.spacing.screenHorizontal, vertical = 12.dp),
+                ) {
+                    Button(
+                        onClick = viewModel::acceptAll,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp),
+                    ) {
+                        Text(stringResource(R.string.sms_review_confirm_all, state.transactions.size))
+                    }
+                    Text(
+                        text = stringResource(R.string.sms_review_edit_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp),
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
         },
     ) { padding ->
         if (state.isLoading) {
@@ -190,35 +233,154 @@ fun PendingImportsScreen(
             }
 
             items(state.transactions, key = { it.id }) { transaction ->
-                val category = categoriesById[transaction.categoryId]
+                ReviewCard(
+                    transaction = transaction,
+                    category = categoriesById[transaction.categoryId],
+                    accountName = accountsById[transaction.accountId]?.name,
+                    transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
+                    onEdit = { onEdit(transaction.id) },
+                    onReject = { viewModel.reject(transaction.id) },
+                    onAccept = { viewModel.accept(transaction.id) },
+                    modifier = Modifier.animateItem(),
+                )
+            }
+        }
+    }
+}
 
-                KhaataCard(contentPadding = PaddingValues(vertical = 8.dp)) {
-                    TransactionRow(
-                        transaction = transaction,
-                        categoryName = category?.name,
-                        accountName = accountsById[transaction.accountId]?.name,
-                        transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
-                        categoryColorSeed = category?.colorSeed ?: 0,
-                        categoryIconKey = category?.iconKey,
-                        onClick = { onEdit(transaction.id) },
+/**
+ * One bank message, read back as a transaction for the user to check.
+ *
+ * Laid out in the order the message is checked against memory: which bank and when, who it was
+ * and how much, then what the app made of it -- category and account -- as chips that open the
+ * editor. A matched transfer says so, since two messages becoming one row is exactly the step a
+ * user would otherwise wonder about. "Looks right" is the primary action because it is by far the
+ * commonest answer.
+ */
+@Composable
+private fun ReviewCard(
+    transaction: Transaction,
+    category: Category?,
+    accountName: String?,
+    transferAccountName: String?,
+    onEdit: () -> Unit,
+    onReject: () -> Unit,
+    onAccept: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isTransfer = transaction.type == TransactionType.TRANSFER
+    val title = transaction.merchant?.takeIf { it.isNotBlank() }
+        ?: transaction.note?.takeIf { it.isNotBlank() }
+        ?: category?.name
+        ?: stringResource(
+            when (transaction.type) {
+                TransactionType.EXPENSE -> R.string.transaction_expense
+                TransactionType.INCOME -> R.string.transaction_income
+                TransactionType.TRANSFER -> R.string.transaction_transfer
+            },
+        )
+
+    KhaataCard(modifier = modifier, onClick = onEdit) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Outlined.Sms,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = listOfNotNull(accountName, relativeDateLabel(transaction.occurredOn)).joinToString(" · "),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(12.dp))
+            TransactionAmountText(
+                amount = transaction.amount,
+                type = transaction.type,
+                style = KhaataTextStyles.amountLarge,
+            )
+        }
+
+        if (isTransfer) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(KhaataTheme.money.incomeContainer)
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Default.SwapHoriz,
+                    contentDescription = null,
+                    tint = KhaataTheme.money.onIncomeContainer,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.sms_review_transfer_matched),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = KhaataTheme.money.onIncomeContainer,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (!isTransfer) {
+                AssistChip(
+                    onClick = onEdit,
+                    label = {
+                        Text(category?.name ?: stringResource(R.string.categories_uncategorised), maxLines = 1)
+                    },
+                    leadingIcon = {
+                        Icon(CategoryIcons[category?.iconKey], contentDescription = null, Modifier.size(18.dp))
+                    },
+                )
+            }
+            AssistChip(
+                onClick = onEdit,
+                label = {
+                    Text(
+                        text = if (isTransfer && transferAccountName != null) {
+                            "${accountName.orEmpty()} → $transferAccountName"
+                        } else {
+                            accountName.orEmpty()
+                        },
+                        maxLines = 1,
                     )
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        OutlinedButton(
-                            onClick = { viewModel.reject(transaction.id) },
-                            modifier = Modifier.weight(1f),
-                        ) { Text(stringResource(R.string.sms_review_reject)) }
+                },
+                leadingIcon = {
+                    Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, Modifier.size(18.dp))
+                },
+            )
+        }
 
-                        Button(
-                            onClick = { viewModel.accept(transaction.id) },
-                            modifier = Modifier.weight(1f),
-                        ) { Text(stringResource(R.string.sms_review_accept)) }
-                    }
-                }
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onReject, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.sms_review_reject), maxLines = 1)
+            }
+            Button(onClick = onAccept, modifier = Modifier.weight(2f)) {
+                Text(stringResource(R.string.sms_review_looks_right), maxLines = 1)
             }
         }
     }

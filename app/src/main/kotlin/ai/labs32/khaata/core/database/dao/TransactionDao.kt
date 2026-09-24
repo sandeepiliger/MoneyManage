@@ -262,6 +262,97 @@ interface TransactionDao {
         tagPattern: String?,
     ): FilteredTotalRow
 
+    /**
+     * [filteredSpendTotal] as a stream, for Activity's In / Out / Net strip, so the figures move
+     * the moment a transaction is added, edited or deleted rather than only when the filter does.
+     * Same WHERE clause, word for word.
+     */
+    @Query(
+        """
+        SELECT
+          COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount_minor_units ELSE 0 END), 0) AS totalMinor,
+          COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount_minor_units ELSE 0 END), 0) AS incomeMinor,
+          COUNT(*) AS count
+        FROM transactions
+        WHERE deletedAt IS NULL
+          AND isPending = 0
+          AND (:fromDate IS NULL OR occurredOn >= :fromDate)
+          AND (:toDate IS NULL OR occurredOn <= :toDate)
+          AND (:type IS NULL OR type = :type)
+          AND (:accountCount = 0 OR accountId IN (:accountIds) OR transferAccountId IN (:accountIds))
+          AND (:categoryCount = 0 OR categoryId IN (:categoryIds))
+          AND (:minMinor IS NULL OR amount_minor_units >= :minMinor)
+          AND (:maxMinor IS NULL OR amount_minor_units <= :maxMinor)
+          AND (
+                :query IS NULL
+                OR merchant LIKE '%' || :query || '%'
+                OR note LIKE '%' || :query || '%'
+                OR referenceNumber LIKE '%' || :query || '%'
+              )
+          AND (:tagPattern IS NULL OR tags LIKE '%' || :tagPattern || '%')
+        """,
+    )
+    fun observeFilteredSpendTotal(
+        fromDate: LocalDate?,
+        toDate: LocalDate?,
+        type: TransactionType?,
+        accountIds: List<String>,
+        accountCount: Int,
+        categoryIds: List<String>,
+        categoryCount: Int,
+        minMinor: Long?,
+        maxMinor: Long?,
+        query: String?,
+        tagPattern: String?,
+    ): Flow<FilteredTotalRow>
+
+    /**
+     * Money out and money in per day for the same filter, for the total on each date header.
+     *
+     * Spending and income follow `Transaction.countsAsSpending` and `countsAsIncome`, as in
+     * [filteredSpendTotal]: effective rows only, transfers in neither, since moving money between
+     * two of your own accounts is not money spent that day.
+     */
+    @Query(
+        """
+        SELECT
+          occurredOn AS day,
+          COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount_minor_units ELSE 0 END), 0) AS spentMinor,
+          COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount_minor_units ELSE 0 END), 0) AS incomeMinor
+        FROM transactions
+        WHERE deletedAt IS NULL
+          AND isPending = 0
+          AND (:fromDate IS NULL OR occurredOn >= :fromDate)
+          AND (:toDate IS NULL OR occurredOn <= :toDate)
+          AND (:type IS NULL OR type = :type)
+          AND (:accountCount = 0 OR accountId IN (:accountIds) OR transferAccountId IN (:accountIds))
+          AND (:categoryCount = 0 OR categoryId IN (:categoryIds))
+          AND (:minMinor IS NULL OR amount_minor_units >= :minMinor)
+          AND (:maxMinor IS NULL OR amount_minor_units <= :maxMinor)
+          AND (
+                :query IS NULL
+                OR merchant LIKE '%' || :query || '%'
+                OR note LIKE '%' || :query || '%'
+                OR referenceNumber LIKE '%' || :query || '%'
+              )
+          AND (:tagPattern IS NULL OR tags LIKE '%' || :tagPattern || '%')
+        GROUP BY occurredOn
+        """,
+    )
+    fun observeDailyTotals(
+        fromDate: LocalDate?,
+        toDate: LocalDate?,
+        type: TransactionType?,
+        accountIds: List<String>,
+        accountCount: Int,
+        categoryIds: List<String>,
+        categoryCount: Int,
+        minMinor: Long?,
+        maxMinor: Long?,
+        query: String?,
+        tagPattern: String?,
+    ): Flow<List<DailyTotalRow>>
+
     // ---- Aggregates --------------------------------------------------------------------------
 
     /**
@@ -606,4 +697,11 @@ data class FilteredTotalRow(
     /** Money received. Kept apart so a filtered view of income does not read as ₹0 spent. */
     val incomeMinor: Long,
     val count: Int,
+)
+
+/** One day's totals for the Activity list's date headers; see [TransactionDao.observeDailyTotals]. */
+data class DailyTotalRow(
+    val day: LocalDate,
+    val spentMinor: Long,
+    val incomeMinor: Long,
 )

@@ -33,28 +33,24 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * The onboarding steps.
+ * The onboarding steps: a welcome, then three.
  *
- * Only [WELCOME] and [ACCOUNT] are load-bearing; everything else can be skipped. A first-run flow
- * that demands a dozen decisions before showing anything is where a large share of installs are
- * lost, so each screen states what it is for and offers a way past.
+ * Account and balance, bank SMS, done. It used to be twelve -- currency, language, income,
+ * categories, a first budget, lock, notifications -- and every screen before the first
+ * transaction is where installs are lost. Each of those now has a better moment: currency and lock
+ * in Settings, the budget from Home's "set a monthly budget" link, categories as they are used,
+ * and the notification permission as one optional button on the last screen.
+ *
+ * Only [WELCOME] and [ACCOUNT] are load-bearing; SMS can be skipped.
  */
 enum class OnboardingStep {
     WELCOME,
-    WHY,
-    CURRENCY,
-    LANGUAGE,
     ACCOUNT,
-    INCOME,
-    CATEGORIES,
-    BUDGET,
-    NOTIFICATIONS,
-    LOCK,
     SMS,
     FINISH,
     ;
 
-    val canSkip: Boolean get() = this != WELCOME && this != ACCOUNT
+    val canSkip: Boolean get() = this == SMS
 }
 
 data class OnboardingUiState(
@@ -86,8 +82,11 @@ data class OnboardingUiState(
     val error: String? = null,
 ) {
     val stepIndex: Int get() = OnboardingStep.entries.indexOf(step)
-    val stepCount: Int get() = OnboardingStep.entries.size
-    val progress: Float get() = (stepIndex + 1f) / stepCount
+
+    /** 1 to [stepCount] once past the welcome, which is an introduction rather than a step. */
+    val stepNumber: Int get() = stepIndex
+    val stepCount: Int get() = OnboardingStep.entries.size - 1
+    val progress: Float get() = stepNumber.toFloat() / stepCount
 
     /** The account step is the only one with a hard requirement. */
     val canAdvance: Boolean

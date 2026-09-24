@@ -1062,4 +1062,17 @@
     <string name="plan_previous_month">पिछला महीना</string>
     <string name="plan_next_month">अगला महीना</string>
     <string name="plan_final_figures">%1$s के अंतिम आंकड़े</string>
+
+    <string name="activity_matching">%1$d मिले</string>
+
+    <string name="transaction_save_amount">%1$s सहेजें</string>
+    <string name="a11y_decimal_point">दशमलव</string>
+    <string name="a11y_backspace">आख़िरी अंक मिटाएँ</string>
+
+    <string name="sms_review_looks_right">सही है</string>
+    <string name="sms_review_confirm_all">सभी %1$d की पुष्टि करें</string>
+    <string name="sms_review_edit_hint">राशि, श्रेणी या खाता बदलने के लिए कार्ड पर टैप करें</string>
+    <string name="sms_review_transfer_matched">दोनों संदेश मिले · एक बार गिना गया</string>
+
+    <string name="onboarding_step_of">%2$d में से चरण %1$d</string>
 </resources>

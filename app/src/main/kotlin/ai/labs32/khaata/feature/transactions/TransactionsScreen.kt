@@ -1,5 +1,23 @@
 package ai.labs32.khaata.feature.transactions
 
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import ai.labs32.khaata.core.model.CategoryKind
+import ai.labs32.khaata.core.model.Transaction
+import ai.labs32.khaata.core.money.Money
+import ai.labs32.khaata.core.money.MoneyStyle
+import ai.labs32.khaata.core.money.SignStyle
+import ai.labs32.khaata.core.ui.components.KhaataStatTile
+import ai.labs32.khaata.core.ui.components.MoneyText
+import ai.labs32.khaata.core.ui.theme.KhaataTextStyles
+import ai.labs32.khaata.data.repository.TransactionSort
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -173,6 +191,8 @@ private fun TransactionListPane(
 
     val undoLabel = stringResource(R.string.action_undo)
     val deletedMessage = stringResource(R.string.transaction_deleted)
+    // The row a right swipe asked to recategorise, while its category sheet is open.
+    var recategorising by remember { mutableStateOf<Transaction?>(null) }
 
     LaunchedEffect(state.recentlyDeletedId) {
         val id = state.recentlyDeletedId ?: return@LaunchedEffect
@@ -208,11 +228,12 @@ private fun TransactionListPane(
                 onSelect = viewModel::onTypeFilterChange,
             )
 
-            if (state.filter.isActive && state.filteredTotal != null) {
-                FilterSummary(
+            state.filteredTotal?.let { spent ->
+                SummaryStrip(
+                    thisMonth = state.summaryIsThisMonth,
                     count = state.filteredCount,
-                    spent = state.filteredTotal!!,
-                    received = state.filteredIncome,
+                    spent = spent,
+                    received = state.filteredIncome ?: Money.zero(spent.currency),
                 )
             }
 
@@ -224,8 +245,30 @@ private fun TransactionListPane(
                 onOpenTransaction = onOpenTransaction,
                 onAddTransaction = onAddTransaction,
                 onClearFilters = viewModel::clearFilters,
+                onDelete = viewModel::delete,
+                onRecategorise = { recategorising = it },
             )
         }
+    }
+
+    recategorising?.let { transaction ->
+        val relevant = remember(state.categories, transaction.type) {
+            state.categories.filter { category ->
+                when (transaction.type) {
+                    TransactionType.INCOME -> category.kind != CategoryKind.EXPENSE
+                    else -> category.kind != CategoryKind.INCOME
+                }
+            }
+        }
+        CategoryPickerSheet(
+            categories = relevant,
+            selectedId = transaction.categoryId,
+            onSelect = { categoryId ->
+                viewModel.recategorise(transaction.id, categoryId)
+                recategorising = null
+            },
+            onDismiss = { recategorising = null },
+        )
     }
 
     if (state.showFilters) {
@@ -250,6 +293,8 @@ private fun TransactionList(
     onOpenTransaction: (String) -> Unit,
     onAddTransaction: () -> Unit,
     onClearFilters: () -> Unit,
+    onDelete: (String) -> Unit,
+    onRecategorise: (Transaction) -> Unit,
 ) {
     val refreshState = pagedTransactions.loadState.refresh
 
@@ -297,21 +342,37 @@ private fun TransactionList(
                 // rather than by pre-grouping, so it works with paging.
                 val previous = if (index > 0) pagedTransactions.peek(index - 1) else null
                 if (previous == null || previous.occurredOn != transaction.occurredOn) {
-                    DateHeader(transaction.occurredOn)
+                    DateHeader(
+                        date = transaction.occurredOn,
+                        // Only when sorted by date: sorted by amount, one day's rows are scattered
+                        // and a day total above one of them would describe rows that are not there.
+                        net = if (state.filter.sort == TransactionSort.DATE_DESC) {
+                            state.dailyNet[transaction.occurredOn]
+                        } else {
+                            null
+                        },
+                    )
                 }
 
                 val category = categoriesById[transaction.categoryId]
 
-                TransactionRow(
-                    transaction = transaction,
-                    categoryName = category?.name,
-                    accountName = accountsById[transaction.accountId]?.name,
-                    transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
-                    categoryColorSeed = category?.colorSeed ?: 0,
-                    categoryIconKey = category?.iconKey,
-                    onClick = { onOpenTransaction(transaction.id) },
-                    showDate = false,
-                )
+                SwipeableRow(
+                    canRecategorise = transaction.type != TransactionType.TRANSFER,
+                    onDelete = { onDelete(transaction.id) },
+                    onRecategorise = { onRecategorise(transaction) },
+                ) {
+                    TransactionRow(
+                        transaction = transaction,
+                        categoryName = category?.name,
+                        accountName = accountsById[transaction.accountId]?.name,
+                        transferAccountName = transaction.transferAccountId?.let { accountsById[it]?.name },
+                        categoryColorSeed = category?.colorSeed ?: 0,
+                        categoryIconKey = category?.iconKey,
+                        onClick = { onOpenTransaction(transaction.id) },
+                        showDate = false,
+                        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+                    )
+                }
             }
 
             if (pagedTransactions.loadState.append is LoadState.Loading) {
@@ -333,16 +394,104 @@ private fun TransactionList(
     }
 }
 
+/**
+ * The date above a day's rows, with that day's net beside it -- "what did I spend on Tuesday?"
+ * answered without adding the rows up by eye.
+ */
 @Composable
-private fun DateHeader(date: LocalDate) {
-    Text(
-        text = relativeDateLabel(date),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun DateHeader(date: LocalDate, net: Money?) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)
+            .semantics(mergeDescendants = true) { heading() },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = relativeDateLabel(date),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        if (net != null && !net.isZero) {
+            MoneyText(
+                money = net,
+                signStyle = SignStyle.ALWAYS,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+/**
+ * A row that swipes: left to delete, with the usual undo; right to change its category.
+ *
+ * The right swipe never dismisses -- it opens the category sheet and the row springs back -- so
+ * only delete ever removes a row from under the finger. Both are also on the transaction's own
+ * screen, for anyone who does not swipe.
+ */
+@Composable
+private fun SwipeableRow(
+    canRecategorise: Boolean,
+    onDelete: () -> Unit,
+    onRecategorise: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val haptics = LocalHapticFeedback.current
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            when (value) {
+                SwipeToDismissBoxValue.EndToStart -> {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onDelete()
+                    true
+                }
+                SwipeToDismissBoxValue.StartToEnd -> {
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onRecategorise()
+                    false
+                }
+                SwipeToDismissBoxValue.Settled -> true
+            }
+        },
     )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = canRecategorise,
+        backgroundContent = {
+            val direction = dismissState.dismissDirection
+            val deleting = direction == SwipeToDismissBoxValue.EndToStart
+            val color = when (direction) {
+                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.primaryContainer
+                SwipeToDismissBoxValue.Settled -> Color.Transparent
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color)
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = if (deleting) Arrangement.End else Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (direction != SwipeToDismissBoxValue.Settled) {
+                    Icon(
+                        imageVector = if (deleting) Icons.Outlined.Delete else Icons.Outlined.Category,
+                        contentDescription = null,
+                        tint = if (deleting) {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        } else {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        },
+                    )
+                }
+            }
+        },
+    ) {
+        content()
+    }
 }
 
 @Composable
@@ -434,58 +583,62 @@ private fun QuickTypeFilters(
 }
 
 /**
- * The total for the current filter.
+ * Money in, money out and the difference, for whatever the list is showing -- this month when
+ * nothing is filtered, the filter's rows otherwise.
  *
- * Computed from a separate query rather than by summing loaded pages, so it does not creep upward
- * as the user scrolls — which would be a subtly wrong number in a finance app.
+ * From separate queries rather than summed from loaded pages, so the figures do not creep upward
+ * as the user scrolls. Transfers count in neither: moving money between two of your own accounts
+ * is not money in or out.
  */
 @Composable
-private fun FilterSummary(
+private fun SummaryStrip(
+    thisMonth: Boolean,
     count: Int,
-    spent: ai.labs32.khaata.core.money.Money,
-    received: ai.labs32.khaata.core.money.Money?,
+    spent: Money,
+    received: Money,
 ) {
-    // Spent and received are shown apart, never netted: a filter on income used to read
-    // "5 Expense ₹0" because only spending was summed. Transfers count in neither.
-    val showReceived = received != null && !received.isZero
-    val showSpent = !spent.isZero || !showReceived
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    val money = KhaataTheme.money
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
         Text(
-            text = "$count",
-            style = MaterialTheme.typography.labelLarge,
+            text = if (thisMonth) {
+                stringResource(R.string.reports_period_this_month)
+            } else {
+                stringResource(R.string.activity_matching, count)
+            },
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.weight(1f))
-        if (showSpent) {
-            SummaryFigure(stringResource(R.string.transaction_expense), spent)
+        Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            KhaataStatTile(
+                label = stringResource(R.string.activity_in),
+                tint = money.income,
+                modifier = Modifier.weight(1f),
+            ) {
+                MoneyText(money = received, moneyStyle = MoneyStyle.COMPACT, style = KhaataTextStyles.amountMedium, color = money.income)
+            }
+            KhaataStatTile(
+                label = stringResource(R.string.activity_out),
+                tint = money.expense,
+                modifier = Modifier.weight(1f),
+            ) {
+                MoneyText(money = spent, moneyStyle = MoneyStyle.COMPACT, style = KhaataTextStyles.amountMedium, color = money.expense)
+            }
+            KhaataStatTile(
+                label = stringResource(R.string.activity_net),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            ) {
+                MoneyText(
+                    money = received - spent,
+                    moneyStyle = MoneyStyle.COMPACT,
+                    signStyle = SignStyle.ALWAYS,
+                    style = KhaataTextStyles.amountMedium,
+                )
+            }
         }
-        if (showSpent && showReceived) Spacer(Modifier.width(16.dp))
-        if (showReceived) {
-            SummaryFigure(stringResource(R.string.transaction_income), received!!)
-        }
+        Spacer(Modifier.height(8.dp))
     }
-}
-
-@Composable
-private fun SummaryFigure(label: String, money: ai.labs32.khaata.core.money.Money) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-    Spacer(Modifier.width(8.dp))
-    Text(
-        text = MoneyFormatter.plain(money),
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurface,
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -25,6 +25,7 @@ object ThirdPartyNotices {
         Notice("AndroidX (Core, AppCompat, Activity, Lifecycle, Navigation)", "The Android Open Source Project", APACHE_2),
         Notice("Jetpack Compose (UI, Foundation, Animation, Material 3)", "The Android Open Source Project", APACHE_2),
         Notice("Material Icons Extended", "The Android Open Source Project", APACHE_2),
+        Notice("Plus Jakarta Sans typeface", "The Plus Jakarta Sans Project Authors", "SIL Open Font License 1.1"),
         Notice("AndroidX Room", "The Android Open Source Project", APACHE_2),
         Notice("AndroidX DataStore", "The Android Open Source Project", APACHE_2),
         Notice("AndroidX Paging", "The Android Open Source Project", APACHE_2),

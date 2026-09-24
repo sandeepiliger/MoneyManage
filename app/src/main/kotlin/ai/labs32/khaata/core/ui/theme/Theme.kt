@@ -10,8 +10,11 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import ai.labs32.khaata.core.model.ThemePreference
 
 private val LightColorScheme = lightColorScheme(
@@ -163,6 +166,12 @@ fun KhaataTheme(
 
     val moneyColors = if (darkTheme) MoneyColors.Dark else MoneyColors.Light
 
+    // Hindi keeps the device font, which renders Devanagari whole; see khaataTypography.
+    val language = LocalConfiguration.current.locales[0]?.language
+    val typography = remember(language) {
+        khaataTypography(if (language == "hi") FontFamily.Default else BrandFontFamily)
+    }
+
     CompositionLocalProvider(
         LocalMoneyColors provides moneyColors,
         LocalKhaataSpacing provides KhaataSpacing(),
@@ -170,7 +179,7 @@ fun KhaataTheme(
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = KhaataTypography,
+            typography = typography,
             shapes = KhaataShapes,
             content = content,
         )

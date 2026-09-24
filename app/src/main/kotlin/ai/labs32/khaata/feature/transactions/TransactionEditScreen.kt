@@ -1,5 +1,13 @@
 package ai.labs32.khaata.feature.transactions
 
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import ai.labs32.khaata.core.money.MoneyParser
+import ai.labs32.khaata.feature.shared.relativeDateLabel
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -96,8 +104,10 @@ import java.time.format.DateTimeFormatter
  *
  * The screen is arranged around one claim: recording a spend should take two or three seconds.
  * The amount keypad is on screen immediately with no field to focus first, the account is
- * prefilled, and the category is preselected from the merchant when a rule matches. Everything
- * optional — merchant, note, date, tags — sits below the fold and never blocks saving.
+ * prefilled, and the category is preselected from the merchant when a rule matches. The merchant
+ * sits right under the amount, because it is what picks the category; date, note and tags are one
+ * row of chips, visible but never blocking saving. None of it hides behind a "more options" link:
+ * a date nobody saw was the commonest way a spend landed on the wrong day.
  *
  * The reference apps mostly open a form with an amount field that needs focusing and a category
  * picker that needs a decision before anything can be saved. That is fine once and tiresome the
@@ -120,8 +130,13 @@ fun TransactionEditScreen(
 
     LaunchedEffect(transactionId) { viewModel.initialise(transactionId) }
 
+    val haptics = LocalHapticFeedback.current
     LaunchedEffect(state.savedTransactionId) {
-        if (state.savedTransactionId != null) onDone()
+        if (state.savedTransactionId != null) {
+            // A firm tick on save, so a one-handed entry is felt to have landed without looking.
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            onDone()
+        }
     }
 
     // The system photo picker: no storage permission, and the app receives only the one image
@@ -256,8 +271,11 @@ private fun TransactionEditContent(
     onOpenReceipt: (ReceiptTile) -> Unit,
     onBrowseCategories: () -> Unit,
 ) {
-    var showOptionalFields by remember { mutableStateOf(state.isEditing) }
+    // Open when there is something in them already, so editing never hides a saved note.
+    var showNote by rememberSaveable { mutableStateOf(state.note.isNotBlank()) }
+    var showTags by rememberSaveable { mutableStateOf(state.tagsText.isNotBlank()) }
     val spacing = KhaataTheme.spacing
+    val compact = LocalConfiguration.current.screenHeightDp < COMPACT_HEIGHT_DP
 
     Column(modifier.fillMaxSize()) {
         Column(
@@ -288,7 +306,12 @@ private fun TransactionEditContent(
                 WarningRow(warning)
             }
 
-            Spacer(Modifier.height(spacing.large))
+            if (state.type != TransactionType.TRANSFER) {
+                Spacer(Modifier.height(spacing.small))
+                MerchantField(state = state, onChange = viewModel::onMerchantChange)
+            }
+
+            Spacer(Modifier.height(if (compact) spacing.default else spacing.large))
 
             // Account first, because a transaction cannot be saved without one.
             AccountSelector(
@@ -342,12 +365,24 @@ private fun TransactionEditContent(
 
             Spacer(Modifier.height(spacing.default))
 
-            if (showOptionalFields) {
-                OptionalFields(state = state, viewModel = viewModel)
-            } else {
-                TextButton(onClick = { showOptionalFields = true }) {
-                    Text(stringResource(R.string.quick_add_more_options))
-                }
+            DetailChips(
+                date = state.occurredOn,
+                dateError = state.errorFor("date")?.message,
+                onPickDate = viewModel::onDateChange,
+                noteOpen = showNote || state.note.isNotBlank(),
+                onToggleNote = { showNote = !showNote },
+                tagsOpen = showTags || state.tagsText.isNotBlank(),
+                onToggleTags = { showTags = !showTags },
+            )
+
+            if (showNote || state.note.isNotBlank()) {
+                Spacer(Modifier.height(spacing.medium))
+                NoteField(state = state, onChange = viewModel::onNoteChange)
+            }
+
+            if (showTags || state.tagsText.isNotBlank()) {
+                Spacer(Modifier.height(spacing.medium))
+                TagsField(state = state, viewModel = viewModel)
             }
 
             state.errorFor("form")?.let { error ->
@@ -362,11 +397,17 @@ private fun TransactionEditContent(
             Spacer(Modifier.height(spacing.default))
         }
 
+        val amount = MoneyParser.parse(state.amountText, state.currency)?.takeIf { it.isPositive }
         AmountKeypad(
             onKey = viewModel::onKeypadInput,
             onSave = viewModel::save,
             canSave = state.canSave,
             isSaving = state.isSaving,
+            // Says what it will do -- "Save ₹450" -- so the figure is confirmed at the moment of
+            // pressing, not discovered wrong afterwards in the list.
+            saveLabel = amount?.let { stringResource(R.string.transaction_save_amount, MoneyFormatter.plain(it)) }
+                ?: stringResource(R.string.action_save),
+            compact = compact,
         )
     }
 }
@@ -608,22 +649,25 @@ private fun CategorySelector(
     }
 }
 
-// ---- Optional fields -------------------------------------------------------------------------
+// ---- Details -------------------------------------------------------------------------------
 
+/**
+ * Where the money went. Directly under the amount, because the merchant is what the category
+ * suggestion is read from -- typing "Swiggy" first is what makes the right chip already selected.
+ */
 @Composable
-private fun OptionalFields(
+private fun MerchantField(
     state: TransactionEditUiState,
-    viewModel: TransactionEditViewModel,
+    onChange: (String) -> Unit,
 ) {
-    val spacing = KhaataTheme.spacing
-
     Column {
         OutlinedTextField(
             value = state.merchant,
-            onValueChange = viewModel::onMerchantChange,
-            label = { Text(stringResource(R.string.transaction_merchant)) },
+            onValueChange = onChange,
+            placeholder = { Text(stringResource(R.string.transaction_merchant)) },
             leadingIcon = { Icon(Icons.Default.Storefront, contentDescription = null) },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -637,105 +681,75 @@ private fun OptionalFields(
             ) {
                 state.merchantSuggestions.forEach { suggestion ->
                     androidx.compose.material3.SuggestionChip(
-                        onClick = { viewModel.onMerchantChange(suggestion) },
+                        onClick = { onChange(suggestion) },
                         label = { Text(suggestion, maxLines = 1) },
                     )
                 }
             }
         }
-
-        Spacer(Modifier.height(spacing.medium))
-
-        OutlinedTextField(
-            value = state.note,
-            onValueChange = viewModel::onNoteChange,
-            label = { Text(stringResource(R.string.transaction_note)) },
-            leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 1,
-            maxLines = 3,
-            isError = state.errorFor("note") != null,
-            supportingText = state.errorFor("note")?.let { { Text(it.message) } },
-        )
-
-        Spacer(Modifier.height(spacing.medium))
-
-        OutlinedTextField(
-            value = state.tagsText,
-            onValueChange = viewModel::onTagsTextChange,
-            label = { Text(stringResource(R.string.transaction_tags)) },
-            placeholder = { Text(stringResource(R.string.transaction_tags_hint)) },
-            leadingIcon = { Icon(Icons.Default.Sell, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-        // Tags only help if they are spelled the same every time, so the ones already in use are
-        // a tap away rather than retyped.
-        if (state.knownTags.isNotEmpty()) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = spacing.small),
-            ) {
-                items(state.knownTags.take(MAX_TAG_SUGGESTIONS)) { tag ->
-                    FilterChip(
-                        selected = state.tags.any { it.equals(tag, ignoreCase = true) },
-                        onClick = { viewModel.onKnownTagToggle(tag) },
-                        label = { Text(tag, maxLines = 1) },
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(spacing.medium))
-
-        DateRow(
-            date = state.occurredOn,
-            error = state.errorFor("date")?.message,
-            onPickDate = viewModel::onDateChange,
-        )
     }
 }
 
+/**
+ * Date, note and tags as one row of chips.
+ *
+ * The date chip always shows the date the entry will be saved on, so "today" is confirmed at a
+ * glance and a spend from yesterday is one tap to fix. Note and tags open their fields in place.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateRow(
+private fun DetailChips(
     date: java.time.LocalDate,
-    error: String?,
+    dateError: String?,
     onPickDate: (java.time.LocalDate) -> Unit,
+    noteOpen: Boolean,
+    onToggleNote: () -> Unit,
+    tagsOpen: Boolean,
+    onToggleTags: () -> Unit,
 ) {
     var showPicker by remember { mutableStateOf(false) }
-    val formatter = remember { DateTimeFormatter.ofPattern("d MMM yyyy") }
+    val selectedColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    )
 
     Column {
         Row(
             Modifier
                 .fillMaxWidth()
-                .clip(KhaataShapeTokens.cardCompact)
-                .clickable { showPicker = true }
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(
-                Icons.Default.CalendarToday,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
+            FilterChip(
+                selected = date != java.time.LocalDate.now(),
+                onClick = { showPicker = true },
+                label = {
+                    Text(
+                        stringResource(R.string.transaction_date) + ": " + relativeDateLabel(date),
+                        maxLines = 1,
+                    )
+                },
+                leadingIcon = { Icon(Icons.Default.CalendarToday, contentDescription = null, Modifier.size(18.dp)) },
+                colors = selectedColors,
             )
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = stringResource(R.string.transaction_date),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
+            FilterChip(
+                selected = noteOpen,
+                onClick = onToggleNote,
+                label = { Text(stringResource(R.string.transaction_note), maxLines = 1) },
+                leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null, Modifier.size(18.dp)) },
+                colors = selectedColors,
             )
-            Text(
-                text = date.format(formatter),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
+            FilterChip(
+                selected = tagsOpen,
+                onClick = onToggleTags,
+                label = { Text(stringResource(R.string.transaction_tags), maxLines = 1) },
+                leadingIcon = { Icon(Icons.Default.Sell, contentDescription = null, Modifier.size(18.dp)) },
+                colors = selectedColors,
             )
         }
-        if (error != null) {
-            Text(error, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        if (dateError != null) {
+            Text(dateError, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
     }
 
@@ -773,6 +787,59 @@ private fun DateRow(
     }
 }
 
+@Composable
+private fun NoteField(
+    state: TransactionEditUiState,
+    onChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = state.note,
+        onValueChange = onChange,
+        label = { Text(stringResource(R.string.transaction_note)) },
+        leadingIcon = { Icon(Icons.Default.Notes, contentDescription = null) },
+        modifier = Modifier.fillMaxWidth(),
+        minLines = 1,
+        maxLines = 3,
+        isError = state.errorFor("note") != null,
+        supportingText = state.errorFor("note")?.let { { Text(it.message) } },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TagsField(
+    state: TransactionEditUiState,
+    viewModel: TransactionEditViewModel,
+) {
+    Column {
+        OutlinedTextField(
+            value = state.tagsText,
+            onValueChange = viewModel::onTagsTextChange,
+            label = { Text(stringResource(R.string.transaction_tags)) },
+            placeholder = { Text(stringResource(R.string.transaction_tags_hint)) },
+            leadingIcon = { Icon(Icons.Default.Sell, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+        )
+        // Tags only help if they are spelled the same every time, so the ones already in use are
+        // a tap away rather than retyped.
+        if (state.knownTags.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = KhaataTheme.spacing.small),
+            ) {
+                items(state.knownTags.take(MAX_TAG_SUGGESTIONS)) { tag ->
+                    FilterChip(
+                        selected = state.tags.any { it.equals(tag, ignoreCase = true) },
+                        onClick = { viewModel.onKnownTagToggle(tag) },
+                        label = { Text(tag, maxLines = 1) },
+                    )
+                }
+            }
+        }
+    }
+}
+
 // ---- Keypad ----------------------------------------------------------------------------------
 
 /**
@@ -790,7 +857,13 @@ private fun AmountKeypad(
     onSave: () -> Unit,
     canSave: Boolean,
     isSaving: Boolean,
+    saveLabel: String,
+    compact: Boolean,
 ) {
+    val haptics = LocalHapticFeedback.current
+    // On a short screen the keys give up a little height so the merchant and category above
+    // stay on screen with the keyboard; they never drop below the 48dp touch minimum.
+    val keyHeight = if (compact) 48.dp else 56.dp
     val rows = listOf(
         listOf(KeypadKey.Digit(1), KeypadKey.Digit(2), KeypadKey.Digit(3)),
         listOf(KeypadKey.Digit(4), KeypadKey.Digit(5), KeypadKey.Digit(6)),
@@ -810,10 +883,20 @@ private fun AmountKeypad(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 row.forEach { key ->
-                    KeypadButton(key = key, onClick = { onKey(key) }, modifier = Modifier.weight(1f))
+                    KeypadButton(
+                        key = key,
+                        onClick = {
+                            // A light tick per key, the feel of a real keypad, so a typed amount
+                            // can be trusted without watching every digit land.
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onKey(key)
+                        },
+                        height = keyHeight,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(if (compact) 6.dp else 8.dp))
         }
 
         Button(
@@ -831,8 +914,9 @@ private fun AmountKeypad(
                 )
             } else {
                 Text(
-                    stringResource(R.string.action_save),
+                    saveLabel,
                     style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
                 )
             }
         }
@@ -843,6 +927,7 @@ private fun AmountKeypad(
 private fun KeypadButton(
     key: KeypadKey,
     onClick: () -> Unit,
+    height: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
 ) {
     val label = when (key) {
@@ -853,15 +938,15 @@ private fun KeypadButton(
     }
     val description = when (key) {
         is KeypadKey.Digit -> key.value.toString()
-        KeypadKey.Decimal -> "decimal point"
-        KeypadKey.Backspace -> "backspace"
-        KeypadKey.Clear -> "clear"
+        KeypadKey.Decimal -> stringResource(R.string.a11y_decimal_point)
+        KeypadKey.Backspace -> stringResource(R.string.a11y_backspace)
+        KeypadKey.Clear -> stringResource(R.string.action_clear)
     }
 
     Box(
         modifier = modifier
-            // Comfortably above the 48dp minimum: this is the most-tapped control in the app.
-            .heightIn(min = 56.dp)
+            // At or above the 48dp minimum: this is the most-tapped control in the app.
+            .heightIn(min = height)
             .clip(KhaataShapeTokens.keypadKey)
             .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
@@ -886,3 +971,6 @@ private fun KeypadButton(
 
 /** Enough chips to cover the tags someone actually reuses without turning into a list. */
 private const val MAX_TAG_SUGGESTIONS = 12
+
+/** Below this height the keypad tightens so the fields above it stay in view. */
+private const val COMPACT_HEIGHT_DP = 700

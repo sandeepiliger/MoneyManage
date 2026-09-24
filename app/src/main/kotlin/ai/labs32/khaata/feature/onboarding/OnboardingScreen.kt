@@ -107,21 +107,13 @@ fun OnboardingScreen(
                 ) {
                     when (step) {
                         OnboardingStep.WELCOME -> WelcomeStep(onTryDemo = viewModel::loadDemoData)
-                        OnboardingStep.WHY -> WhyStep()
-                        OnboardingStep.CURRENCY -> CurrencyStep(state, viewModel::onCurrencyChange)
-                        OnboardingStep.LANGUAGE -> LanguageStep(state, viewModel::onLanguageChange)
                         OnboardingStep.ACCOUNT -> AccountStep(state, viewModel)
-                        OnboardingStep.INCOME -> IncomeStep(state, viewModel::onIncomeChange)
-                        OnboardingStep.CATEGORIES -> CategoriesStep(state, viewModel::onCategoryToggle)
-                        OnboardingStep.BUDGET -> BudgetStep(state, viewModel)
-                        OnboardingStep.NOTIFICATIONS -> NotificationsStep(viewModel)
-                        OnboardingStep.LOCK -> LockStep(state, viewModel::onLockModeChange)
                         OnboardingStep.SMS -> SmsStep(
                             state = state,
                             onChange = viewModel::onSmsImportChange,
                             onImportRecentChange = viewModel::onImportRecentSmsChange,
                         )
-                        OnboardingStep.FINISH -> FinishStep()
+                        OnboardingStep.FINISH -> FinishStep(viewModel)
                     }
                 }
             }
@@ -155,13 +147,6 @@ fun OnboardingScreen(
             }
         }
     }
-
-    if (state.showPinSetup) {
-        PinSetupDialog(
-            onConfirm = viewModel::completePinSetup,
-            onDismiss = viewModel::dismissPinSetup,
-        )
-    }
 }
 
 @Composable
@@ -192,12 +177,20 @@ private fun OnboardingTopBar(
                 TextButton(onClick = onSkip) { Text(stringResource(R.string.action_skip)) }
             }
         }
-        LinearProgressIndicator(
-            progress = { state.progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = KhaataTheme.spacing.large),
-        )
+        if (state.stepNumber > 0) {
+            LinearProgressIndicator(
+                progress = { state.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = KhaataTheme.spacing.large),
+            )
+            Text(
+                text = stringResource(R.string.onboarding_step_of, state.stepNumber, state.stepCount),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = KhaataTheme.spacing.large, vertical = 8.dp),
+            )
+        }
     }
 }
 
@@ -232,65 +225,6 @@ private fun WelcomeStep(onTryDemo: () -> Unit) {
             .fillMaxWidth()
             .heightIn(min = 48.dp),
     ) { Text(stringResource(R.string.onboarding_try_demo)) }
-}
-
-@Composable
-private fun WhyStep() {
-    StepHeading(title = stringResource(R.string.onboarding_why_title))
-    listOf(
-        R.string.onboarding_why_spending,
-        R.string.onboarding_why_budget,
-        R.string.onboarding_why_bills,
-        R.string.onboarding_why_private,
-    ).forEach { res ->
-        Row(
-            Modifier.padding(vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(22.dp),
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(stringResource(res), style = MaterialTheme.typography.bodyLarge)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun CurrencyStep(state: OnboardingUiState, onSelect: (CurrencyCode) -> Unit) {
-    StepHeading(
-        title = stringResource(R.string.onboarding_currency_title),
-        body = stringResource(R.string.onboarding_currency_body),
-    )
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        CurrencyCode.entries.forEach { currency ->
-            FilterChip(
-                selected = state.currency == currency,
-                onClick = { onSelect(currency) },
-                label = { Text("${currency.symbol} ${currency.code}") },
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun LanguageStep(state: OnboardingUiState, onSelect: (String) -> Unit) {
-    StepHeading(title = stringResource(R.string.onboarding_language_title))
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf("en" to R.string.language_english, "hi" to R.string.language_hindi)
-            .forEach { (tag, labelRes) ->
-                FilterChip(
-                    selected = state.languageTag == tag,
-                    onClick = { onSelect(tag) },
-                    label = { Text(stringResource(labelRes)) },
-                )
-            }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -358,131 +292,6 @@ private fun AccountStep(state: OnboardingUiState, viewModel: OnboardingViewModel
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
-}
-
-@Composable
-private fun IncomeStep(state: OnboardingUiState, onChange: (String) -> Unit) {
-    StepHeading(
-        title = stringResource(R.string.onboarding_income_title),
-        body = stringResource(R.string.onboarding_income_body),
-    )
-    OutlinedTextField(
-        value = state.monthlyIncomeText,
-        onValueChange = onChange,
-        prefix = { Text(state.currency.symbol) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun CategoriesStep(state: OnboardingUiState, onToggle: (String) -> Unit) {
-    StepHeading(
-        title = stringResource(R.string.onboarding_categories_title),
-        body = stringResource(R.string.onboarding_categories_body),
-    )
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        DefaultCategories.ONBOARDING_SUGGESTIONS.forEach { categoryId ->
-            val category = DefaultCategories.ALL.firstOrNull { it.id == categoryId }
-                ?: return@forEach
-            FilterChip(
-                selected = categoryId in state.selectedCategoryIds,
-                onClick = { onToggle(categoryId) },
-                label = { Text(category.name) },
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-@Composable
-private fun BudgetStep(state: OnboardingUiState, viewModel: OnboardingViewModel) {
-    StepHeading(
-        title = stringResource(R.string.onboarding_budget_title),
-        body = stringResource(R.string.onboarding_budget_body),
-    )
-
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        DefaultCategories.BUDGET_SUGGESTIONS.forEach { categoryId ->
-            val category = DefaultCategories.ALL.firstOrNull { it.id == categoryId }
-                ?: return@forEach
-            FilterChip(
-                selected = state.budgetCategoryId == categoryId,
-                onClick = { viewModel.onBudgetCategoryChange(categoryId) },
-                label = { Text(category.name) },
-            )
-        }
-    }
-
-    Spacer(Modifier.height(KhaataTheme.spacing.default))
-
-    OutlinedTextField(
-        value = state.budgetLimitText,
-        onValueChange = viewModel::onBudgetLimitChange,
-        label = { Text(stringResource(R.string.budgets_limit)) },
-        prefix = { Text(state.currency.symbol) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-    )
-
-    // A suggested figure derived from stated income, offered rather than imposed.
-    viewModel.suggestedBudget()?.let { suggestion ->
-        Spacer(Modifier.height(8.dp))
-        TextButton(onClick = { viewModel.onBudgetLimitChange(suggestion.toPlainString()) }) {
-            Text("${stringResource(R.string.action_add)} ${MoneyFormatter.plain(suggestion)}")
-        }
-    }
-}
-
-@Composable
-private fun NotificationsStep(viewModel: OnboardingViewModel) {
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-    ) { viewModel.onNotificationsRequested() }
-
-    PermissionStep(
-        icon = Icons.Outlined.Notifications,
-        title = stringResource(R.string.onboarding_notifications_title),
-        body = stringResource(R.string.onboarding_notifications_body),
-        actionLabel = stringResource(R.string.action_enable),
-        onAction = {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                viewModel.onNotificationsRequested()
-            }
-        },
-    )
-}
-
-@Composable
-private fun LockStep(state: OnboardingUiState, onSelect: (AppLockMode) -> Unit) {
-    StepHeading(
-        title = stringResource(R.string.onboarding_lock_title),
-        body = stringResource(R.string.onboarding_lock_body),
-    )
-    listOf(
-        AppLockMode.BIOMETRIC to R.string.settings_lock_biometric,
-        AppLockMode.PIN to R.string.settings_lock_pin,
-        AppLockMode.OFF to R.string.settings_lock_off,
-    ).forEach { (mode, labelRes) ->
-        OutlinedButton(
-            onClick = { onSelect(mode) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .heightIn(min = 48.dp),
-        ) {
-            if (state.lockMode == mode) {
-                Icon(Icons.Default.CheckCircle, contentDescription = null, Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-            }
-            Text(stringResource(labelRes))
-        }
-    }
 }
 
 @Composable
@@ -591,8 +400,20 @@ private fun PermissionStep(
     }
 }
 
+/**
+ * Done -- and the one permission worth asking for on the way out.
+ *
+ * Reminders were a step of their own. Asked here instead, once the user has seen what the app
+ * will remind them about, it is one optional button rather than another screen to get past; bill
+ * reminders and budget alerts are on by default and cannot reach anyone on Android 13+ without it.
+ */
 @Composable
-private fun FinishStep() {
+private fun FinishStep(viewModel: OnboardingViewModel) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { viewModel.onNotificationsRequested() }
+
     Spacer(Modifier.height(KhaataTheme.spacing.xxlarge))
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Icon(
@@ -617,6 +438,32 @@ private fun FinishStep() {
         modifier = Modifier.fillMaxWidth(),
         textAlign = TextAlign.Center,
     )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Spacer(Modifier.height(KhaataTheme.spacing.xlarge))
+        OutlinedButton(
+            onClick = { launcher.launch(Manifest.permission.POST_NOTIFICATIONS) },
+            enabled = !state.notificationsRequested,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp),
+        ) {
+            Icon(
+                if (state.notificationsRequested) Icons.Default.CheckCircle else Icons.Outlined.Notifications,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.onboarding_notifications_title))
+        }
+        Spacer(Modifier.height(KhaataTheme.spacing.small))
+        Text(
+            text = stringResource(R.string.onboarding_notifications_body),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+    }
 }
 
 @Composable
