@@ -20,7 +20,8 @@ class TranslationParityTest {
     private val english = read(File(res, "values/strings.xml"))
 
     private val translations: Map<String, File> =
-        res.listFiles { dir -> dir.name.startsWith("values-") }.orEmpty()
+        res.listFiles().orEmpty()
+            .filter { it.name.startsWith("values-") }
             .map { File(it, "strings.xml") }
             .filter { it.exists() }
             .associateBy { it.parentFile.name.removePrefix("values-") }

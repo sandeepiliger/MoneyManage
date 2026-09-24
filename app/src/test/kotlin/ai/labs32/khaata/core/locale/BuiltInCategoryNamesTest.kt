@@ -23,6 +23,7 @@ import org.robolectric.annotation.Config
  * -- what the user sees, and what reaches the database.
  */
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class BuiltInCategoryNamesTest {
 
     @Before

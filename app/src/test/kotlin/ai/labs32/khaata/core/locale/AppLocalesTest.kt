@@ -21,6 +21,7 @@ import java.util.Locale
  * would otherwise stay in the phone's language while the screens changed.
  */
 @RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class AppLocalesTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
