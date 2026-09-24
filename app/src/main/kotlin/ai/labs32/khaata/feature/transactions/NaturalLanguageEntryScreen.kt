@@ -2,6 +2,7 @@ package ai.labs32.khaata.feature.transactions
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.os.Build
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
@@ -33,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -90,14 +94,9 @@ fun NaturalLanguageEntryScreen(
     val voiceLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) { result ->
-        val spoken = result.data
-            ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            ?.firstOrNull()
-            ?.takeIf { it.isNotBlank() }
-        if (spoken != null) {
-            val combined = if (state.input.isBlank()) spoken else state.input.trimEnd() + " " + spoken
-            viewModel.onInputChange(combined)
-        }
+        // Every reading, not just the first: the view model picks the one that makes sense.
+        val heard = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).orEmpty()
+        if (heard.isNotEmpty()) viewModel.onVoiceResult(heard)
     }
 
     // Explicitly typed: the catch branch evaluates to a Job, so without this the lambda infers
@@ -108,8 +107,20 @@ fun NaturalLanguageEntryScreen(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM,
             )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, java.util.Locale.getDefault())
+            // Indian English, as a language tag: it hears "lakh", "Swiggy" and Hinglish amounts,
+            // and writes Latin script the parser reads. The extra must be a String -- a Locale
+            // object is silently ignored and the recogniser falls back to its own default.
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, VOICE_LANGUAGE)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, VOICE_LANGUAGE)
             putExtra(RecognizerIntent.EXTRA_PROMPT, voicePrompt)
+            // Several readings, so a misheard first guess can be outvoted.
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, VOICE_MAX_RESULTS)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                putStringArrayListExtra(
+                    RecognizerIntent.EXTRA_BIASING_STRINGS,
+                    ArrayList(viewModel.voiceHints),
+                )
+            }
         }
         try {
             voiceLauncher.launch(intent)
@@ -178,6 +189,13 @@ fun NaturalLanguageEntryScreen(
                 minLines = 3,
             )
 
+            if (state.voiceAlternatives.isNotEmpty()) {
+                VoiceAlternatives(
+                    alternatives = state.voiceAlternatives,
+                    onPick = viewModel::useVoiceAlternative,
+                )
+            }
+
             Spacer(Modifier.height(KhaataTheme.spacing.small))
 
             // The assistant's boundary is stated on the screen where it matters, not buried in
@@ -217,6 +235,32 @@ fun NaturalLanguageEntryScreen(
         }
     }
 }
+
+/** The recogniser's other readings of what was just said, one tap to swap in. */
+@Composable
+private fun VoiceAlternatives(alternatives: List<String>, onPick: (String) -> Unit) {
+    Column(Modifier.padding(top = KhaataTheme.spacing.small)) {
+        Text(
+            text = stringResource(R.string.voice_did_you_mean),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(KhaataTheme.spacing.small),
+        ) {
+            alternatives.forEach { alternative ->
+                SuggestionChip(
+                    onClick = { onPick(alternative) },
+                    label = { Text(alternative, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                )
+            }
+        }
+    }
+}
+
+private const val VOICE_LANGUAGE = "en-IN"
+private const val VOICE_MAX_RESULTS = 5
 
 @Composable
 private fun DraftList(

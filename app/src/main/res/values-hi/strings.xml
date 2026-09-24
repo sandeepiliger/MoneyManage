@@ -249,6 +249,7 @@
     <string name="voice_input">बोलें</string>
     <string name="voice_prompt">बताएं आपने क्या खर्च किया</string>
     <string name="voice_unavailable">इस डिवाइस पर वॉइस इनपुट उपलब्ध नहीं है।</string>
+    <string name="voice_did_you_mean">क्या आपका मतलब था</string>
 
     <!-- Accounts -->
     <string name="accounts_title">खाते</string>

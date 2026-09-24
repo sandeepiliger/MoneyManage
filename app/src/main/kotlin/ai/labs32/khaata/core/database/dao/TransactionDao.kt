@@ -493,6 +493,18 @@ interface TransactionDao {
     )
     suspend fun merchantSuggestions(prefix: String, limit: Int): List<String>
 
+    /** The most-used merchant names, most-used first: hints for the speech recogniser. */
+    @Query(
+        """
+        SELECT merchant FROM transactions
+        WHERE deletedAt IS NULL AND merchant IS NOT NULL AND merchant != ''
+        GROUP BY merchantKey
+        ORDER BY COUNT(*) DESC
+        LIMIT :limit
+        """,
+    )
+    suspend fun frequentMerchants(limit: Int): List<String>
+
     /**
      * Whether a recurring rule's occurrence on [date] is already in the ledger.
      *

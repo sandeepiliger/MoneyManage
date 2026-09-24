@@ -387,6 +387,8 @@ class TransactionRepository @Inject constructor(
     suspend fun merchantSuggestions(prefix: String, limit: Int = 8): List<String> =
         if (prefix.isBlank()) emptyList() else transactionDao.merchantSuggestions(prefix.trim(), limit)
 
+    suspend fun frequentMerchants(limit: Int = 40): List<String> = transactionDao.frequentMerchants(limit)
+
     suspend fun count(): Int = transactionDao.count()
 
     suspend fun countForAccount(accountId: String): Int = transactionDao.countForAccount(accountId)

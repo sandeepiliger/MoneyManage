@@ -262,6 +262,7 @@
     <string name="voice_input">Speak</string>
     <string name="voice_prompt">Say what you spent</string>
     <string name="voice_unavailable">Voice input isn\'t available on this device.</string>
+    <string name="voice_did_you_mean">Did you mean</string>
 
     <!-- ==================== Accounts ==================== -->
     <string name="accounts_title">Accounts</string>

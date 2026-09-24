@@ -53,6 +53,11 @@ data class NaturalLanguageEntryUiState(
     val isSaving: Boolean = false,
     val savedCount: Int = 0,
     val error: String? = null,
+    /**
+     * The recogniser's other readings of the last thing said, offered as "did you mean". Empty
+     * once the user types, since by then the dictated text is theirs.
+     */
+    val voiceAlternatives: List<String> = emptyList(),
 ) {
     val selectedCount: Int get() = drafts.count { it.isSelected }
 }
@@ -73,6 +78,16 @@ class NaturalLanguageEntryViewModel @Inject constructor(
 
     private val inputFlow = MutableStateFlow("")
 
+    /** The reading of the last dictation that went into the input, so an alternative can replace it. */
+    private var lastDictation: String? = null
+
+    /**
+     * Words to bias the speech recogniser towards: this user's merchants, categories and
+     * accounts, and the words people use to describe money. Loaded once when the screen opens.
+     */
+    var voiceHints: List<String> = BASE_VOICE_HINTS
+        private set
+
     init {
         viewModelScope.launch {
             _uiState.update {
@@ -81,6 +96,15 @@ class NaturalLanguageEntryViewModel @Inject constructor(
                     categories = categoryRepository.observeActive().first(),
                 )
             }
+            val merchants = runCatching { transactionRepository.frequentMerchants(MERCHANT_HINTS) }
+                .onFailure { KhaataLog.e(TAG, "Could not load merchant hints", it) }
+                .getOrDefault(emptyList())
+            val state = _uiState.value
+            voiceHints = (merchants + state.categories.map { it.name } + state.accounts.map { it.name } + BASE_VOICE_HINTS)
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinctBy { it.lowercase() }
+                .take(MAX_VOICE_HINTS)
         }
 
         // Re-parsing on every keystroke would rebuild the draft list under the user's finger and
@@ -92,7 +116,46 @@ class NaturalLanguageEntryViewModel @Inject constructor(
     }
 
     fun onInputChange(text: String) {
-        _uiState.update { it.copy(input = text) }
+        lastDictation = null
+        setInput(text, alternatives = emptyList())
+    }
+
+    /**
+     * Takes every reading the recogniser offered for one utterance, most confident first.
+     *
+     * Its first guess is not always the sensible one: "four fifty on Swiggy" can come back first
+     * as "for fifty on Swiggy" or "for five on Swiggy". So the reading that parses best goes into
+     * the input, appended to anything already there, and the others stay on screen as one-tap
+     * corrections.
+     */
+    fun onVoiceResult(alternatives: List<String>) {
+        val heard = alternatives.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        val best = parser.parseBest(heard, clock.today()) ?: return
+        val current = _uiState.value.input
+        val combined = if (current.isBlank()) best.text else current.trimEnd() + " " + best.text
+        lastDictation = best.text
+        setInput(
+            combined,
+            alternatives = heard.filter { it != best.text }.take(MAX_VOICE_ALTERNATIVES),
+        )
+    }
+
+    /** Swaps the last dictation in the input for another of the recogniser's readings. */
+    fun useVoiceAlternative(alternative: String) {
+        val state = _uiState.value
+        val previous = lastDictation
+        val text = if (previous != null && state.input.endsWith(previous)) {
+            state.input.dropLast(previous.length) + alternative
+        } else {
+            alternative
+        }
+        lastDictation = alternative
+        val others = (listOfNotNull(previous) + state.voiceAlternatives).filter { it != alternative }.distinct()
+        setInput(text, alternatives = others.take(MAX_VOICE_ALTERNATIVES))
+    }
+
+    private fun setInput(text: String, alternatives: List<String>) {
+        _uiState.update { it.copy(input = text, voiceAlternatives = alternatives) }
         inputFlow.value = text
     }
 
@@ -197,5 +260,15 @@ class NaturalLanguageEntryViewModel @Inject constructor(
     private companion object {
         const val TAG = "NaturalLanguageEntryViewModel"
         const val PARSE_DEBOUNCE_MS = 350L
+        const val MERCHANT_HINTS = 40
+        const val MAX_VOICE_HINTS = 100
+        const val MAX_VOICE_ALTERNATIVES = 3
+
+        /** How people here describe money out loud, so the recogniser expects these words. */
+        val BASE_VOICE_HINTS = listOf(
+            "spent", "paid", "received", "got", "salary", "refund", "rupees", "hundred",
+            "thousand", "lakh", "crore", "yesterday", "today", "UPI", "Swiggy", "Zomato",
+            "Uber", "Ola", "Amazon", "Flipkart", "petrol", "groceries", "rent", "EMI",
+        )
     }
 }

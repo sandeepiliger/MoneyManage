@@ -36,7 +36,9 @@ class NaturalLanguageParser(
     fun parse(input: String, today: LocalDate): List<ParsedEntry> {
         if (input.isBlank()) return emptyList()
 
-        val text = input.trim()
+        // Amounts as they are said -- "five hundred", "450 rupees" -- rewritten into the form
+        // below reads. Typed input passes through unchanged. See [SpokenText].
+        val text = SpokenText.normalise(input.trim())
         val lower = text.lowercase()
 
         val datePhrase = DatePhraseParser.find(lower, today)
@@ -45,8 +47,11 @@ class NaturalLanguageParser(
 
         // Digits that belong to a date must never be read as an amount: "spent 100 on 05/03"
         // is one ₹100 expense, not three. Masking with spaces keeps every index aligned with
-        // the original text, so merchant extraction still works on the untouched string.
-        val amountSearchText = datePhrase?.let { mask(text, it.range) } ?: text
+        // the original text, so merchant extraction still works on the untouched string. A time
+        // of day is masked the same way: "dinner 450 at 10:30" is one ₹450 dinner, where it
+        // used to be three drafts of ₹450, ₹10 and ₹30.
+        var amountSearchText = datePhrase?.let { mask(text, it.range) } ?: text
+        TIME_OF_DAY.findAll(lower).forEach { amountSearchText = mask(amountSearchText, it.range) }
 
         val segments = splitIntoSegments(text, amountSearchText)
         val entries = segments.mapNotNull { segment ->
@@ -66,6 +71,31 @@ class NaturalLanguageParser(
             )
         }
         return entries
+    }
+
+    /**
+     * Parses each of a speech recogniser's alternatives and keeps the one that reads best.
+     *
+     * A recogniser returns several guesses at what was said, most likely first, and its first
+     * guess is not always the one that makes sense as money: "spent 450 on swiggy" can come back
+     * first as "spent for 50 on swiggy". An alternative wins by yielding drafts at all, then by
+     * how many of its drafts name what the money was for, then by having fewer drafts (a stray
+     * number split off as its own draft is the usual misreading); a tie keeps the recogniser's
+     * own order. With nothing that parses, the first alternative is returned with no drafts, so
+     * the user still sees what was heard.
+     */
+    fun parseBest(alternatives: List<String>, today: LocalDate): BestReading? {
+        val candidates = alternatives.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+        if (candidates.isEmpty()) return null
+        val readings = candidates.map { BestReading(it, parse(it, today)) }
+        return readings.withIndex()
+            .maxWithOrNull(
+                compareBy<IndexedValue<BestReading>> { it.value.entries.isNotEmpty() }
+                    .thenBy { reading -> reading.value.entries.count { it.merchantKey != null } }
+                    .thenByDescending { it.value.entries.size }
+                    .thenByDescending { it.index },
+            )
+            ?.value
     }
 
     /** Replaces [range] with spaces, preserving every other character's index. */
@@ -121,6 +151,11 @@ class NaturalLanguageParser(
         val amounts = AMOUNT_IN_TEXT.findAll(searchable).toList()
         if (amounts.size <= 1) return listOf(Segment(text, searchable))
 
+        // Which amount an unseparated run of words belongs to. People describe a list one way
+        // throughout: "1200 petrol 850 groceries" puts each description after its amount, and
+        // "chai 20 petrol 1200" before it. Words after the last amount mean the former.
+        val descriptionsFollow = searchable.substring(amounts.last().range.last + 1).any { it.isLetter() }
+
         val segments = ArrayList<Segment>(amounts.size)
         for (index in amounts.indices) {
             // Each segment runs from just after the previous amount to just before the next one,
@@ -128,12 +163,12 @@ class NaturalLanguageParser(
             val start = if (index == 0) {
                 0
             } else {
-                boundaryBetween(searchable, amounts[index - 1].range.last, amounts[index].range.first)
+                boundaryBetween(searchable, amounts[index - 1].range.last, amounts[index].range.first, descriptionsFollow)
             }
             val end = if (index == amounts.lastIndex) {
                 text.length
             } else {
-                boundaryBetween(searchable, amounts[index].range.last, amounts[index + 1].range.first)
+                boundaryBetween(searchable, amounts[index].range.last, amounts[index + 1].range.first, descriptionsFollow)
             }
             // Both strings share an index space, so one pair of offsets slices both.
             segments += Segment(text.substring(start, end), searchable.substring(start, end))
@@ -144,16 +179,18 @@ class NaturalLanguageParser(
     /**
      * Finds where to cut between two amounts.
      *
-     * Prefers an explicit separator ("and", a comma, "+"); otherwise splits at the midpoint of
-     * the gap, which keeps each amount with its nearest descriptive words.
+     * Prefers an explicit separator ("and", a comma, "+"). Otherwise the words between belong
+     * whole to one amount -- the previous one when [descriptionsFollow], else the next. Cutting
+     * at the midpoint, as this once did, split words in half: "chai 20 petrol 1200" became "chai
+     * pet" and "rol", which is exactly what joining two dictated sentences produces.
      */
-    private fun boundaryBetween(text: String, previousEnd: Int, nextStart: Int): Int {
+    private fun boundaryBetween(text: String, previousEnd: Int, nextStart: Int, descriptionsFollow: Boolean): Int {
         val gap = text.substring(previousEnd + 1, nextStart)
         for (separator in SEGMENT_SEPARATORS) {
             val at = gap.indexOf(separator, ignoreCase = true)
             if (at >= 0) return previousEnd + 1 + at + separator.length
         }
-        return previousEnd + 1 + gap.length / 2
+        return if (descriptionsFollow) nextStart else previousEnd + 1
     }
 
     /**
@@ -229,6 +266,12 @@ class NaturalLanguageParser(
             RegexOption.IGNORE_CASE,
         )
 
+        /** "10:30", "10:30 pm", "7 pm", "9 o'clock": times of day, never amounts. */
+        val TIME_OF_DAY = Regex(
+            """\b\d{1,2}:\d{2}(?:\s*[ap]\.?m\.?)?|\b\d{1,2}\s*(?:[ap]\.?m\.?|o'?clock)(?![a-z])""",
+            RegexOption.IGNORE_CASE,
+        )
+
         val SEGMENT_SEPARATORS = listOf(" and ", ",", " plus ", " + ", ";", " & ")
 
         val EXPENSE_WORDS = listOf(
@@ -270,6 +313,9 @@ class NaturalLanguageParser(
         )
     }
 }
+
+/** One recogniser alternative and what it parsed to; see [NaturalLanguageParser.parseBest]. */
+data class BestReading(val text: String, val entries: List<ParsedEntry>)
 
 /** A draft transaction produced from free text. Never written without the user confirming. */
 data class ParsedEntry(
