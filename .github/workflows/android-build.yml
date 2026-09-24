@@ -67,6 +67,29 @@ jobs:
       - name: Run :app unit tests
         run: ./gradlew :app:testDebugUnitTest --stacktrace
 
+      # The walkthrough test (AppWalkthroughTest) saves a screenshot of every main screen. They
+      # go to a rolling release rather than an artifact for the same reason the APKs do: release
+      # assets are the one download this Claude Code session can reach, so this is how the
+      # layouts get looked at without a phone. Always, so a failing run still shows what it drew.
+      - name: Publish screenshots
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ ! -d app/build/screenshots ]; then
+            echo "No screenshots were taken."
+            exit 0
+          fi
+          (cd app/build && zip -qr ../../screenshots.zip screenshots)
+          if ! gh release view ui-screenshots >/dev/null 2>&1; then
+            gh release create ui-screenshots --prerelease --title "UI screenshots" \
+              --notes "Screens rendered by AppWalkthroughTest on the latest CI run."
+          fi
+          gh release upload ui-screenshots screenshots.zip --clobber
+          gh release edit ui-screenshots --notes "From \`$(git rev-parse --short HEAD)\` on \`${GITHUB_REF_NAME}\`."
+
       - name: Upload :app test report on failure
         if: failure()
         uses: actions/upload-artifact@v4

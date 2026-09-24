@@ -344,6 +344,9 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.arch.core.testing)
     testImplementation(libs.androidx.room.testing)
+    // Robolectric Compose tests: drive the real screens and check what is actually on them.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.junit)
@@ -355,4 +358,15 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.truth)
     kspAndroidTest(libs.hilt.compiler)
+}
+
+// A failing unit test's full message and stack in the CI log. The HTML report is an Actions
+// artifact, which this project's Claude Code sessions cannot download, so the log is the only
+// place a failure can be read back from.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStandardStreams = false
+    }
 }
