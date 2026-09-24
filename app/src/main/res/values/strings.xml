@@ -1076,4 +1076,12 @@
 
     <string name="settings_monthly_income">Monthly income (optional)</string>
     <string name="settings_monthly_income_help">The assistant uses it to judge what is affordable</string>
+    <plurals name="home_more_waiting">
+        <item quantity="one">%1$d more waiting</item>
+        <item quantity="other">%1$d more waiting</item>
+    </plurals>
+    <plurals name="home_more_bills">
+        <item quantity="one">%1$d more bill to confirm</item>
+        <item quantity="other">%1$d more bills to confirm</item>
+    </plurals>
 </resources>

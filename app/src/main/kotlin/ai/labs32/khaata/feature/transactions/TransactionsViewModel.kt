@@ -117,7 +117,11 @@ class TransactionsViewModel @Inject constructor(
         // has loaded, so summing it would show a total that grows as the user scrolls. They are
         // streams, so adding or deleting a transaction moves them without touching the filter.
         combine(
-            filterFlow.debounce(SEARCH_DEBOUNCE_MS).distinctUntilChanged(),
+            // Debounced only while typing, like the list itself: a tapped chip or the first load
+            // should show its totals at once, not a quarter-second after the rows.
+            filterFlow
+                .debounce { filter -> if (filter.query.isNullOrBlank()) 0L else SEARCH_DEBOUNCE_MS }
+                .distinctUntilChanged(),
             profileRepository.observe().map { it?.currency ?: CurrencyCode.DEFAULT }.distinctUntilChanged(),
         ) { filter, currency -> filter to currency }
             .flatMapLatest { (filter, currency) ->

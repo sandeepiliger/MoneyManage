@@ -120,6 +120,10 @@ class AppWalkthroughTest {
 
         compose.onNode(hasContentDescription(str(R.string.nav_add_transaction), substring = true)).performClick()
         waitForText(R.string.transaction_add_title)
+        // The keypad appears once the editor has loaded the accounts.
+        compose.waitUntil(TIMEOUT_MS) {
+            compose.onAllNodes(hasContentDescription("4") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+        }
         snap("add-empty")
 
         listOf("4", "5", "0").forEach { digit ->
@@ -172,6 +176,67 @@ class AppWalkthroughTest {
         waitForText(R.string.dashboard_empty_title)
         assertBottomBarAtTheBottom()
         snap("home-empty")
+    }
+
+    /** Dark theme: the same screens, to check every surface and figure stays legible. */
+    @Test
+    @Config(qualifiers = "+night")
+    fun theMainScreensInDarkTheme() {
+        startWithSampleData()
+        snap("home")
+        tab(R.string.nav_activity).performClick()
+        waitForText(R.string.activity_in)
+        snap("activity")
+        tab(R.string.nav_plan).performClick()
+        waitForText(R.string.plan_bills)
+        snap("plan")
+        tab(R.string.nav_money).performClick()
+        waitForText(R.string.money_you_have)
+        snap("money")
+    }
+
+    /**
+     * Hindi: labels are longer and set in the system font (the brand face has no Devanagari), so
+     * this is where truncation and overflow would show first.
+     */
+    @Test
+    @Config(qualifiers = "hi-rIN-w393dp-h851dp-xhdpi")
+    fun theMainScreensInHindi() {
+        startWithSampleData()
+        assertBottomBarAtTheBottom()
+        snap("home")
+        tab(R.string.nav_activity).performClick()
+        waitForText(R.string.activity_in)
+        snap("activity")
+        tab(R.string.nav_plan).performClick()
+        waitForText(R.string.plan_bills)
+        snap("plan")
+        tab(R.string.nav_money).performClick()
+        waitForText(R.string.money_you_have)
+        snap("money")
+        compose.onNode(hasContentDescription(str(R.string.nav_add_transaction), substring = true)).performClick()
+        waitForText(R.string.transaction_add_title)
+        compose.waitUntil(TIMEOUT_MS) {
+            compose.onAllNodes(hasContentDescription("4") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+        }
+        snap("add")
+    }
+
+    /** A small phone (360dp x 640dp): the add screen's keypad and fields must still fit. */
+    @Test
+    @Config(qualifiers = "w360dp-h640dp-xhdpi")
+    fun theAddScreenFitsASmallPhone() {
+        startWithSampleData()
+        snap("home")
+        compose.onNode(hasContentDescription(str(R.string.nav_add_transaction), substring = true)).performClick()
+        waitForText(R.string.transaction_add_title)
+        compose.waitUntil(TIMEOUT_MS) {
+            compose.onAllNodes(hasContentDescription("4") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+        }
+        // The whole keypad and the save button are on screen, not pushed below it.
+        compose.onNode(hasContentDescription("0") and hasClickAction()).assertIsDisplayed()
+        compose.onNode(hasText(str(R.string.action_save)) and hasClickAction()).assertIsDisplayed()
+        snap("add")
     }
 
     // ---- Helpers ------------------------------------------------------------------------------

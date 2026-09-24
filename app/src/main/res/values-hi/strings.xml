@@ -1078,4 +1078,12 @@
 
     <string name="settings_monthly_income">मासिक आय (ज़रूरी नहीं)</string>
     <string name="settings_monthly_income_help">सहायक इससे तय करता है कि क्या खर्च करना ठीक है</string>
+    <plurals name="home_more_waiting">
+        <item quantity="one">%1$d और बाकी</item>
+        <item quantity="other">%1$d और बाकी</item>
+    </plurals>
+    <plurals name="home_more_bills">
+        <item quantity="one">%1$d और बिल की पुष्टि करनी है</item>
+        <item quantity="other">%1$d और बिलों की पुष्टि करनी है</item>
+    </plurals>
 </resources>

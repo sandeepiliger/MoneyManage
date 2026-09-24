@@ -597,15 +597,39 @@ private fun NeedsYouRows(
         )
     }
 
-    state.awaitingBills.forEach { occurrence ->
+    // One row per bill, not per missed date: a rent nobody confirmed for three months is one
+    // thing to deal with, and listing each month pushed everything else off the card. The row
+    // offers the oldest date first, since confirming in order keeps the ledger in order; the rest
+    // are counted beside it and all of them are on Plan.
+    val billsByRule = remember(state.awaitingBills) {
+        state.awaitingBills.groupBy { it.rule.id }.values.map { it.first() to it.size - 1 }
+    }
+    billsByRule.take(MAX_BILLS_IN_NEEDS_YOU).forEach { (occurrence, more) ->
         if (shown++ > 0) HorizontalDivider(color = divider)
+        val due = stringResource(R.string.recurring_was_due, occurrence.dueOn.format(dateFormatter))
         NeedsYouRow(
             icon = Icons.Outlined.EventRepeat,
             tint = money.warning,
             title = "${occurrence.rule.name} · ${MoneyFormatter.plain(occurrence.rule.amount)}",
-            subtitle = stringResource(R.string.recurring_was_due, occurrence.dueOn.format(dateFormatter)),
+            subtitle = if (more > 0) {
+                due + " · " + pluralStringResource(R.plurals.home_more_waiting, more, more)
+            } else {
+                due
+            },
             actionLabel = stringResource(R.string.recurring_confirm_post),
             onAction = { onBillPaid(occurrence) },
+        )
+    }
+    if (billsByRule.size > MAX_BILLS_IN_NEEDS_YOU) {
+        if (shown++ > 0) HorizontalDivider(color = divider)
+        val extra = billsByRule.size - MAX_BILLS_IN_NEEDS_YOU
+        NeedsYouRow(
+            icon = Icons.Outlined.EventRepeat,
+            tint = money.warning,
+            title = pluralStringResource(R.plurals.home_more_bills, extra, extra),
+            subtitle = null,
+            actionLabel = stringResource(R.string.home_open),
+            onAction = { onNavigate(Routes.PLAN) },
         )
     }
 
@@ -719,6 +743,7 @@ private fun DemoBanner(onManage: () -> Unit) {
 }
 
 private const val MAX_BUDGETS_IN_NEEDS_YOU = 2
+private const val MAX_BILLS_IN_NEEDS_YOU = 3
 
 // ---- Cards -----------------------------------------------------------------------------------
 
