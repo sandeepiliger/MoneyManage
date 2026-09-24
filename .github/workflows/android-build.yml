@@ -224,8 +224,12 @@ jobs:
 
           # Assets from before this workflow used stable names, cleaned up once and thereafter a
           # no-op, so the release cannot accumulate a pile of builds with no obvious newest.
+          #
+          # grep exits 1 when there is nothing stale, which under pipefail ended the step here --
+          # silently, since the step continues on error -- so the notes below were never updated
+          # and the release kept describing a build from days before the APKs it carried.
           gh release view latest-build --json assets --jq '.assets[].name' \
-            | grep -vx -e 'khaata-debug.apk' -e 'khaata-optimised.apk' \
+            | { grep -vx -e 'khaata-debug.apk' -e 'khaata-optimised.apk' || true; } \
             | while read -r stale; do
                 [ -n "$stale" ] && gh release delete-asset latest-build "$stale" --yes || true
               done
