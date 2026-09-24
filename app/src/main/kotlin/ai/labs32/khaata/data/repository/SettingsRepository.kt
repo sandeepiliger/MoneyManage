@@ -95,6 +95,8 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setSmsImportEnabled(enabled: Boolean) = edit { it[Keys.SMS_IMPORT] = enabled }
 
+    suspend fun setSmsAutoAdd(enabled: Boolean) = edit { it[Keys.SMS_AUTO_ADD] = enabled }
+
     suspend fun setNotificationImportEnabled(enabled: Boolean) =
         edit { it[Keys.NOTIFICATION_IMPORT] = enabled }
 
@@ -183,6 +185,7 @@ class SettingsRepository @Inject constructor(
             crashReportingEnabled = this[Keys.CRASH_REPORTING] ?: false,
             cloudAiEnabled = this[Keys.CLOUD_AI] ?: false,
             smsImportEnabled = this[Keys.SMS_IMPORT] ?: false,
+            smsAutoAdd = this[Keys.SMS_AUTO_ADD] ?: true,
             notificationImportEnabled = this[Keys.NOTIFICATION_IMPORT] ?: false,
             budgetAlertsEnabled = this[Keys.BUDGET_ALERTS] ?: true,
             billRemindersEnabled = this[Keys.BILL_REMINDERS] ?: true,
@@ -207,6 +210,7 @@ class SettingsRepository @Inject constructor(
         val CRASH_REPORTING = booleanPreferencesKey("crash_reporting_enabled")
         val CLOUD_AI = booleanPreferencesKey("cloud_ai_enabled")
         val SMS_IMPORT = booleanPreferencesKey("sms_import_enabled")
+        val SMS_AUTO_ADD = booleanPreferencesKey("sms_auto_add")
         val NOTIFICATION_IMPORT = booleanPreferencesKey("notification_import_enabled")
         val BUDGET_ALERTS = booleanPreferencesKey("budget_alerts_enabled")
         val BILL_REMINDERS = booleanPreferencesKey("bill_reminders_enabled")

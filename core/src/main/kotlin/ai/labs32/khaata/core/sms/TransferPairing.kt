@@ -26,10 +26,28 @@ object TransferPairing {
     const val WINDOW_DAYS = 2L
 
     /**
-     * The single staged import that is the other leg of an incoming message, or null.
+     * Whether [transaction] can still become one leg of a transfer.
+     *
+     * An SMS import nobody has handled yet: waiting in review, or added automatically and not
+     * touched since ([Transaction.updatedAt] still equal to [Transaction.createdAt] -- confirming,
+     * editing and recategorising all move it). Messages are added straight to the ledger by
+     * default now, so the first leg of a transfer is usually already there by the time the second
+     * arrives; limiting pairing to pending rows would record every such transfer as an expense
+     * plus an income, inflating both. A row the user has confirmed or changed is theirs and is
+     * never rewritten.
+     */
+    fun isOpenForPairing(transaction: Transaction): Boolean =
+        transaction.source == TransactionSource.SMS_IMPORT &&
+            !transaction.isDeleted &&
+            transaction.transferAccountId == null &&
+            transaction.type != TransactionType.TRANSFER &&
+            (transaction.isPending || transaction.updatedAt == transaction.createdAt)
+
+    /**
+     * The single SMS import that is the other leg of an incoming message, or null.
      *
      * A counterpart moves the same amount the opposite way on a different account within
-     * [WINDOW_DAYS], is still pending, came from SMS, and is not already a transfer.
+     * [WINDOW_DAYS], is [open for pairing][isOpenForPairing], and is not already a transfer.
      *
      * Bank references settle it where both legs quote one. UPI, IMPS and NEFT carry the same
      * RRN or UTR into both banks' messages, so an equal reference picks that candidate out of
@@ -47,11 +65,7 @@ object TransferPairing {
         if (type == TransactionType.TRANSFER) return null
         val incomingReference = reference?.takeIf { it.isNotBlank() }
         val eligible = candidates.filter { candidate ->
-            candidate.isPending &&
-                !candidate.isDeleted &&
-                candidate.source == TransactionSource.SMS_IMPORT &&
-                candidate.transferAccountId == null &&
-                candidate.type != TransactionType.TRANSFER &&
+            isOpenForPairing(candidate) &&
                 candidate.type != type &&
                 candidate.amount == amount &&
                 candidate.accountId != accountId &&
@@ -69,6 +83,9 @@ object TransferPairing {
 
     /**
      * [pending] rewritten as the one transfer that it and the incoming leg together describe.
+     *
+     * Its pending state is kept as it was: a leg still in review stays in review as the transfer,
+     * and one already added automatically stays added.
      *
      * Money leaves the account that was debited and arrives in the one that was credited, on the
      * debit's date, which is when it actually left. A transfer has no category, and the bank's

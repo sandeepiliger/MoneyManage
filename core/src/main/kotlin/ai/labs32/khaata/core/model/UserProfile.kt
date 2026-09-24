@@ -78,6 +78,13 @@ data class AppSettings(
     val crashReportingEnabled: Boolean = false,
     val cloudAiEnabled: Boolean = false,
     val smsImportEnabled: Boolean = false,
+    /**
+     * Whether a bank message is added to the ledger as it arrives, rather than waiting in review.
+     * On by default: most messages are right, and one that is not is a swipe to remove. The
+     * one-time read of past messages always goes to review whatever this says, because history
+     * can overlap a balance the user typed in themselves.
+     */
+    val smsAutoAdd: Boolean = true,
     val notificationImportEnabled: Boolean = false,
     val budgetAlertsEnabled: Boolean = true,
     val billRemindersEnabled: Boolean = true,

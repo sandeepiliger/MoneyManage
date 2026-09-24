@@ -66,12 +66,13 @@ class SmsTransactionReceiver : BroadcastReceiver() {
             try {
                 when (val outcome = importer.import(body = body, sender = sender)) {
                     is SmsImportOutcome.Staged -> {
-                        KhaataLog.d(TAG, "Staged, confidence=${outcome.parsed.confidence}")
+                        KhaataLog.d(TAG, "Imported, autoAdded=${outcome.autoAdded}, confidence=${outcome.parsed.confidence}")
                         notifier.notifyPendingImport(
                             parsed = outcome.parsed,
                             categoryName = outcome.categoryName,
                             accountName = outcome.accountName,
                             isNewAccount = outcome.isNewAccount,
+                            addedTransactionId = outcome.transactionId.takeIf { outcome.autoAdded },
                         )
                     }
 
@@ -82,7 +83,7 @@ class SmsTransactionReceiver : BroadcastReceiver() {
                     SmsImportOutcome.NotEnabled -> KhaataLog.d(TAG, "SMS import is not enabled")
                     SmsImportOutcome.Duplicate -> KhaataLog.d(TAG, "Duplicate, skipped")
                     SmsImportOutcome.AlreadyInBalance -> KhaataLog.d(TAG, "Already in the balance, skipped")
-                    is SmsImportOutcome.PairedAsTransfer -> KhaataLog.d(TAG, "Paired with a staged import as a transfer")
+                    is SmsImportOutcome.PairedAsTransfer -> KhaataLog.d(TAG, "Paired with an earlier import as a transfer")
 
                     // The one quiet outcome worth breaking silence for: a real payment was
                     // recognised and then dropped because no account claimed it. Rate-limited to

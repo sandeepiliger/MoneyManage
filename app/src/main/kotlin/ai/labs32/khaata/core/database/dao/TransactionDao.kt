@@ -639,16 +639,22 @@ interface TransactionDao {
      * within [from]..[to], not already paired. [TransferPairing][ai.labs32.khaata.core.sms.TransferPairing]
      * makes the actual decision.
      */
+    /**
+     * SMS imports that could still be the other leg of a transfer: pending, or added
+     * automatically and untouched since. Mirrors TransferPairing.isOpenForPairing, which makes
+     * the final call on each row.
+     */
     @Query(
         """
         SELECT * FROM transactions
-        WHERE isPending = 1 AND deletedAt IS NULL AND source = 'SMS_IMPORT'
+        WHERE deletedAt IS NULL AND source = 'SMS_IMPORT'
           AND transferAccountId IS NULL
+          AND (isPending = 1 OR updatedAt = createdAt)
           AND amount_minor_units = :minorUnits
           AND occurredOn BETWEEN :from AND :to
         """,
     )
-    suspend fun pendingImportsForAmount(minorUnits: Long, from: LocalDate, to: LocalDate): List<TransactionEntity>
+    suspend fun pairingCandidatesForAmount(minorUnits: Long, from: LocalDate, to: LocalDate): List<TransactionEntity>
 
     @Transaction
     suspend fun replaceAll(transactions: List<TransactionEntity>) {

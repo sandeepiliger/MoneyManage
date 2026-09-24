@@ -71,9 +71,11 @@ class TransferPairingTest {
     }
 
     @Test
-    fun `a confirmed, manual, deleted or already-paired row is never rewritten`() {
+    fun `a confirmed, edited, manual, deleted or already-paired row is never rewritten`() {
         val candidates = listOf(
-            staged("confirmed", TransactionType.INCOME, "5000", "icici", isPending = false),
+            // Confirmed by the user: confirming moves updatedAt past createdAt.
+            staged("confirmed", TransactionType.INCOME, "5000", "icici", isPending = false)
+                .copy(updatedAt = Instant.parse("2026-03-10T09:00:00Z")),
             staged("manual", TransactionType.INCOME, "5000", "icici", source = TransactionSource.MANUAL),
             staged("deleted", TransactionType.INCOME, "5000", "icici")
                 .copy(deletedAt = Instant.parse("2026-03-10T10:00:00Z")),
@@ -154,5 +156,29 @@ class TransferPairingTest {
         assertThat(paired.map { it.currentBalance }).containsExactly(Money.of("25000"), Money.of("0")).inOrder()
         assertThat(merged.countsAsSpending).isFalse()
         assertThat(merged.countsAsIncome).isFalse()
+    }
+
+    /**
+     * Messages are added straight to the ledger by default, so the first leg of a transfer is
+     * usually already added, not pending, when the second arrives. Untouched, it still pairs --
+     * otherwise every such transfer would be an expense plus an income.
+     */
+    @Test
+    fun `an automatically added leg nobody has touched still pairs, and stays added`() {
+        val added = staged("c", TransactionType.INCOME, "5000", "icici", isPending = false)
+        assertThat(TransferPairing.isOpenForPairing(added)).isTrue()
+        assertThat(counterpartOf(TransactionType.EXPENSE, "5000", "hdfc", listOf(added))).isEqualTo(added)
+
+        val merged = TransferPairing.merge(added, "hdfc", day, incomingReference = null)
+        assertThat(merged.type).isEqualTo(TransactionType.TRANSFER)
+        assertThat(merged.isPending).isFalse()
+    }
+
+    @Test
+    fun `an automatically added leg the user has edited is theirs and does not pair`() {
+        val edited = staged("c", TransactionType.INCOME, "5000", "icici", isPending = false)
+            .copy(updatedAt = Instant.parse("2026-03-10T11:00:00Z"))
+        assertThat(TransferPairing.isOpenForPairing(edited)).isFalse()
+        assertThat(counterpartOf(TransactionType.EXPENSE, "5000", "hdfc", listOf(edited))).isNull()
     }
 }

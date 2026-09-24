@@ -26,7 +26,8 @@ import javax.inject.Singleton
 /** What happened to one message. Every path is named, so nothing is silently dropped. */
 sealed interface SmsImportOutcome {
     /**
-     * A pending transaction was created and is waiting for the user to confirm it.
+     * A transaction was created from the message: added to the ledger straight away when
+     * [autoAdded], otherwise pending and waiting for the user to confirm it.
      *
      * [categoryName] and [accountName] are resolved here rather than left for the notification to
      * look up: the receiver has no repositories, and the notifier deliberately has no database
@@ -39,6 +40,8 @@ sealed interface SmsImportOutcome {
         val accountName: String,
         /** True when [accountName] did not exist before this message — see [SmsTransactionImporter.createAccountFromSms]. */
         val isNewAccount: Boolean,
+        /** Added to the ledger rather than staged for review; see [SmsTransactionImporter.import]. */
+        val autoAdded: Boolean = false,
     ) : SmsImportOutcome
 
     /** The message was not a transaction — an OTP, a promotion, a balance alert. */
@@ -61,14 +64,15 @@ sealed interface SmsImportOutcome {
     data object AlreadyInBalance : SmsImportOutcome
 
     /**
-     * The other leg of a transfer already waiting for review, so that row became the transfer
-     * instead of a second row being staged. The first leg was already announced.
+     * The other leg of a transfer already recorded from an earlier message (waiting for review, or
+     * added and not yet touched), so that row became the transfer instead of a second row being
+     * created. The first leg was already announced.
      */
     data class PairedAsTransfer(val transactionId: String) : SmsImportOutcome
 }
 
 /**
- * Turns a bank SMS into a pending transaction.
+ * Turns a bank SMS into a transaction.
  *
  * Four rules govern everything here.
  *
@@ -76,10 +80,15 @@ sealed interface SmsImportOutcome {
  * network access, and nothing in this class writes a message body to a log, to analytics, or to
  * any field that is later exported.
  *
- * Nothing is ever posted straight to the ledger. Every import lands as `isPending`, which the user
- * confirms or discards. A bank SMS is a claim about what happened, not a fact — the message can be
- * a duplicate, a pre-authorisation that never settles, or simply wrong — and a balance built on
- * unconfirmed claims is one the user cannot reconcile.
+ * A message arriving now is added to the ledger straight away, unless the user has turned
+ * [AppSettings.smsAutoAdd][ai.labs32.khaata.core.model.AppSettings.smsAutoAdd] off: most bank
+ * messages are right, and asking about each one made the app a queue to clear rather than a record
+ * that keeps itself. What makes that safe is everything before the write -- duplicates (including
+ * ones the user already typed or deleted) are skipped, a message from before a stated balance is
+ * skipped, and the two messages of a transfer become one row. One that is still wrong is a swipe
+ * to remove. The one-time read of past messages always stages for review instead: history can
+ * overlap a balance the user typed in themselves, and nobody should find a year of it added
+ * unasked.
  *
  * A message with no matching account is refused rather than filed against a guess. Putting a
  * transaction on the wrong account silently corrupts two balances and the user has no way to see
@@ -136,6 +145,10 @@ class SmsTransactionImporter @Inject constructor(
             return SmsImportOutcome.NotATransaction
         }
 
+        // Straight into the ledger for a message arriving now, when the user has left that on;
+        // history from the inbox read always waits for review. See the class comment.
+        val autoAdd = !fromInboxScan && settingsRepository.current().smsAutoAdd
+
         val accounts = accountRepository.getAll().filterNot { it.isArchived }
         val (account, isNewAccount) = when (val match = matchAccount(parsed, accounts)) {
             is AccountMatch.Found -> match.account to false
@@ -168,14 +181,14 @@ class SmsTransactionImporter @Inject constructor(
             return SmsImportOutcome.Duplicate
         }
 
-        // The other leg of a transfer between the user's own accounts, already waiting for
-        // review: one transfer, not an expense plus an income. See [TransferPairing].
+        // The other leg of a transfer between the user's own accounts, already recorded from the
+        // first message: one transfer, not an expense plus an income. See [TransferPairing].
         val counterpart = TransferPairing.counterpart(
             type = parsed.type,
             amount = parsed.amount,
             accountId = account.id,
             occurredOn = parsed.occurredOn,
-            candidates = transactionRepository.pendingImportsNear(
+            candidates = transactionRepository.pairingCandidatesNear(
                 parsed.amount,
                 parsed.occurredOn,
                 TransferPairing.WINDOW_DAYS,
@@ -190,7 +203,7 @@ class SmsTransactionImporter @Inject constructor(
                 incomingReference = parsed.referenceNumber,
             )
             transactionRepository.update(merged, learnCategory = false)
-            KhaataLog.d(TAG, "Paired an SMS with a staged import as one transfer")
+            KhaataLog.d(TAG, "Paired an SMS with an earlier import as one transfer")
             return SmsImportOutcome.PairedAsTransfer(merged.id)
         }
 
@@ -222,14 +235,14 @@ class SmsTransactionImporter @Inject constructor(
             occurredOn = parsed.occurredOn,
             source = TransactionSource.SMS_IMPORT,
             referenceNumber = parsed.referenceNumber,
-            isPending = true,
-            // Nothing is learned from an unconfirmed row: a wrong parse would teach the
-            // categoriser the wrong merchant before anyone had a chance to correct it.
+            isPending = !autoAdd,
+            // Nothing is learned from a row the user has not looked at, added or not: a wrong
+            // parse would teach the categoriser the wrong merchant before anyone could correct it.
             learnCategory = false,
         )
 
         // Logged by outcome and confidence only — never the body, the merchant or the amount.
-        KhaataLog.d(TAG, "Staged an SMS import, confidence=${parsed.confidence}, newAccount=$isNewAccount")
+        KhaataLog.d(TAG, "Imported an SMS, autoAdded=$autoAdd, confidence=${parsed.confidence}, newAccount=$isNewAccount")
 
         return SmsImportOutcome.Staged(
             transactionId = id,
@@ -238,6 +251,7 @@ class SmsTransactionImporter @Inject constructor(
             categoryName = suggestion?.categoryId?.let { categoryRepository.findById(it)?.name },
             accountName = account.name,
             isNewAccount = isNewAccount,
+            autoAdded = autoAdd,
         )
     }
 

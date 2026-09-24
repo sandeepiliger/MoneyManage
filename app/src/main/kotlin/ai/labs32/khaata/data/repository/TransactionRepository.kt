@@ -291,8 +291,8 @@ class TransactionRepository @Inject constructor(
     )
 
     /** Staged imports of exactly [amount] dated within [days] of [around]; candidates for pairing. */
-    suspend fun pendingImportsNear(amount: Money, around: LocalDate, days: Long): List<Transaction> =
-        transactionDao.pendingImportsForAmount(amount.minorUnits, around.minusDays(days), around.plusDays(days))
+    suspend fun pairingCandidatesNear(amount: Money, around: LocalDate, days: Long): List<Transaction> =
+        transactionDao.pairingCandidatesForAmount(amount.minorUnits, around.minusDays(days), around.plusDays(days))
             .toDomain()
 
     // ---- Aggregates --------------------------------------------------------------------------

@@ -222,7 +222,9 @@ class KhaataNotifier @Inject constructor(
     }
 
     /**
-     * Tells the user an imported transaction is waiting for them to confirm it.
+     * Tells the user about a transaction read from a bank message: one already added when
+     * [addedTransactionId] is set -- the tap opens it, to change or remove -- or one waiting for
+     * them to confirm otherwise, when the tap opens the review list.
      *
      * Carries the merchant and the amount in the expanded notification and neither on the lock
      * screen, and never any part of the SMS itself. Low priority: this is not urgent, it is a
@@ -234,8 +236,10 @@ class KhaataNotifier @Inject constructor(
         categoryName: String?,
         accountName: String,
         isNewAccount: Boolean,
+        addedTransactionId: String? = null,
     ): Boolean {
         if (!hasPermission()) return false
+        val added = addedTransactionId != null
         // The reference number identifies the payment, so re-parsing the same message — a carrier
         // redelivery, say — replaces the notification rather than stacking a second one.
         val dedupeKey = "import:${parsed.referenceNumber ?: parsed.hashCode()}"
@@ -258,12 +262,13 @@ class KhaataNotifier @Inject constructor(
         // Category is omitted rather than guessed at when nothing was suggested — "Uncategorised"
         // in a notification invites a correction the user cannot make from here.
         val detail = listOfNotNull(categoryName, accountName).joinToString(" · ")
-        val hint = if (isNewAccount) {
+        val hint = when {
             // A user who never added this account should not have to work out why it appeared --
             // said once, in the expanded body, not repeated every time this account is used again.
-            context.getString(R.string.notification_import_new_account, accountName)
-        } else {
-            context.getString(R.string.notification_import_confirm_hint)
+            isNewAccount && added -> context.getString(R.string.notification_import_new_account_added, accountName)
+            isNewAccount -> context.getString(R.string.notification_import_new_account, accountName)
+            added -> context.getString(R.string.notification_import_added_hint)
+            else -> context.getString(R.string.notification_import_confirm_hint)
         }
         val body = if (detail.isBlank()) hint else "$detail\n$hint"
 
@@ -276,10 +281,16 @@ class KhaataNotifier @Inject constructor(
             // headline above is only shown once the device is unlocked.
             .setPublicVersion(
                 baseBuilder(NotificationChannels.IMPORTS)
-                    .setContentTitle(context.getString(R.string.notification_import_title))
+                    .setContentTitle(
+                        context.getString(
+                            if (added) R.string.notification_import_added_title else R.string.notification_import_title,
+                        ),
+                    )
                     .build(),
             )
-            .setContentIntent(pendingImportsIntent())
+            .setContentIntent(
+                addedTransactionId?.let { openTransactionIntent(it) } ?: pendingImportsIntent(),
+            )
             .build()
 
         return post(dedupeKey, NotificationChannels.IMPORTS, notification)
@@ -367,6 +378,18 @@ class KhaataNotifier @Inject constructor(
         return PendingIntent.getActivity(context, 2, intent, PENDING_INTENT_FLAGS)
     }
 
+    /**
+     * Opens one transaction. The request code comes from the id, so two notifications each keep
+     * their own transaction rather than the second's extra overwriting the first's.
+     */
+    private fun openTransactionIntent(transactionId: String): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java)
+            .setAction(ACTION_OPEN_TRANSACTION)
+            .putExtra(EXTRA_TRANSACTION_ID, transactionId)
+            .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        return PendingIntent.getActivity(context, transactionId.hashCode(), intent, PENDING_INTENT_FLAGS)
+    }
+
     private fun quickAddIntent(): PendingIntent {
         val intent = Intent(context, MainActivity::class.java)
             .setAction(ACTION_QUICK_ADD)
@@ -383,6 +406,8 @@ class KhaataNotifier @Inject constructor(
     companion object {
         const val ACTION_QUICK_ADD = "ai.labs32.khaata.action.QUICK_ADD"
         const val ACTION_REVIEW_IMPORTS = "ai.labs32.khaata.action.REVIEW_IMPORTS"
+        const val ACTION_OPEN_TRANSACTION = "ai.labs32.khaata.action.OPEN_TRANSACTION"
+        const val EXTRA_TRANSACTION_ID = "ai.labs32.khaata.extra.TRANSACTION_ID"
 
         private const val TAG = "KhaataNotifier"
 

@@ -96,7 +96,7 @@
     <string name="onboarding_lock_title">ऐप को लॉक करें</string>
     <string name="onboarding_lock_body">फ़िंगरप्रिंट या पिन लगाएँ ताकि फ़ोन उठाने वाले को आपका हिसाब न दिखे।</string>
     <string name="onboarding_sms_title">बैंक के मैसेज पढ़ें?</string>
-    <string name="onboarding_sms_body">खाता आपके बैंक के लेन-देन वाले SMS पढ़ सकता है ताकि आपको टाइप न करना पड़े। मैसेज आपके फ़ोन में ही पढ़े जाते हैं, कहीं भेजे नहीं जाते। हर एक को सेव करने से पहले आप पक्का करते हैं।</string>
+    <string name="onboarding_sms_body">खाता आपके बैंक के लेन-देन SMS पढ़ सकता है, ताकि आपको उन्हें टाइप न करना पड़े। संदेश आपके फ़ोन पर ही पढ़े जाते हैं और कहीं भेजे नहीं जाते। हर खर्च संदेश आते ही जुड़ जाता है, और जो न चाहिए उसे आप हटा सकते हैं।</string>
     <string name="onboarding_sms_optional">यह पूरी तरह वैकल्पिक है — इसके बिना भी सब काम करता है।</string>
     <string name="onboarding_sms_history_title">पिछले 90 दिनों के संदेश भी लाएँ</string>
     <string name="onboarding_sms_history_body">पिछले 90 दिनों के बैंक संदेश एक बार पढ़े जाते हैं। जो मिलता है वह आपकी पुष्टि का इंतज़ार करता है और आपके दर्ज किए बैलेंस को कभी नहीं बदलता।</string>
@@ -1088,4 +1088,11 @@
     </plurals>
 
     <string name="activity_filter_all">सभी</string>
+
+    <string name="privacy_sms_auto_add">बैंक संदेश अपने आप जोड़ें</string>
+    <string name="privacy_sms_auto_add_on">संदेश आते ही खर्च और आमदनी जुड़ जाती है। जो न चाहिए उसे हटा दें।</string>
+    <string name="privacy_sms_auto_add_off">हर संदेश गिने जाने से पहले आपकी पुष्टि का इंतज़ार करता है।</string>
+    <string name="notification_import_added_title">लेन-देन जोड़ा गया</string>
+    <string name="notification_import_added_hint">आपके बैंक संदेश से जोड़ा गया। बदलने या हटाने के लिए टैप करें।</string>
+    <string name="notification_import_new_account_added">%1$s को नए खाते के रूप में जोड़ा। बदलने या हटाने के लिए टैप करें।</string>
 </resources>

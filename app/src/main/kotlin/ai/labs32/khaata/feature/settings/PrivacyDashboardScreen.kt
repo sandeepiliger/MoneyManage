@@ -162,6 +162,14 @@ class PrivacyDashboardViewModel @Inject constructor(
     }
 
     /**
+     * Whether a bank message is added as it arrives or waits for review. Off brings back the
+     * review queue for every message; either way a row can be removed afterwards.
+     */
+    fun setSmsAutoAdd(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSmsAutoAdd(enabled) }
+    }
+
+    /**
      * Reads the last 90 days of messages into Pending, on request.
      *
      * Repeating it is harmless -- anything already imported is recognised and skipped -- so it
@@ -457,6 +465,18 @@ fun PrivacyDashboardScreen(
                     },
                 )
                 if (settings.smsImportEnabled) {
+                    SettingsRow(
+                        title = stringResource(R.string.privacy_sms_auto_add),
+                        subtitle = stringResource(
+                            if (settings.smsAutoAdd) R.string.privacy_sms_auto_add_on else R.string.privacy_sms_auto_add_off,
+                        ),
+                        trailing = {
+                            Switch(
+                                checked = settings.smsAutoAdd,
+                                onCheckedChange = viewModel::setSmsAutoAdd,
+                            )
+                        },
+                    )
                     val running = inboxImport == InboxImportStatus.Running
                     SettingsRow(
                         title = stringResource(R.string.privacy_sms_import_recent),

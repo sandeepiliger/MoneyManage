@@ -94,7 +94,7 @@
     <string name="onboarding_lock_title">Lock the app</string>
     <string name="onboarding_lock_body">Use your fingerprint or a PIN so your finances are not open to anyone who picks up your phone.</string>
     <string name="onboarding_sms_title">Read bank messages?</string>
-    <string name="onboarding_sms_body">Khaata can read transaction SMS from your bank so you do not have to type them in. Messages are read on your phone and never sent anywhere. You confirm each one before it is saved.</string>
+    <string name="onboarding_sms_body">Khaata can read transaction SMS from your bank so you do not have to type them in. Messages are read on your phone and never sent anywhere. Each spend is added as it arrives, and you can remove any you do not want.</string>
     <string name="onboarding_sms_optional">This is completely optional — everything works without it.</string>
     <string name="onboarding_sms_history_title">Also bring in the last 90 days</string>
     <string name="onboarding_sms_history_body">Reads bank messages from the past 90 days, once. What it finds waits for you to confirm, and never changes the balance you entered.</string>
@@ -1086,4 +1086,11 @@
     </plurals>
 
     <string name="activity_filter_all">All</string>
+
+    <string name="privacy_sms_auto_add">Add bank messages automatically</string>
+    <string name="privacy_sms_auto_add_on">Spends and credits are added as the messages arrive. Remove any you do not want.</string>
+    <string name="privacy_sms_auto_add_off">Each message waits for you to confirm it before it counts.</string>
+    <string name="notification_import_added_title">Transaction added</string>
+    <string name="notification_import_added_hint">Added from your bank message. Tap to change or remove.</string>
+    <string name="notification_import_new_account_added">Added %1$s as a new account. Tap to change or remove.</string>
 </resources>

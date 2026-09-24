@@ -124,15 +124,19 @@ class MainActivity : FragmentActivity() {
 }
 
 /** Where a tapped notification or shortcut should take the user once the app is on screen. */
-private enum class DeepLink {
-    QUICK_ADD,
-    REVIEW_IMPORTS,
-    ;
+private sealed interface DeepLink {
+    data object QuickAdd : DeepLink
+    data object ReviewImports : DeepLink
+
+    /** A transaction added from a bank message, opened from its notification to check or remove. */
+    data class OpenTransaction(val transactionId: String) : DeepLink
 
     companion object {
         fun from(intent: Intent?): DeepLink? = when (intent?.action) {
-            KhaataNotifier.ACTION_QUICK_ADD, MainActivity.ACTION_QUICK_ADD_ALIAS -> QUICK_ADD
-            KhaataNotifier.ACTION_REVIEW_IMPORTS -> REVIEW_IMPORTS
+            KhaataNotifier.ACTION_QUICK_ADD, MainActivity.ACTION_QUICK_ADD_ALIAS -> QuickAdd
+            KhaataNotifier.ACTION_REVIEW_IMPORTS -> ReviewImports
+            KhaataNotifier.ACTION_OPEN_TRANSACTION ->
+                intent.getStringExtra(KhaataNotifier.EXTRA_TRANSACTION_ID)?.let { OpenTransaction(it) }
             else -> null
         }
     }
@@ -165,8 +169,9 @@ private fun KhaataApp(
     // MainActivity.onNewIntent sets the same value, but LaunchedEffect only reruns on a change.
     LaunchedEffect(deepLink) {
         when (deepLink) {
-            DeepLink.QUICK_ADD -> navController.navigate(Routes.ADD_TRANSACTION)
-            DeepLink.REVIEW_IMPORTS -> navController.navigate(Routes.PENDING_IMPORTS)
+            DeepLink.QuickAdd -> navController.navigate(Routes.ADD_TRANSACTION)
+            DeepLink.ReviewImports -> navController.navigate(Routes.PENDING_IMPORTS)
+            is DeepLink.OpenTransaction -> navController.navigate(Routes.transactionDetail(deepLink.transactionId))
             null -> return@LaunchedEffect
         }
         onDeepLinkConsumed()
